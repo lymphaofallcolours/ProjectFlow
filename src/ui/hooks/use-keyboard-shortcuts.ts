@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useUIStore } from '@/application/ui-store'
 import { useSessionStore } from '@/application/session-store'
 import { useGraphStore } from '@/application/graph-store'
+import { saveCampaignAction } from '@/application/campaign-actions'
 
 export function useKeyboardShortcuts() {
   useEffect(() => {
@@ -17,6 +18,21 @@ export function useKeyboardShortcuts() {
       }
 
       const ctrl = e.ctrlKey || e.metaKey
+
+      // Ctrl+S → save campaign
+      if (ctrl && e.key === 's') {
+        e.preventDefault()
+        saveCampaignAction()
+        return
+      }
+
+      // Ctrl+A → select all nodes
+      if (ctrl && e.key === 'a') {
+        e.preventDefault()
+        const nodeIds = Object.keys(useGraphStore.getState().nodes)
+        useGraphStore.getState().selectNodes(nodeIds)
+        return
+      }
 
       // Ctrl+/ → toggle legend
       if (ctrl && e.key === '/') {
@@ -85,6 +101,48 @@ export function useKeyboardShortcuts() {
       if (ctrl && e.shiftKey && e.key === 'Z') {
         e.preventDefault()
         useGraphStore.getState().redo()
+        return
+      }
+
+      // Escape → priority chain dismissal
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        const ui = useUIStore.getState()
+        const session = useSessionStore.getState()
+        const graph = useGraphStore.getState()
+
+        // 1. Close active overlay (field panel or cockpit)
+        if (ui.activeOverlay) {
+          ui.closeOverlay()
+          return
+        }
+        // 2. Hide radial subnodes
+        if (ui.radialNodeId) {
+          ui.hideRadialSubnodes()
+          return
+        }
+        // 3. Close panels (search, entity sidebar, legend, timeline)
+        if (ui.searchPanelOpen) {
+          ui.toggleSearchPanel()
+          return
+        }
+        if (ui.entitySidebarOpen) {
+          ui.toggleEntitySidebar()
+          return
+        }
+        if (ui.legendPanelOpen) {
+          ui.toggleLegendPanel()
+          return
+        }
+        if (session.sessionTimelineOpen) {
+          session.toggleSessionTimeline()
+          return
+        }
+        // 4. Clear selection
+        if (graph.selectedNodeIds.size > 0) {
+          graph.clearSelection()
+          return
+        }
         return
       }
 

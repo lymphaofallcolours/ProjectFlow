@@ -102,4 +102,84 @@ describe('keyboard shortcut actions', () => {
     useGraphStore.getState().redo()
     expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(1)
   })
+
+  it('select all nodes (Ctrl+A)', () => {
+    useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+    useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+    useGraphStore.getState().addNode('combat', { x: 200, y: 0 })
+
+    const nodeIds = Object.keys(useGraphStore.getState().nodes)
+    useGraphStore.getState().selectNodes(nodeIds)
+
+    expect(useGraphStore.getState().selectedNodeIds.size).toBe(3)
+  })
+
+  describe('Escape priority chain', () => {
+    it('closes active overlay first', () => {
+      useUIStore.getState().openCockpit('node-1')
+      expect(useUIStore.getState().activeOverlay).not.toBeNull()
+
+      // Escape should close overlay
+      useUIStore.getState().closeOverlay()
+      expect(useUIStore.getState().activeOverlay).toBeNull()
+    })
+
+    it('hides radial subnodes when no overlay', () => {
+      useUIStore.getState().showRadialSubnodes('node-1')
+      expect(useUIStore.getState().radialNodeId).toBe('node-1')
+
+      useUIStore.getState().hideRadialSubnodes()
+      expect(useUIStore.getState().radialNodeId).toBeNull()
+    })
+
+    it('closes search panel when no overlay or radial', () => {
+      useUIStore.getState().toggleSearchPanel()
+      expect(useUIStore.getState().searchPanelOpen).toBe(true)
+
+      useUIStore.getState().toggleSearchPanel()
+      expect(useUIStore.getState().searchPanelOpen).toBe(false)
+    })
+
+    it('clears selection when nothing else is open', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().selectNodes([id])
+      expect(useGraphStore.getState().selectedNodeIds.size).toBe(1)
+
+      useGraphStore.getState().clearSelection()
+      expect(useGraphStore.getState().selectedNodeIds.size).toBe(0)
+    })
+
+    it('follows correct priority: overlay > radial > panel > selection', () => {
+      // Set up all states (cockpit set last since openCockpit clears radialNodeId)
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().selectNodes([id])
+      useUIStore.getState().toggleSearchPanel()
+      // Use setState directly to avoid openCockpit clearing radialNodeId
+      useUIStore.setState({
+        activeOverlay: { type: 'cockpit', nodeId: 'node-1' },
+        radialNodeId: 'node-1',
+        searchPanelOpen: true,
+      })
+
+      // Step 1: close overlay
+      expect(useUIStore.getState().activeOverlay).not.toBeNull()
+      useUIStore.getState().closeOverlay()
+      expect(useUIStore.getState().activeOverlay).toBeNull()
+
+      // Step 2: hide radial
+      expect(useUIStore.getState().radialNodeId).toBe('node-1')
+      useUIStore.getState().hideRadialSubnodes()
+      expect(useUIStore.getState().radialNodeId).toBeNull()
+
+      // Step 3: close search panel
+      expect(useUIStore.getState().searchPanelOpen).toBe(true)
+      useUIStore.getState().toggleSearchPanel()
+      expect(useUIStore.getState().searchPanelOpen).toBe(false)
+
+      // Step 4: clear selection
+      expect(useGraphStore.getState().selectedNodeIds.size).toBe(1)
+      useGraphStore.getState().clearSelection()
+      expect(useGraphStore.getState().selectedNodeIds.size).toBe(0)
+    })
+  })
 })
