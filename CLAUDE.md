@@ -14,6 +14,8 @@ ProjectFlow — a narrative graph editor and session runner for tabletop RPG gam
 
 Frontend-only React app. No backend. Data persisted via JSON file export/import (File System Access API with download fallback).
 
+**UI Design:** Claude MUST use the `frontend-design` skill/plugin when building or modifying any UI component, layout, overlay, or visual element. Read the skill instructions BEFORE writing any component code. ProjectFlow should feel like a clean interface — not generic AI-generated UI.
+
 ```
 src/
 ├── domain/           # Core types, entity system, graph model — ZERO framework imports
@@ -108,34 +110,68 @@ Status markers: `@Alfa+wounded`, `!@Voss+dead`. Parsed by `domain/entity-tag-par
 - JSON save files can grow large with base64 attachments. Keep attachment support behind a size warning.
 - Entity tag regex lives in domain/ — if you change it, update the TipTap extension AND the search/filter logic.
 
-## Automated Documentation & Memory Maintenance
+## Autonomous Workflow — Claude MUST Follow Unprompted
 
-Claude MUST maintain living documentation as part of development.
+Claude operates as a self-directed developer on this project. The following behaviors are MANDATORY and must happen WITHOUT the user asking.
 
 ### On Every Session Start
-- Read `docs/wip.md` and `docs/decisions-log.md`.
+- Read `docs/wip.md` and `docs/decisions-log.md` BEFORE doing anything else.
+- Read `docs/spec.md` if the current task touches a feature defined there.
+- If a `docs/plans/` file exists for the current feature, read it and resume from where it left off.
 
 ### During Development
 - **New file/module** → Update `docs/architecture.md` if it adds a boundary or layer.
-- **Non-obvious decision** → Append to `docs/decisions-log.md`.
+- **Non-obvious decision** → Append to `docs/decisions-log.md` using the ADR format.
 - **New dependency** → Document WHY in `docs/dependencies.md`.
-- **Bug with non-obvious cause** → Add to Gotchas above.
+- **Bug with non-obvious cause** → Add to Gotchas section above.
+- **New pattern adopted** → Add to `docs/code-conventions.md`.
 
-### On Session End
-- Update `docs/wip.md`: completed, in-progress, blocked, next steps.
+### On Every Commit
+- Claude MUST update relevant docs IN THE SAME COMMIT as the code change. Docs are not a separate task — they are part of the work. A commit that changes architecture without updating `docs/architecture.md` is incomplete.
+- Use conventional commit messages: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`.
 
-> ⚠️ Documentation updates are NOT optional. If out of scope, add a TODO in `docs/wip.md`.
+### On Session End / Task Completion
+- Update `docs/wip.md` with: completed, in-progress, blocked, next steps.
+- Log any TODO/FIXME added to code in `docs/wip.md` with file path and context.
+- Self-check: "Did I change anything that makes existing docs stale?" If yes, fix now.
+
+### Feature Planning (Master Plans)
+When a new feature is being planned or started, Claude MUST:
+1. Create `docs/plans/{feature-name}.md` with the full implementation plan BEFORE writing code.
+2. The plan MUST include: goal, affected files/layers, data model changes, step-by-step implementation order, test strategy, and acceptance criteria.
+3. Reference the plan file at any point during implementation to stay on track.
+4. Update the plan if the approach changes mid-implementation (append "Revised" sections, don't delete the original).
+5. When the feature is complete, move the plan to `docs/plans/completed/` and note completion in `docs/wip.md`.
+
+```
+docs/plans/
+├── {feature-name}.md          # Active feature plans
+└── completed/                 # Archived plans for finished features
+```
+
+### Development Decisions from the Spec
+Claude MUST follow `docs/spec.md` as the source of truth for all feature design decisions. If the spec defines how something works, Claude implements it as specified. If Claude encounters ambiguity or a better approach, it MUST:
+1. Log the concern in `docs/decisions-log.md`.
+2. Propose the alternative to the user.
+3. Only deviate from the spec after explicit approval.
+4. Update `docs/spec.md` to reflect the approved change.
+
+> ⚠️ Documentation updates are NOT optional. Stale docs are worse than no docs.
+> A feature is not done until its docs are updated and its plan is archived.
 
 ## Documentation Map
 
 ```
 docs/
-├── spec.md                # Full project specification (ProjectFlow-Spec.md)
+├── spec.md                # Full project specification — source of truth for features
 ├── architecture.md        # Layer boundaries, component hierarchy, data flow
 ├── code-conventions.md    # Patterns, anti-patterns, examples
 ├── testing.md             # Test strategies, fixtures, mocking rules
 ├── wip.md                 # Session state — updated EVERY session
 ├── decisions-log.md       # ADRs — append-only
 ├── dependencies.md        # Why each dependency exists
-└── changelog.md           # Maintained via conventional commits
+├── changelog.md           # Maintained via conventional commits
+└── plans/                 # Feature implementation plans
+    ├── {feature}.md       # Active plans
+    └── completed/         # Archived completed plans
 ```
