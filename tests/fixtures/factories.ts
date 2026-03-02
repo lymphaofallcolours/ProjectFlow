@@ -7,6 +7,7 @@ import type {
   Position2D,
   SceneType,
 } from '@/domain/types'
+import type { Entity, EntityType, EntityRegistry } from '@/domain/entity-types'
 import { createEmptyNodeFields, createEmptyRichContent } from '@/domain/graph-operations'
 import { createCampaign } from '@/domain/campaign-operations'
 
@@ -58,5 +59,22 @@ export function createPopulatedNodeFields(overrides?: Partial<NodeFields>): Node
     script: { markdown: 'Test script content' },
     gmNotes: { markdown: 'Test GM notes' },
     ...overrides,
+  }
+}
+
+export function createTestEntity(overrides?: Partial<Entity>): Entity {
+  return {
+    id: crypto.randomUUID(),
+    type: 'pc' as EntityType,
+    name: 'Test Entity',
+    statusHistory: [],
+    custom: {},
+    ...overrides,
+  }
+}
+
+export function createTestEntityRegistry(entities: Entity[] = []): EntityRegistry {
+  return {
+    entities: Object.fromEntries(entities.map((e) => [e.id, e])),
   }
 }
