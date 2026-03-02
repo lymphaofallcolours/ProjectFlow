@@ -110,3 +110,30 @@ html, body, #root {
   background: var(--color-surface-overlay) !important;
   border-color: var(--color-text-muted) !important;
 }
+
+/* ---- TipTap / ProseMirror styles ---- */
+
+.tiptap-editor {
+  color: var(--color-text-primary);
+  caret-color: var(--color-node-event);
+}
+
+.tiptap-editor p {
+  margin: 0;
+}
+
+.tiptap-editor p + p {
+  margin-top: 0.5em;
+}
+
+.tiptap-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+
+.tiptap-editor:focus-within {
+  outline: none;
+}

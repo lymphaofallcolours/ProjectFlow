@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { Plus, X } from 'lucide-react'
 import type { CustomField } from '@/domain/types'
 import { createEmptyRichContent } from '@/domain/graph-operations'
+import { TipTapEditor } from '@/ui/editor/tiptap-editor'
 
 type CustomFieldEditorProps = {
   value: CustomField[]
@@ -59,12 +60,11 @@ export function CustomFieldEditor({ value, onChange }: CustomFieldEditorProps) {
               <X size={14} className="text-text-muted" />
             </button>
           </div>
-          <textarea
-            value={field.content.markdown}
-            onChange={(e) => handleUpdateContent(i, e.target.value)}
+          <TipTapEditor
+            content={field.content.markdown}
+            onUpdate={(text) => handleUpdateContent(i, text)}
             placeholder="Content..."
-            className="w-full bg-transparent text-sm text-text-primary placeholder:text-text-muted
-              outline-none resize-none min-h-[60px]"
+            className="min-h-[60px]"
           />
         </div>
       ))}
