@@ -5,6 +5,15 @@ import {
   EdgeLabelRenderer,
 } from '@xyflow/react'
 import type { EdgeProps } from '@xyflow/react'
+import type { StoryEdge } from '@/domain/types'
+
+export type StoryEdgeData = { storyEdge: StoryEdge }
+
+const EDGE_STYLE_CONFIG = {
+  default: { dashArray: undefined, color: 'var(--color-border)', opacity: 1 },
+  conditional: { dashArray: '8 4', color: 'var(--color-node-social)', opacity: 0.85 },
+  secret: { dashArray: '3 3', color: 'var(--color-text-muted)', opacity: 0.4 },
+} as const
 
 export const StoryEdgeComponent = memo(function StoryEdgeComponent({
   id,
@@ -16,7 +25,8 @@ export const StoryEdgeComponent = memo(function StoryEdgeComponent({
   targetPosition,
   label,
   selected,
-}: EdgeProps) {
+  data,
+}: EdgeProps<StoryEdgeData>) {
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -27,14 +37,19 @@ export const StoryEdgeComponent = memo(function StoryEdgeComponent({
     borderRadius: 16,
   })
 
+  const edgeStyle = data?.storyEdge?.style ?? 'default'
+  const config = EDGE_STYLE_CONFIG[edgeStyle]
+
   return (
     <>
       <BaseEdge
         id={id}
         path={edgePath}
         style={{
-          stroke: selected ? 'var(--color-node-event)' : 'var(--color-border)',
+          stroke: selected ? 'var(--color-node-event)' : config.color,
           strokeWidth: selected ? 2 : 1.5,
+          strokeDasharray: config.dashArray,
+          opacity: config.opacity,
           transition: 'stroke 0.15s, stroke-width 0.15s',
         }}
         markerEnd="url(#arrow)"

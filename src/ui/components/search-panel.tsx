@@ -12,7 +12,7 @@ export function SearchPanel() {
   const close = useUIStore((s) => s.toggleSearchPanel)
   const openFieldPanel = useUIStore((s) => s.openFieldPanel)
   const setEntityHighlightFilter = useUIStore((s) => s.setEntityHighlightFilter)
-  const selectNode = useGraphStore((s) => s.selectNode)
+  const selectNodes = useGraphStore((s) => s.selectNodes)
   const nodes = useGraphStore((s) => s.nodes)
   const entitiesMap = useEntityStore((s) => s.entities)
 
@@ -58,10 +58,10 @@ export function SearchPanel() {
 
   const handleTextResultClick = useCallback(
     (nodeId: string, fieldKey: string) => {
-      selectNode(nodeId)
+      selectNodes([nodeId])
       openFieldPanel(nodeId, fieldKey as Parameters<typeof openFieldPanel>[1])
     },
-    [selectNode, openFieldPanel],
+    [selectNodes, openFieldPanel],
   )
 
   const handleEntityHighlight = useCallback(

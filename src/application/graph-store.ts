@@ -14,12 +14,20 @@ import {
   createNode,
   createEdge,
   removeNode as removeNodeOp,
+  removeNodes as removeNodesOp,
   removeEdge as removeEdgeOp,
   updateNodePosition,
   updateNodeLabel,
   updateNodeSceneType,
   updateNodeField,
   duplicateNode,
+  duplicateNodes as duplicateNodesOp,
+  extractSubgraph,
+  pasteSubgraph,
+  updateEdgeStyle as updateEdgeStyleOp,
+  updateEdgeLabel as updateEdgeLabelOp,
+  updateNodeArcLabel as updateArcLabelOp,
+  rewireEdge as rewireEdgeOp,
 } from '@/domain/graph-operations'
 import {
   setNodePlaythroughStatus as setPlaythroughOp,
@@ -31,10 +39,12 @@ type GraphState = {
   edges: Record<string, StoryEdge>
   viewport: ViewportState
   scrollDirection: ScrollDirection
-  selectedNodeId: string | null
+  selectedNodeIds: Set<string>
+  clipboard: { nodes: StoryNode[]; edges: StoryEdge[] } | null
 
   addNode: (sceneType: SceneType, position: Position2D, label?: string) => string
   deleteNode: (id: string) => void
+  deleteSelectedNodes: () => void
   connectNodes: (sourceId: string, targetId: string, label?: string) => string
   disconnectEdge: (edgeId: string) => void
   moveNode: (id: string, position: Position2D) => void
@@ -42,11 +52,21 @@ type GraphState = {
   changeSceneType: (id: string, sceneType: SceneType) => void
   updateField: (nodeId: string, fieldKey: FieldKey, value: NodeFields[FieldKey]) => void
   duplicateNode: (id: string) => string | null
+  duplicateSelectedNodes: () => string[]
   setPlaythroughStatus: (nodeId: string, status: PlaythroughStatus, notes?: string) => void
   clearPlaythroughStatus: (nodeId: string) => void
   setViewport: (viewport: ViewportState) => void
   setScrollDirection: (direction: ScrollDirection) => void
-  selectNode: (id: string | null) => void
+  selectNodes: (ids: string[]) => void
+  toggleNodeSelection: (id: string) => void
+  clearSelection: () => void
+  copySelectedNodes: () => void
+  cutSelectedNodes: () => void
+  pasteClipboard: (offset?: Position2D) => void
+  setEdgeStyle: (edgeId: string, style: StoryEdge['style']) => void
+  setEdgeLabel: (edgeId: string, label: string | undefined) => void
+  setArcLabel: (nodeId: string, arcLabel: string | undefined) => void
+  rewireEdge: (edgeId: string, newSource?: string, newTarget?: string) => void
   loadGraph: (
     nodes: Record<string, StoryNode>,
     edges: Record<string, StoryEdge>,
@@ -61,7 +81,8 @@ const initialState = {
   edges: {} as Record<string, StoryEdge>,
   viewport: { x: 0, y: 0, zoom: 1 },
   scrollDirection: 'horizontal' as ScrollDirection,
-  selectedNodeId: null as string | null,
+  selectedNodeIds: new Set<string>(),
+  clipboard: null as { nodes: StoryNode[]; edges: StoryEdge[] } | null,
 }
 
 export const useGraphStore = create<GraphState>((set, get) => ({
@@ -76,10 +97,18 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   deleteNode: (id) => {
     set((state) => {
       const result = removeNodeOp(state.nodes, state.edges, id)
-      return {
-        ...result,
-        selectedNodeId: state.selectedNodeId === id ? null : state.selectedNodeId,
-      }
+      const nextSelected = new Set(state.selectedNodeIds)
+      nextSelected.delete(id)
+      return { ...result, selectedNodeIds: nextSelected }
+    })
+  },
+
+  deleteSelectedNodes: () => {
+    set((state) => {
+      const ids = Array.from(state.selectedNodeIds)
+      if (ids.length === 0) return state
+      const result = removeNodesOp(state.nodes, state.edges, ids)
+      return { ...result, selectedNodeIds: new Set<string>() }
     })
   },
 
@@ -137,6 +166,25 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     return copy.id
   },
 
+  duplicateSelectedNodes: () => {
+    const state = get()
+    const ids = Array.from(state.selectedNodeIds)
+    if (ids.length === 0) return []
+    const { nodes: newNodes, edges: newEdges, idMap } = duplicateNodesOp(
+      state.nodes,
+      state.edges,
+      ids,
+      { x: 50, y: 50 },
+    )
+    const newIds = Object.values(idMap)
+    set((s) => ({
+      nodes: { ...s.nodes, ...newNodes },
+      edges: { ...s.edges, ...newEdges },
+      selectedNodeIds: new Set(newIds),
+    }))
+    return newIds
+  },
+
   setPlaythroughStatus: (nodeId, status, notes) => {
     set((state) => {
       const node = state.nodes[nodeId]
@@ -155,11 +203,83 @@ export const useGraphStore = create<GraphState>((set, get) => ({
 
   setViewport: (viewport) => set({ viewport }),
   setScrollDirection: (scrollDirection) => set({ scrollDirection }),
-  selectNode: (id) => set({ selectedNodeId: id }),
 
-  loadGraph: (nodes, edges, viewport, scrollDirection) => {
-    set({ nodes, edges, viewport, scrollDirection, selectedNodeId: null })
+  selectNodes: (ids) => set({ selectedNodeIds: new Set(ids) }),
+
+  toggleNodeSelection: (id) =>
+    set((state) => {
+      const next = new Set(state.selectedNodeIds)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return { selectedNodeIds: next }
+    }),
+
+  clearSelection: () => set({ selectedNodeIds: new Set<string>() }),
+
+  copySelectedNodes: () => {
+    const state = get()
+    const ids = Array.from(state.selectedNodeIds)
+    if (ids.length === 0) return
+    const subgraph = extractSubgraph(state.nodes, state.edges, ids)
+    set({ clipboard: subgraph })
   },
 
-  reset: () => set(initialState),
+  cutSelectedNodes: () => {
+    const store = get()
+    store.copySelectedNodes()
+    store.deleteSelectedNodes()
+  },
+
+  pasteClipboard: (offset) => {
+    const { clipboard } = get()
+    if (!clipboard || clipboard.nodes.length === 0) return
+    const pasteOffset = offset ?? { x: 50, y: 50 }
+    const { nodes: newNodes, edges: newEdges } = pasteSubgraph(
+      clipboard.nodes,
+      clipboard.edges,
+      pasteOffset,
+    )
+    const newIds = Object.keys(newNodes)
+    set((state) => ({
+      nodes: { ...state.nodes, ...newNodes },
+      edges: { ...state.edges, ...newEdges },
+      selectedNodeIds: new Set(newIds),
+    }))
+  },
+
+  setEdgeStyle: (edgeId, style) => {
+    set((state) => {
+      const edge = state.edges[edgeId]
+      if (!edge) return state
+      return { edges: { ...state.edges, [edgeId]: updateEdgeStyleOp(edge, style) } }
+    })
+  },
+
+  setEdgeLabel: (edgeId, label) => {
+    set((state) => {
+      const edge = state.edges[edgeId]
+      if (!edge) return state
+      return { edges: { ...state.edges, [edgeId]: updateEdgeLabelOp(edge, label) } }
+    })
+  },
+
+  setArcLabel: (nodeId, arcLabel) => {
+    set((state) => {
+      const node = state.nodes[nodeId]
+      if (!node) return state
+      return { nodes: { ...state.nodes, [nodeId]: updateArcLabelOp(node, arcLabel) } }
+    })
+  },
+
+  rewireEdge: (edgeId, newSource, newTarget) => {
+    set((state) => ({
+      edges: rewireEdgeOp(state.edges, edgeId, newSource, newTarget),
+    }))
+  },
+
+  loadGraph: (nodes, edges, viewport, scrollDirection) => {
+    set({ nodes, edges, viewport, scrollDirection, selectedNodeIds: new Set<string>() })
+  },
+
+  reset: () => set({ ...initialState, selectedNodeIds: new Set<string>() }),
 }))

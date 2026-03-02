@@ -159,3 +159,156 @@ export function duplicateNode(
     },
   }
 }
+
+export function removeNodes(
+  nodes: Record<string, StoryNode>,
+  edges: Record<string, StoryEdge>,
+  nodeIds: string[],
+): { nodes: Record<string, StoryNode>; edges: Record<string, StoryEdge> } {
+  const removeSet = new Set(nodeIds)
+  const remainingNodes = Object.fromEntries(
+    Object.entries(nodes).filter(([id]) => !removeSet.has(id)),
+  )
+  const remainingEdges = Object.fromEntries(
+    Object.entries(edges).filter(
+      ([, edge]) => !removeSet.has(edge.source) && !removeSet.has(edge.target),
+    ),
+  )
+  return { nodes: remainingNodes, edges: remainingEdges }
+}
+
+export function duplicateNodes(
+  nodes: Record<string, StoryNode>,
+  edges: Record<string, StoryEdge>,
+  nodeIds: string[],
+  offset: Position2D,
+): {
+  nodes: Record<string, StoryNode>
+  edges: Record<string, StoryEdge>
+  idMap: Record<string, string>
+} {
+  const idMap: Record<string, string> = {}
+  const sourceSet = new Set(nodeIds)
+  const newNodes: Record<string, StoryNode> = {}
+
+  for (const id of nodeIds) {
+    const node = nodes[id]
+    if (!node) continue
+    const copy = duplicateNode(node, {
+      x: node.position.x + offset.x,
+      y: node.position.y + offset.y,
+    })
+    idMap[id] = copy.id
+    newNodes[copy.id] = copy
+  }
+
+  const newEdges: Record<string, StoryEdge> = {}
+  for (const edge of Object.values(edges)) {
+    if (sourceSet.has(edge.source) && sourceSet.has(edge.target)) {
+      const newEdge: StoryEdge = {
+        ...edge,
+        id: crypto.randomUUID(),
+        source: idMap[edge.source],
+        target: idMap[edge.target],
+      }
+      newEdges[newEdge.id] = newEdge
+    }
+  }
+
+  return { nodes: newNodes, edges: newEdges, idMap }
+}
+
+export function updateEdgeStyle(
+  edge: StoryEdge,
+  style: StoryEdge['style'],
+): StoryEdge {
+  return { ...edge, style }
+}
+
+export function updateEdgeLabel(
+  edge: StoryEdge,
+  label: string | undefined,
+): StoryEdge {
+  return { ...edge, label }
+}
+
+export function updateNodeArcLabel(
+  node: StoryNode,
+  arcLabel: string | undefined,
+): StoryNode {
+  return {
+    ...node,
+    arcLabel: arcLabel || undefined,
+    metadata: { ...node.metadata, updatedAt: new Date().toISOString() },
+  }
+}
+
+export function extractSubgraph(
+  nodes: Record<string, StoryNode>,
+  edges: Record<string, StoryEdge>,
+  nodeIds: string[],
+): { nodes: StoryNode[]; edges: StoryEdge[] } {
+  const idSet = new Set(nodeIds)
+  const subNodes = nodeIds
+    .map((id) => nodes[id])
+    .filter((n): n is StoryNode => n !== undefined)
+  const subEdges = Object.values(edges).filter(
+    (edge) => idSet.has(edge.source) && idSet.has(edge.target),
+  )
+  return { nodes: subNodes, edges: subEdges }
+}
+
+export function pasteSubgraph(
+  clipNodes: StoryNode[],
+  clipEdges: StoryEdge[],
+  offset: Position2D,
+): {
+  nodes: Record<string, StoryNode>
+  edges: Record<string, StoryEdge>
+} {
+  const idMap: Record<string, string> = {}
+  const now = new Date().toISOString()
+  const newNodes: Record<string, StoryNode> = {}
+
+  for (const node of clipNodes) {
+    const newId = crypto.randomUUID()
+    idMap[node.id] = newId
+    newNodes[newId] = {
+      ...node,
+      id: newId,
+      position: { x: node.position.x + offset.x, y: node.position.y + offset.y },
+      fields: structuredClone(node.fields),
+      metadata: { createdAt: now, updatedAt: now, tags: [...node.metadata.tags] },
+    }
+  }
+
+  const newEdges: Record<string, StoryEdge> = {}
+  for (const edge of clipEdges) {
+    const newSource = idMap[edge.source]
+    const newTarget = idMap[edge.target]
+    if (newSource && newTarget) {
+      const newId = crypto.randomUUID()
+      newEdges[newId] = { ...edge, id: newId, source: newSource, target: newTarget }
+    }
+  }
+
+  return { nodes: newNodes, edges: newEdges }
+}
+
+export function rewireEdge(
+  edges: Record<string, StoryEdge>,
+  edgeId: string,
+  newSource?: string,
+  newTarget?: string,
+): Record<string, StoryEdge> {
+  const edge = edges[edgeId]
+  if (!edge) return edges
+  return {
+    ...edges,
+    [edgeId]: {
+      ...edge,
+      source: newSource ?? edge.source,
+      target: newTarget ?? edge.target,
+    },
+  }
+}

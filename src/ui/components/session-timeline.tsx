@@ -21,7 +21,7 @@ export function SessionTimeline() {
   const updateSessionLabel = useSessionStore((s) => s.updateSessionLabel)
   const endSession = useSessionStore((s) => s.endSession)
   const nodes = useGraphStore((s) => s.nodes)
-  const selectNode = useGraphStore((s) => s.selectNode)
+  const selectNodes = useGraphStore((s) => s.selectNodes)
 
   const session = useMemo(
     () => playthroughLog.find((e) => e.id === activeSessionId),
@@ -130,7 +130,7 @@ export function SessionTimeline() {
                   return (
                     <button
                       key={visit.nodeId}
-                      onClick={() => selectNode(visit.nodeId)}
+                      onClick={() => selectNodes([visit.nodeId])}
                       className="flex items-start gap-2.5 w-full px-4 py-2 text-left
                         hover:bg-surface-glass cursor-pointer transition-colors"
                     >

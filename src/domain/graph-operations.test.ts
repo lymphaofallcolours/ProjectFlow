@@ -6,12 +6,20 @@ import {
   createEmptyRichContent,
   removeNode,
   removeEdge,
+  removeNodes,
+  duplicateNodes,
   updateNodeLabel,
   updateNodeSceneType,
   updateNodePosition,
   updateNodeField,
   isFieldPopulated,
   duplicateNode,
+  updateEdgeStyle,
+  updateEdgeLabel,
+  updateNodeArcLabel,
+  extractSubgraph,
+  pasteSubgraph,
+  rewireEdge,
 } from './graph-operations'
 import { createTestNode, createTestEdge, createPopulatedNodeFields } from '../../tests/fixtures/factories'
 
@@ -257,5 +265,218 @@ describe('duplicateNode', () => {
     const original = createTestNode({ sceneType: 'combat' })
     const copy = duplicateNode(original, { x: 0, y: 0 })
     expect(copy.sceneType).toBe('combat')
+  })
+})
+
+describe('removeNodes', () => {
+  it('removes multiple nodes at once', () => {
+    const nodes = {
+      n1: createTestNode({ id: 'n1' }),
+      n2: createTestNode({ id: 'n2' }),
+      n3: createTestNode({ id: 'n3' }),
+    }
+    const result = removeNodes(nodes, {}, ['n1', 'n3'])
+    expect(Object.keys(result.nodes)).toEqual(['n2'])
+  })
+
+  it('removes all edges connected to any removed node', () => {
+    const nodes = {
+      n1: createTestNode({ id: 'n1' }),
+      n2: createTestNode({ id: 'n2' }),
+      n3: createTestNode({ id: 'n3' }),
+    }
+    const edges = {
+      e1: createTestEdge({ id: 'e1', source: 'n1', target: 'n2' }),
+      e2: createTestEdge({ id: 'e2', source: 'n2', target: 'n3' }),
+    }
+    const result = removeNodes(nodes, edges, ['n1'])
+    expect(Object.keys(result.edges)).toEqual(['e2'])
+  })
+
+  it('handles empty nodeIds array', () => {
+    const nodes = { n1: createTestNode({ id: 'n1' }) }
+    const result = removeNodes(nodes, {}, [])
+    expect(Object.keys(result.nodes)).toHaveLength(1)
+  })
+})
+
+describe('duplicateNodes', () => {
+  it('duplicates multiple nodes with new IDs', () => {
+    const nodes = {
+      n1: createTestNode({ id: 'n1', label: 'A' }),
+      n2: createTestNode({ id: 'n2', label: 'B' }),
+    }
+    const result = duplicateNodes(nodes, {}, ['n1', 'n2'], { x: 50, y: 50 })
+    expect(Object.keys(result.nodes)).toHaveLength(2)
+    expect(result.idMap['n1']).toBeDefined()
+    expect(result.idMap['n2']).toBeDefined()
+    expect(result.idMap['n1']).not.toBe('n1')
+  })
+
+  it('duplicates interconnecting edges with remapped IDs', () => {
+    const nodes = {
+      n1: createTestNode({ id: 'n1' }),
+      n2: createTestNode({ id: 'n2' }),
+    }
+    const edges = {
+      e1: createTestEdge({ id: 'e1', source: 'n1', target: 'n2' }),
+    }
+    const result = duplicateNodes(nodes, edges, ['n1', 'n2'], { x: 50, y: 50 })
+    const newEdges = Object.values(result.edges)
+    expect(newEdges).toHaveLength(1)
+    expect(newEdges[0].source).toBe(result.idMap['n1'])
+    expect(newEdges[0].target).toBe(result.idMap['n2'])
+  })
+
+  it('does not duplicate edges to nodes outside the selection', () => {
+    const nodes = {
+      n1: createTestNode({ id: 'n1' }),
+      n2: createTestNode({ id: 'n2' }),
+      n3: createTestNode({ id: 'n3' }),
+    }
+    const edges = {
+      e1: createTestEdge({ id: 'e1', source: 'n1', target: 'n3' }),
+    }
+    const result = duplicateNodes(nodes, edges, ['n1', 'n2'], { x: 50, y: 50 })
+    expect(Object.keys(result.edges)).toHaveLength(0)
+  })
+
+  it('applies position offset', () => {
+    const nodes = {
+      n1: createTestNode({ id: 'n1', position: { x: 100, y: 200 } }),
+    }
+    const result = duplicateNodes(nodes, {}, ['n1'], { x: 30, y: 40 })
+    const copy = Object.values(result.nodes)[0]
+    expect(copy.position).toEqual({ x: 130, y: 240 })
+  })
+})
+
+describe('updateEdgeStyle', () => {
+  it('sets edge style to conditional', () => {
+    const edge = createTestEdge({ style: 'default' })
+    const updated = updateEdgeStyle(edge, 'conditional')
+    expect(updated.style).toBe('conditional')
+    expect(edge.style).toBe('default')
+  })
+
+  it('sets edge style to secret', () => {
+    const edge = createTestEdge()
+    const updated = updateEdgeStyle(edge, 'secret')
+    expect(updated.style).toBe('secret')
+  })
+})
+
+describe('updateEdgeLabel', () => {
+  it('sets an edge label', () => {
+    const edge = createTestEdge()
+    const updated = updateEdgeLabel(edge, 'if players agree')
+    expect(updated.label).toBe('if players agree')
+  })
+
+  it('clears label with undefined', () => {
+    const edge = createTestEdge({ label: 'old' })
+    const updated = updateEdgeLabel(edge, undefined)
+    expect(updated.label).toBeUndefined()
+  })
+})
+
+describe('updateNodeArcLabel', () => {
+  it('sets an arc label', () => {
+    const node = createTestNode()
+    const updated = updateNodeArcLabel(node, 'MISSION 3')
+    expect(updated.arcLabel).toBe('MISSION 3')
+  })
+
+  it('clears arc label with empty string', () => {
+    const node = createTestNode({ arcLabel: 'ARC 1' })
+    const updated = updateNodeArcLabel(node, '')
+    expect(updated.arcLabel).toBeUndefined()
+  })
+
+  it('updates the updatedAt timestamp', () => {
+    const node = createTestNode()
+    vi.useFakeTimers()
+    vi.advanceTimersByTime(1000)
+    const updated = updateNodeArcLabel(node, 'ARC 2')
+    vi.useRealTimers()
+    expect(updated.metadata.updatedAt).not.toBe(node.metadata.updatedAt)
+  })
+})
+
+describe('extractSubgraph', () => {
+  it('extracts selected nodes and their connecting edges', () => {
+    const nodes = {
+      n1: createTestNode({ id: 'n1' }),
+      n2: createTestNode({ id: 'n2' }),
+      n3: createTestNode({ id: 'n3' }),
+    }
+    const edges = {
+      e1: createTestEdge({ id: 'e1', source: 'n1', target: 'n2' }),
+      e2: createTestEdge({ id: 'e2', source: 'n2', target: 'n3' }),
+    }
+    const result = extractSubgraph(nodes, edges, ['n1', 'n2'])
+    expect(result.nodes).toHaveLength(2)
+    expect(result.edges).toHaveLength(1) // only e1 connects n1↔n2
+    expect(result.edges[0].id).toBe('e1')
+  })
+
+  it('skips non-existent node IDs', () => {
+    const nodes = { n1: createTestNode({ id: 'n1' }) }
+    const result = extractSubgraph(nodes, {}, ['n1', 'n99'])
+    expect(result.nodes).toHaveLength(1)
+  })
+})
+
+describe('pasteSubgraph', () => {
+  it('creates new nodes with new IDs and offset positions', () => {
+    const clipNodes = [createTestNode({ id: 'old1', position: { x: 100, y: 200 } })]
+    const result = pasteSubgraph(clipNodes, [], { x: 50, y: 50 })
+    const newNodes = Object.values(result.nodes)
+    expect(newNodes).toHaveLength(1)
+    expect(newNodes[0].id).not.toBe('old1')
+    expect(newNodes[0].position).toEqual({ x: 150, y: 250 })
+  })
+
+  it('remaps edge source and target to new IDs', () => {
+    const clipNodes = [
+      createTestNode({ id: 'old1' }),
+      createTestNode({ id: 'old2' }),
+    ]
+    const clipEdges = [createTestEdge({ id: 'oldE', source: 'old1', target: 'old2' })]
+    const result = pasteSubgraph(clipNodes, clipEdges, { x: 0, y: 0 })
+    const newEdges = Object.values(result.edges)
+    expect(newEdges).toHaveLength(1)
+    expect(newEdges[0].source).not.toBe('old1')
+    expect(newEdges[0].target).not.toBe('old2')
+    // Check that sources and targets point to the new node IDs
+    const newNodeIds = new Set(Object.keys(result.nodes))
+    expect(newNodeIds.has(newEdges[0].source)).toBe(true)
+    expect(newNodeIds.has(newEdges[0].target)).toBe(true)
+  })
+})
+
+describe('rewireEdge', () => {
+  it('changes the source of an edge', () => {
+    const edges = {
+      e1: createTestEdge({ id: 'e1', source: 'a', target: 'b' }),
+    }
+    const result = rewireEdge(edges, 'e1', 'c')
+    expect(result['e1'].source).toBe('c')
+    expect(result['e1'].target).toBe('b')
+  })
+
+  it('changes the target of an edge', () => {
+    const edges = {
+      e1: createTestEdge({ id: 'e1', source: 'a', target: 'b' }),
+    }
+    const result = rewireEdge(edges, 'e1', undefined, 'c')
+    expect(result['e1'].source).toBe('a')
+    expect(result['e1'].target).toBe('c')
+  })
+
+  it('returns unchanged edges for missing edgeId', () => {
+    const edges = { e1: createTestEdge({ id: 'e1' }) }
+    const result = rewireEdge(edges, 'missing', 'x')
+    expect(result).toBe(edges)
   })
 })

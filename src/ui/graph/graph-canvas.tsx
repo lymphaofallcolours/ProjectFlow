@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -6,6 +6,7 @@ import {
   BackgroundVariant,
   Controls,
   MiniMap,
+  SelectionMode,
   useReactFlow,
 } from '@xyflow/react'
 import type {
@@ -15,6 +16,8 @@ import type {
   NodeChange,
   Connection,
   NodeMouseHandler,
+  OnSelectionChangeFunc,
+  EdgeMouseHandler,
 } from '@xyflow/react'
 import { useGraphStore } from '@/application/graph-store'
 import { useUIStore } from '@/application/ui-store'
@@ -50,7 +53,8 @@ function GraphCanvasInner() {
   const { flowNodes, flowEdges } = useFlowNodes()
   const { screenToFlowPosition } = useReactFlow()
   const moveNode = useGraphStore((s) => s.moveNode)
-  const selectNode = useGraphStore((s) => s.selectNode)
+  const selectNodes = useGraphStore((s) => s.selectNodes)
+  const clearSelection = useGraphStore((s) => s.clearSelection)
   const connectNodes = useGraphStore((s) => s.connectNodes)
   const setViewport = useGraphStore((s) => s.setViewport)
   const hideRadialSubnodes = useUIStore((s) => s.hideRadialSubnodes)
@@ -60,18 +64,32 @@ function GraphCanvasInner() {
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null)
 
+  // Track whether we're in a drag to avoid duplicate snapshots
+  const isDraggingRef = useRef(false)
+
   const onNodesChange: OnNodesChange = useCallback(
     (changes: NodeChange[]) => {
       for (const change of changes) {
-        if (change.type === 'position' && change.position && !change.dragging) {
-          moveNode(change.id, change.position)
-        }
-        if (change.type === 'select' && change.selected) {
-          selectNode(change.id)
+        if (change.type === 'position' && change.position) {
+          if (change.dragging && !isDraggingRef.current) {
+            isDraggingRef.current = true
+          }
+          if (!change.dragging && isDraggingRef.current) {
+            isDraggingRef.current = false
+            moveNode(change.id, change.position)
+          }
         }
       }
     },
-    [moveNode, selectNode],
+    [moveNode],
+  )
+
+  const onSelectionChange: OnSelectionChangeFunc = useCallback(
+    ({ nodes }) => {
+      const ids = nodes.map((n) => n.id)
+      selectNodes(ids)
+    },
+    [selectNodes],
   )
 
   const onEdgesChange: OnEdgesChange = useCallback(
@@ -89,10 +107,10 @@ function GraphCanvasInner() {
   )
 
   const onPaneClick = useCallback(() => {
-    selectNode(null)
+    clearSelection()
     setContextMenu(null)
     hideRadialSubnodes()
-  }, [selectNode, hideRadialSubnodes])
+  }, [clearSelection, hideRadialSubnodes])
 
   const onNodeContextMenu: NodeMouseHandler = useCallback(
     (event, node) => {
@@ -102,6 +120,19 @@ function GraphCanvasInner() {
         nodeId: node.id,
         position: { x: event.clientX, y: event.clientY },
       })
+    },
+    [],
+  )
+
+  const onEdgeContextMenu: EdgeMouseHandler = useCallback(
+    (event, edge) => {
+      event.preventDefault()
+      setContextMenu({
+        type: 'node',
+        nodeId: edge.id,
+        position: { x: event.clientX, y: event.clientY },
+      })
+      // We'll handle edge context menu in Commit 3
     },
     [],
   )
@@ -146,12 +177,19 @@ function GraphCanvasInner() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onSelectionChange={onSelectionChange}
         onPaneClick={onPaneClick}
         onNodeClick={onNodeClick}
         onNodeContextMenu={onNodeContextMenu}
+        onEdgeContextMenu={onEdgeContextMenu}
         onPaneContextMenu={onPaneContextMenu}
         onNodeDoubleClick={onNodeDoubleClick}
         onMoveEnd={(_event, viewport) => setViewport(viewport)}
+        selectionKeyCode="Shift"
+        multiSelectionKeyCode="Shift"
+        selectionOnDrag
+        selectionMode={SelectionMode.Partial}
+        deleteKeyCode={null}
         fitView
         proOptions={{ hideAttribution: true }}
         defaultEdgeOptions={{

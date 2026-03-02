@@ -42,11 +42,11 @@ describe('useGraphStore', () => {
       expect(useGraphStore.getState().edges[edgeId]).toBeUndefined()
     })
 
-    it('clears selectedNodeId if deleted node was selected', () => {
+    it('removes deleted node from selectedNodeIds', () => {
       const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
-      useGraphStore.getState().selectNode(id)
+      useGraphStore.getState().selectNodes([id])
       useGraphStore.getState().deleteNode(id)
-      expect(useGraphStore.getState().selectedNodeId).toBeNull()
+      expect(useGraphStore.getState().selectedNodeIds.has(id)).toBe(false)
     })
   })
 
@@ -120,16 +120,233 @@ describe('useGraphStore', () => {
     })
   })
 
-  describe('selectNode', () => {
-    it('sets the selected node id', () => {
-      useGraphStore.getState().selectNode('node-1')
-      expect(useGraphStore.getState().selectedNodeId).toBe('node-1')
+  describe('selection', () => {
+    it('selectNodes sets the selected node ids', () => {
+      useGraphStore.getState().selectNodes(['a', 'b'])
+      expect(useGraphStore.getState().selectedNodeIds).toEqual(new Set(['a', 'b']))
     })
 
-    it('clears selection with null', () => {
-      useGraphStore.getState().selectNode('node-1')
-      useGraphStore.getState().selectNode(null)
-      expect(useGraphStore.getState().selectedNodeId).toBeNull()
+    it('clearSelection empties the set', () => {
+      useGraphStore.getState().selectNodes(['a'])
+      useGraphStore.getState().clearSelection()
+      expect(useGraphStore.getState().selectedNodeIds.size).toBe(0)
+    })
+
+    it('toggleNodeSelection adds a node', () => {
+      useGraphStore.getState().toggleNodeSelection('a')
+      expect(useGraphStore.getState().selectedNodeIds.has('a')).toBe(true)
+    })
+
+    it('toggleNodeSelection removes a node if already selected', () => {
+      useGraphStore.getState().selectNodes(['a', 'b'])
+      useGraphStore.getState().toggleNodeSelection('a')
+      expect(useGraphStore.getState().selectedNodeIds.has('a')).toBe(false)
+      expect(useGraphStore.getState().selectedNodeIds.has('b')).toBe(true)
+    })
+  })
+
+  describe('deleteSelectedNodes', () => {
+    it('removes all selected nodes', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      const c = useGraphStore.getState().addNode('combat', { x: 200, y: 0 })
+      useGraphStore.getState().selectNodes([a, b])
+      useGraphStore.getState().deleteSelectedNodes()
+      expect(useGraphStore.getState().nodes[a]).toBeUndefined()
+      expect(useGraphStore.getState().nodes[b]).toBeUndefined()
+      expect(useGraphStore.getState().nodes[c]).toBeDefined()
+      expect(useGraphStore.getState().selectedNodeIds.size).toBe(0)
+    })
+
+    it('removes edges between deleted nodes', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      const c = useGraphStore.getState().addNode('combat', { x: 200, y: 0 })
+      useGraphStore.getState().connectNodes(a, b)
+      const edgeBc = useGraphStore.getState().connectNodes(b, c)
+      useGraphStore.getState().selectNodes([a, b])
+      useGraphStore.getState().deleteSelectedNodes()
+      expect(Object.keys(useGraphStore.getState().edges)).toHaveLength(0)
+      expect(useGraphStore.getState().edges[edgeBc]).toBeUndefined()
+    })
+
+    it('is a no-op with empty selection', () => {
+      useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().deleteSelectedNodes()
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(1)
+    })
+  })
+
+  describe('duplicateSelectedNodes', () => {
+    it('duplicates selected nodes and selects copies', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 }, 'A')
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 }, 'B')
+      useGraphStore.getState().selectNodes([a, b])
+      const newIds = useGraphStore.getState().duplicateSelectedNodes()
+      expect(newIds).toHaveLength(2)
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(4)
+      // Selection should be the new copies
+      expect(useGraphStore.getState().selectedNodeIds).toEqual(new Set(newIds))
+    })
+
+    it('duplicates interconnecting edges', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      useGraphStore.getState().connectNodes(a, b)
+      useGraphStore.getState().selectNodes([a, b])
+      useGraphStore.getState().duplicateSelectedNodes()
+      // Original edge + duplicated edge
+      expect(Object.keys(useGraphStore.getState().edges)).toHaveLength(2)
+    })
+
+    it('returns empty array with no selection', () => {
+      const result = useGraphStore.getState().duplicateSelectedNodes()
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('clipboard', () => {
+    it('copySelectedNodes stores nodes and edges', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      useGraphStore.getState().connectNodes(a, b)
+      useGraphStore.getState().selectNodes([a, b])
+      useGraphStore.getState().copySelectedNodes()
+      const clipboard = useGraphStore.getState().clipboard
+      expect(clipboard).not.toBeNull()
+      expect(clipboard!.nodes).toHaveLength(2)
+      expect(clipboard!.edges).toHaveLength(1)
+    })
+
+    it('cutSelectedNodes copies then deletes', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      useGraphStore.getState().selectNodes([a, b])
+      useGraphStore.getState().cutSelectedNodes()
+      expect(useGraphStore.getState().clipboard).not.toBeNull()
+      expect(useGraphStore.getState().clipboard!.nodes).toHaveLength(2)
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(0)
+    })
+
+    it('pasteClipboard creates new nodes with new IDs', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 }, 'A')
+      useGraphStore.getState().selectNodes([a])
+      useGraphStore.getState().copySelectedNodes()
+      useGraphStore.getState().pasteClipboard()
+      const allNodes = Object.values(useGraphStore.getState().nodes)
+      expect(allNodes).toHaveLength(2)
+      const ids = allNodes.map((n) => n.id)
+      expect(new Set(ids).size).toBe(2) // unique IDs
+    })
+
+    it('pasteClipboard preserves internal edges', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      useGraphStore.getState().connectNodes(a, b)
+      useGraphStore.getState().selectNodes([a, b])
+      useGraphStore.getState().copySelectedNodes()
+      useGraphStore.getState().pasteClipboard()
+      // 2 original + 2 pasted nodes, 1 original + 1 pasted edge
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(4)
+      expect(Object.keys(useGraphStore.getState().edges)).toHaveLength(2)
+    })
+
+    it('pasteClipboard selects pasted nodes', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().selectNodes([a])
+      useGraphStore.getState().copySelectedNodes()
+      useGraphStore.getState().pasteClipboard()
+      const selected = useGraphStore.getState().selectedNodeIds
+      expect(selected.size).toBe(1)
+      expect(selected.has(a)).toBe(false) // pasted node has new ID
+    })
+
+    it('pasteClipboard is a no-op with empty clipboard', () => {
+      useGraphStore.getState().pasteClipboard()
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(0)
+    })
+
+    it('copySelectedNodes is a no-op with empty selection', () => {
+      useGraphStore.getState().copySelectedNodes()
+      expect(useGraphStore.getState().clipboard).toBeNull()
+    })
+
+    it('clipboard survives selection change', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().selectNodes([a])
+      useGraphStore.getState().copySelectedNodes()
+      useGraphStore.getState().clearSelection()
+      expect(useGraphStore.getState().clipboard).not.toBeNull()
+    })
+  })
+
+  describe('setEdgeStyle', () => {
+    it('changes edge style', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      const edgeId = useGraphStore.getState().connectNodes(a, b)
+      useGraphStore.getState().setEdgeStyle(edgeId, 'conditional')
+      expect(useGraphStore.getState().edges[edgeId].style).toBe('conditional')
+    })
+
+    it('is a no-op for missing edge', () => {
+      useGraphStore.getState().setEdgeStyle('fake', 'secret')
+      expect(Object.keys(useGraphStore.getState().edges)).toHaveLength(0)
+    })
+  })
+
+  describe('setEdgeLabel', () => {
+    it('sets edge label', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      const edgeId = useGraphStore.getState().connectNodes(a, b)
+      useGraphStore.getState().setEdgeLabel(edgeId, 'if players agree')
+      expect(useGraphStore.getState().edges[edgeId].label).toBe('if players agree')
+    })
+
+    it('clears edge label with undefined', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      const edgeId = useGraphStore.getState().connectNodes(a, b, 'test')
+      useGraphStore.getState().setEdgeLabel(edgeId, undefined)
+      expect(useGraphStore.getState().edges[edgeId].label).toBeUndefined()
+    })
+  })
+
+  describe('setArcLabel', () => {
+    it('sets arc label on a node', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().setArcLabel(id, 'MISSION 3')
+      expect(useGraphStore.getState().nodes[id].arcLabel).toBe('MISSION 3')
+    })
+
+    it('clears arc label with empty string', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().setArcLabel(id, 'ARC 1')
+      useGraphStore.getState().setArcLabel(id, '')
+      expect(useGraphStore.getState().nodes[id].arcLabel).toBeUndefined()
+    })
+  })
+
+  describe('rewireEdge', () => {
+    it('changes the source of an edge', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      const c = useGraphStore.getState().addNode('combat', { x: 200, y: 0 })
+      const edgeId = useGraphStore.getState().connectNodes(a, b)
+      useGraphStore.getState().rewireEdge(edgeId, c)
+      expect(useGraphStore.getState().edges[edgeId].source).toBe(c)
+      expect(useGraphStore.getState().edges[edgeId].target).toBe(b)
+    })
+
+    it('changes the target of an edge', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      const c = useGraphStore.getState().addNode('combat', { x: 200, y: 0 })
+      const edgeId = useGraphStore.getState().connectNodes(a, b)
+      useGraphStore.getState().rewireEdge(edgeId, undefined, c)
+      expect(useGraphStore.getState().edges[edgeId].source).toBe(a)
+      expect(useGraphStore.getState().edges[edgeId].target).toBe(c)
     })
   })
 
@@ -190,10 +407,10 @@ describe('useGraphStore', () => {
   describe('reset', () => {
     it('clears all state', () => {
       useGraphStore.getState().addNode('event', { x: 0, y: 0 })
-      useGraphStore.getState().selectNode('some-id')
+      useGraphStore.getState().selectNodes(['some-id'])
       useGraphStore.getState().reset()
       expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(0)
-      expect(useGraphStore.getState().selectedNodeId).toBeNull()
+      expect(useGraphStore.getState().selectedNodeIds.size).toBe(0)
     })
   })
 })

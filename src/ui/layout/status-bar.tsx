@@ -6,6 +6,7 @@ import { useSessionStore } from '@/application/session-store'
 export function StatusBar() {
   const nodeCount = useGraphStore((s) => Object.keys(s.nodes).length)
   const edgeCount = useGraphStore((s) => Object.keys(s.edges).length)
+  const selectionCount = useGraphStore((s) => s.selectedNodeIds.size)
   const entityCount = useEntityStore((s) => Object.keys(s.entities).length)
   const name = useCampaignStore((s) => s.name)
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
@@ -27,6 +28,12 @@ export function StatusBar() {
       <span>{edgeCount} edge{edgeCount !== 1 ? 's' : ''}</span>
       <span className="opacity-30">|</span>
       <span>{entityCount} entit{entityCount !== 1 ? 'ies' : 'y'}</span>
+      {selectionCount > 1 && (
+        <>
+          <span className="opacity-30">|</span>
+          <span className="text-node-event">{selectionCount} selected</span>
+        </>
+      )}
       {activeSession && (
         <>
           <span className="opacity-30">|</span>
