@@ -17,31 +17,36 @@ src/
 │   ├── entity-operations.ts    # Pure CRUD for Entity and EntityRegistry (create, update, status)
 │   ├── search.ts               # Full-text and entity-aware node search across all fields
 │   ├── graph-operations.ts     # Pure functions: createNode, removeNode, updateField, etc.
-│   └── campaign-operations.ts  # createCampaign, createDefaultSettings, schema version
+│   ├── campaign-operations.ts  # createCampaign, createDefaultSettings, schema version
+│   └── playthrough-operations.ts # Session CRUD, node visit tracking, diff maps, markdown export
 │
 ├── application/                # State management, orchestration
 │   ├── graph-store.ts          # useGraphStore — nodes, edges, viewport, scroll direction
 │   ├── campaign-store.ts       # useCampaignStore — campaign metadata
 │   ├── entity-store.ts         # useEntityStore — entity CRUD, registry, status tracking
+│   ├── session-store.ts        # useSessionStore — playthrough sessions, diff overlay, timeline toggle
 │   ├── ui-store.ts             # useUIStore — theme, overlay state, radial node, sidebar/panel toggles
-│   └── campaign-actions.ts     # assemble/hydrate/save/load campaign orchestration (incl. entity store)
+│   └── campaign-actions.ts     # assemble/hydrate/save/load campaign orchestration (incl. entity + session)
 │
 ├── infrastructure/             # Browser APIs, serialization, file I/O
 │   ├── file-io.ts              # Save/load JSON via File System Access API + fallback
-│   ├── serialization.ts        # Campaign ↔ JSON with schema versioning (validates entityRegistry)
+│   ├── serialization.ts        # Campaign ↔ JSON with schema versioning (validates entityRegistry + playthroughLog)
+│   ├── markdown-export.ts      # Blob download helper for session markdown export
 │   └── theme.ts                # Dark/light mode persistence (localStorage + .dark class)
 │
 ├── ui/                         # React components — ALL React imports live here
 │   ├── components/             # Reusable UI components
 │   │   ├── legend-panel.tsx    # Floating tag syntax cheatsheet (entity DSL reference)
-│   │   └── search-panel.tsx    # Search panel with text and entity filter modes
+│   │   ├── search-panel.tsx    # Search panel with text and entity filter modes
+│   │   └── session-timeline.tsx # Right slide-out panel: session visits, export, end session
 │   ├── graph/                  # React Flow canvas and custom nodes/edges
 │   │   ├── graph-canvas.tsx    # ReactFlow wrapper, interaction handlers, context menus
-│   │   ├── story-node.tsx      # Memoized custom node with SVG glass shapes + long press + entity highlight dim/glow
+│   │   ├── story-node.tsx      # Memoized custom node with SVG glass shapes + long press + entity highlight + diff overlay ring/dot
 │   │   ├── story-edge.tsx      # Custom edge with glass label pill
 │   │   ├── node-shapes.ts      # SVG path data for 5 shapes (circle, square, triangle, diamond, hexagon)
 │   │   ├── use-flow-nodes.ts   # Domain → React Flow node/edge conversion
-│   │   ├── context-menu.tsx    # Right-click node: change type, duplicate, delete
+│   │   ├── context-menu.tsx    # Right-click node: change type, duplicate, delete, playthrough status
+│   │   ├── playthrough-notes-input.tsx # Inline notes input for "modified" playthrough status
 │   │   └── canvas-context-menu.tsx  # Right-click canvas: new node with type picker
 │   │
 │   ├── overlays/               # Three-tier interaction overlays
@@ -63,7 +68,7 @@ src/
 │   ├── hooks/                  # Shared React hooks
 │   │   ├── use-long-press.ts   # 500ms hold detection, cancels on 5px drag
 │   │   ├── use-escape-key.ts   # Global Escape keydown listener
-│   │   └── use-keyboard-shortcuts.ts  # Global shortcuts (Ctrl+/ legend, Ctrl+F search, Ctrl+E entities)
+│   │   └── use-keyboard-shortcuts.ts  # Global shortcuts (Ctrl+/ legend, Ctrl+F search, Ctrl+E entities, Ctrl+T timeline, Ctrl+D diff)
 │   │
 │   ├── entities/               # Entity registry UI
 │   │   ├── entity-sidebar.tsx  # Slide-in entity registry sidebar panel
@@ -80,9 +85,10 @@ src/
 │   │
 │   └── layout/                 # App shell and chrome
 │       ├── app-shell.tsx       # Main layout: Toolbar / Canvas+Overlays / StatusBar + panels + shortcuts
-│       ├── toolbar.tsx         # New Node, Save, Load, scroll direction, theme + Search, Entities, Legend
+│       ├── toolbar.tsx         # New Node, Save, Load, scroll direction, theme + Search, Entities, Legend, Session, Diff
+│       ├── session-selector.tsx # Session lifecycle dropdown: start/end session, session list, delete
 │       ├── scene-type-picker.tsx # Dropdown for selecting scene type on new node
-│       ├── status-bar.tsx      # Campaign name, node count, edge count, entity count
+│       ├── status-bar.tsx      # Campaign name, node count, edge count, entity count, active session
 │       └── theme-initializer.tsx # Reads stored theme preference on mount
 │
 ├── App.tsx                     # Root component — renders AppShell + ThemeInitializer
@@ -130,7 +136,7 @@ Tier 3: Double-click → full cockpit overlay with responsive grid of all 11 fie
 ```
 User clicks Save → ui/layout/toolbar.tsx
   → calls campaign-actions.saveCampaignAction()
-  → assembleCampaign() reads all stores (graph, campaign, entity), builds Campaign object
+  → assembleCampaign() reads all stores (graph, campaign, entity, session), builds Campaign object
   → infrastructure/serialization.serializeCampaign(campaign) → JSON string
   → infrastructure/file-io.saveToFile(json, filename) → File System Access API or download
 ```
@@ -142,7 +148,7 @@ User clicks Load → ui/layout/toolbar.tsx
   → calls campaign-actions.loadCampaignAction()
   → infrastructure/file-io.loadFromFile() → JSON string (or null)
   → infrastructure/serialization.deserializeCampaign(json) → Campaign (validates schema + entityRegistry)
-  → campaign-actions.hydrateCampaign(campaign) → writes all stores (graph, campaign, entity)
+  → campaign-actions.hydrateCampaign(campaign) → writes all stores (graph, campaign, entity, session)
   → React Flow re-renders with loaded data
 ```
 
@@ -166,6 +172,40 @@ User opens search panel (Ctrl+F) → ui/components/search-panel.tsx
   → results listed with node label + field + match text
   → clicking result navigates to node
   → entity highlight filter (uiStore.entityHighlightFilter) dims/glows nodes in graph canvas
+```
+
+### Playthrough Status Marking (Phase 3)
+
+```
+User right-clicks node → ui/graph/context-menu.tsx → "Playthrough" section
+  → selects status (played_as_planned, modified, skipped)
+  → "Modified" triggers PlaythroughNotesInput for notes entry
+  → dual write:
+    1. graphStore.setPlaythroughStatus(nodeId, status, notes) → persists on node
+    2. sessionStore.recordNodeVisit(nodeId, status, notes) → logs in active session
+  → story-node.tsx renders status dot (7px circle, status color)
+```
+
+### Diff Overlay (Phase 3)
+
+```
+User toggles diff overlay (toolbar Eye icon or Ctrl+D)
+  → sessionStore.diffOverlayActive = true
+  → story-node.tsx reads active/selected session
+  → buildDiffMap(session) computes nodeId→status lookup on-the-fly
+  → nodes with status: colored stroke ring (3.5px) + glow filter
+  → unvisited nodes: dimmed (opacity 0.3)
+```
+
+### Session Timeline (Phase 3)
+
+```
+User opens timeline (Ctrl+T or toolbar button)
+  → sessionStore.sessionTimelineOpen = true
+  → ui/components/session-timeline.tsx slides in from right (w-80, z-30)
+  → shows chronological node visits with status dots, notes, click-to-select
+  → "Export MD" button: domain/playthrough-operations.exportSessionAsMarkdown()
+    → infrastructure/markdown-export.ts.downloadMarkdown() → Blob download
 ```
 
 ## Cross-Cutting Concerns

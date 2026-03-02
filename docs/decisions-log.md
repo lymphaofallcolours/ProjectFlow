@@ -68,6 +68,22 @@
 **Alternatives rejected:** Greedy match (captures too much), word boundary lookahead (too brittle), trie-based indexing (premature optimization).
 **Consequences:** Entity names with multi-word components must start each word with uppercase. Lowercase-only names are supported as single words. Performance is O(nodes × fields) per search — acceptable for campaign-scale data.
 
+## 2026-03-02 — Dedicated useSessionStore for playthrough tracking
+
+**Status:** Accepted
+**Context:** Phase 3 playthrough tracking requires managing session lifecycle, node visit logs, diff overlay state, and timeline sidebar state. Could extend existing stores (graph or UI) or create a new dedicated store.
+**Decision:** New `useSessionStore` Zustand store. Separate concern from graph data (node positions/edges) and UI state (overlay tier, theme). Session lifecycle (start, end, record visit) is distinct from graph mutations.
+**Alternatives rejected:** Extending useGraphStore (conflates graph structure with session state), extending useUIStore (session log is not ephemeral UI state), single monolith store (violates separation of concerns).
+**Consequences:** Dual-write on status mark: context menu writes to both graphStore (persistent node status) and sessionStore (session-level visit log). Campaign save/load must include session store data. assembleCampaign/hydrateCampaign/newCampaignAction all wired to session store.
+
+## 2026-03-02 — Computed diff overlay instead of stored diff state
+
+**Status:** Accepted
+**Context:** Diff overlay needs a nodeId→status map for coloring nodes. Could pre-compute and store this map whenever visits change, or compute on-the-fly in the render.
+**Decision:** Compute diff map on-the-fly via `buildDiffMap(session)` in story-node render. No stored diff state.
+**Alternatives rejected:** Stored derived state (extra store updates, sync bugs), memoized selector (adds complexity for small data sets).
+**Consequences:** Recomputation on every render — acceptable for <200 nodes per campaign. If performance becomes an issue, can add useMemo at component level. Keeps session store minimal.
+
 ---
 
 <!-- Entries above — newest first -->

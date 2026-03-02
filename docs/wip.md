@@ -5,32 +5,31 @@
 ## Current Session
 
 **Date:** 2026-03-02
-**Goal:** Phase 2 — Entity System (complete)
+**Goal:** Phase 3 — Playthrough Tracking & Diff (complete)
 
 ### Completed This Session
 
-- **Commit 1:** Entity tag parser, entity operations, and search — regex-based parser for 6 types × 2 modes, CRUD operations, full-text and entity-aware search. 108 new tests.
-- **Commit 2:** Entity store & campaign integration — useEntityStore Zustand store, campaign assemble/hydrate/reset include entities, serialization validates entityRegistry. 25 new tests.
-- **Commit 3:** TipTap editor foundation — replaced plain textareas with TipTap v3.20.0 (StarterKit + Placeholder), ProseMirror glass styles.
-- **Commit 4:** Entity mention extension & chip rendering — two Mention extension instances (@ present, # mentioned), inline EntityChip with type-colored pills, autocomplete dropdown. 12 new tests.
-- **Commit 5:** Entity registry UI — sidebar with search/filter/list/profile/create, legend panel, toolbar integration, status bar entity count. 8 new UI store tests.
-- **Commit 6:** Search panel & entity graph highlighting — text and entity search modes, debounced input, entity highlight dims non-matching nodes, keyboard shortcuts (Ctrl+/, Ctrl+F, Ctrl+E). 3 new tests.
-- **Commit 7:** Integration tests, docs, polish — entity roundtrip and search integration tests, all docs updated. 9 new integration tests.
+- **Commit 1:** Playthrough domain operations — pure functions for session CRUD, node visit tracking, diff map computation, markdown export. 33 new tests.
+- **Commit 2:** Session store & campaign integration — useSessionStore Zustand store, graph store playthrough mutations, campaign assemble/hydrate/reset wired, serialization validates playthroughLog. 29 new tests.
+- **Commit 3:** Context menu playthrough status — "Playthrough" section with status icons, inline notes input for "modified", dual write to graph store + session store.
+- **Commit 4:** Diff overlay + session selector — toolbar session dropdown, diff toggle, story node colored ring/glow + status dot, status bar session info.
+- **Commit 5:** Session timeline sidebar + markdown export — right slide-out panel with chronological visits, editable label, export button, Ctrl+T/Ctrl+D shortcuts. 2 new tests.
+- **Commit 6:** Integration tests, docs, polish — 12 integration tests (playthrough roundtrip + session timeline), all docs updated, plan archived.
 
 ### Test Coverage
 
-- 248 tests total: 108 domain (65 parser + 22 entity ops + 21 search), 60 application (23 entity store + 19 graph store + 18 UI store), 10 serialization, 12 entity chip, 3 keyboard shortcuts, 12 integration (7 campaign roundtrip + 3 entity roundtrip + 6 entity search + 8 overlay state), 1 app smoke test
+- 324 tests total: 141 domain (65 parser + 22 entity ops + 21 search + 33 playthrough ops), 87 application (23 graph store + 23 entity store + 22 session store + 18 UI store + 1 app), 13 serialization, 12 entity chip, 5 keyboard shortcuts, 36 integration (7 campaign roundtrip + 3 entity roundtrip + 6 entity search + 8 overlay state + 8 playthrough roundtrip + 4 session timeline)
 
 ### Blocked / Needs Attention
 
 - (none)
 
-### Next Steps (Phase 3)
+### Next Steps (Phase 4)
 
-1. **Playthrough tracking** — right-click context menu for node status, session log, diff overlay
-2. **Status change markers** — entity status tracking from tags (+wounded, +dead), status history timeline
-3. **Session timeline sidebar** — chronological list of visited nodes with status and notes
-4. **Export session log** — markdown export for campaign journaling
+1. **Conditions & branching** — conditional edges, rollable decision points, branch visualization
+2. **Session runner mode** — step-through play mode with automatic timeline recording
+3. **Campaign overview dashboard** — statistics, entity relationship graph, session history
+4. **Import/export** — additional formats (PDF export, Foundry VTT integration)
 
 ### TODOs in Code
 
@@ -39,6 +38,10 @@
 ---
 
 ## Previous Sessions
+
+### Phase 2 — Entity System (2026-03-02)
+- 7 commits, 248 tests
+- Entity tagging DSL, TipTap autocomplete, entity registry UI, search, graph highlighting
 
 ### Phase 1 — Foundation MVP (2026-03-02)
 - 10 commits, 83 tests

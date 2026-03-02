@@ -2,6 +2,43 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## Phase 3 — Playthrough Tracking & Diff (2026-03-02)
+
+### docs: add integration tests, update all docs, polish for Phase 3 completion
+- 12 integration tests: playthrough roundtrip (8) + session timeline (4)
+- Tests cover session CRUD, save/load persistence, diff maps, markdown export, backward compatibility
+- All docs updated, plan archived to completed/
+
+### feat: add session timeline sidebar, markdown export, and keyboard shortcuts
+- Session timeline: right slide-out panel with chronological node visits, editable label, export
+- Markdown export: session journal with header, visit list, status notes, statistics
+- Keyboard shortcuts: Ctrl+T (timeline), Ctrl+D (diff overlay)
+
+### feat: implement diff overlay on graph nodes and session selector toolbar
+- Session selector dropdown: start/end session, session list, delete sessions
+- Diff overlay: colored stroke ring (3.5px) + glow on visited nodes, dims unvisited
+- Status dot: 7px circle on bottom-right of nodes with playthrough status
+- Toolbar diff toggle button (Eye icon), status bar session info
+
+### feat: add playthrough status context menu with notes input
+- Context menu "Playthrough" section: played as planned, modified, skipped
+- "Modified" triggers inline notes input (auto-focus, Enter/Escape)
+- Dual write to graph store (persistent status) and session store (session visit log)
+
+### feat: add session store and campaign integration for playthrough
+- useSessionStore: session lifecycle, node visits, diff overlay, timeline toggle
+- Graph store gains setPlaythroughStatus/clearPlaythroughStatus
+- Campaign assemble/hydrate/reset wired to session store
+- Serialization validates playthroughLog (backward-compatible: missing = empty array)
+
+### feat: add playthrough domain operations and status config
+- Pure functions: session CRUD, node visit tracking, diff map computation
+- exportSessionAsMarkdown with formatted header, timeline, and statistics
+- PLAYTHROUGH_STATUS_CONFIG with labels, colors, icons for 4 statuses
+- Test factories for PlaythroughEntry and NodeVisit
+
+---
+
 ## Phase 2 — Entity System (2026-03-02)
 
 ### feat: add search panel, keyboard shortcuts, and entity graph highlighting
