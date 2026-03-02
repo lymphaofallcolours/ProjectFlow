@@ -84,6 +84,38 @@
 **Alternatives rejected:** Stored derived state (extra store updates, sync bugs), memoized selector (adds complexity for small data sets).
 **Consequences:** Recomputation on every render — acceptable for <200 nodes per campaign. If performance becomes an issue, can add useMemo at component level. Keeps session store minimal.
 
+## 2026-03-02 — React Flow native selection over custom lasso
+
+**Status:** Accepted
+**Context:** Phase 4 multi-select requires Shift+click additive selection and lasso drag for area selection. Could build custom selection logic or leverage React Flow v12's built-in selection features.
+**Decision:** Use React Flow's `selectionOnDrag`, `selectionKeyCode="Shift"`, `multiSelectionKeyCode="Shift"`, `selectionMode={SelectionMode.Partial}`, and `onSelectionChange` callback. Mirror selected IDs to Zustand `Set<string>` for business logic.
+**Alternatives rejected:** Custom lasso implementation (duplicates React Flow functionality, harder to maintain); framework-level selection only (can't use in business logic without mirroring).
+**Consequences:** Replaced `selectedNodeId: string | null` with `selectedNodeIds: Set<string>`. All consumer files migrated. React Flow handles visual selection; Zustand handles business logic (clipboard, delete, duplicate).
+
+## 2026-03-02 — Internal clipboard over browser Clipboard API
+
+**Status:** Accepted
+**Context:** Cut/copy/paste needs to serialize complex domain objects (nodes with 11 field types, interconnecting edges with remapped IDs).
+**Decision:** Internal clipboard stored as `{ nodes: StoryNode[]; edges: StoryEdge[] }` in graph-store state. Clipboard survives selection changes. Paste creates new IDs and remaps edge references.
+**Alternatives rejected:** Browser Clipboard API (inappropriate for complex domain objects, security restrictions), external file (over-engineered for single-session use).
+**Consequences:** Clipboard is lost on page refresh. Cross-tab paste not supported. Clipboard content is the raw subgraph — edges only include those between selected nodes.
+
+## 2026-03-02 — Custom history stack over zustand-temporal
+
+**Status:** Accepted
+**Context:** Undo/redo needs to snapshot graph state (nodes + edges) before each mutation. Could use zustand-temporal middleware or a custom stack.
+**Decision:** Dedicated `useHistoryStore` with `past: HistorySnapshot[]` and `future: HistorySnapshot[]`. Pure data store with no imports from graph-store. Graph-store imports history-store. `popUndo(current)` and `popRedo(current)` handle the stack coordination (push current to opposite stack, pop from own stack).
+**Alternatives rejected:** zustand-temporal (adds dependency, tracks all state including non-graphical fields), immutable-state snapshots via Immer patches (more complex, harder to reason about).
+**Consequences:** Only nodes and edges are tracked (not viewport, selection, clipboard). MAX_HISTORY_SIZE=50 caps memory. moveNode is excluded from auto-push — canvas triggers pushHistory() on drag start. Campaign load/reset clears history.
+
+## 2026-03-02 — Subgraph grouping deferred to Phase 5
+
+**Status:** Accepted
+**Context:** Phase 4 spec includes subgraph grouping (collapsible named groups). This requires new domain types (Group), parent-child graph relationships, special rendering (group bounding box, collapse/expand), and significant UI changes.
+**Decision:** Defer to Phase 5. Phase 4 exit criteria ("freely restructure the story graph with professional-grade editing tools") is met without grouping.
+**Alternatives rejected:** Implementing in Phase 4 (too large, would delay multi-select/clipboard/undo which are higher priority).
+**Consequences:** Phase 5 will need to add Group type to domain, group-aware rendering in story-node.tsx, group context menu items, and group-aware undo/redo.
+
 ---
 
 <!-- Entries above — newest first -->

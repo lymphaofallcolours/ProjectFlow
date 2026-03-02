@@ -2,6 +2,33 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## Phase 4 — Advanced Graph Operations (2026-03-02)
+
+### docs: add integration tests, update all docs, polish for Phase 4 completion
+- 11 integration tests: clipboard roundtrip, undo/redo, edge style/arc label persistence, history lifecycle
+- All docs updated (architecture, decisions-log, changelog, wip), plan archived to completed/
+
+### feat: implement undo/redo history with toolbar buttons and keyboard shortcuts
+- Custom history stack (useHistoryStore) with past/future snapshot arrays, MAX_HISTORY_SIZE=50
+- All mutating graph-store actions auto-push snapshots before mutation
+- moveNode excluded from auto-push — canvas pushes on drag start
+- Undo/Redo toolbar buttons (Undo2/Redo2 icons), disabled when unavailable
+- Ctrl+Z (undo), Ctrl+Shift+Z (redo) wired in keyboard shortcuts
+- Campaign load clears history, new campaign resets it
+
+### feat: add multi-select, clipboard, edge styling, arc labels, and node rewiring
+- Multi-select: Shift+click additive, lasso drag area select via React Flow native selection
+- Replaced `selectedNodeId` with `selectedNodeIds: Set<string>`, migrated 4 consumer files
+- Clipboard: Ctrl+C (copy), Ctrl+X (cut), Ctrl+V (paste), Delete/Backspace (delete selected)
+- Subgraph extraction preserves internal edges, paste creates new IDs with remapped references
+- Edge styling: default (solid), conditional (dashed amber), secret (dotted faded)
+- Arc label: context menu inline text input, renders above node shape
+- Node rewiring: `rewireEdge` domain function for changing edge source/target
+- Multi-select context menu variant: Copy, Cut, Duplicate N, Delete N
+- Status bar shows "N selected" when multi-selection active
+
+---
+
 ## Phase 3 — Playthrough Tracking & Diff (2026-03-02)
 
 ### docs: add integration tests, update all docs, polish for Phase 3 completion

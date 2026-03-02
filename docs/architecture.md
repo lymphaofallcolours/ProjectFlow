@@ -16,17 +16,19 @@ src/
 │   ├── entity-tag-parser.ts    # Regex parser for entity tagging DSL ([!%$~&]?[@#]Name(+status)?)
 │   ├── entity-operations.ts    # Pure CRUD for Entity and EntityRegistry (create, update, status)
 │   ├── search.ts               # Full-text and entity-aware node search across all fields
-│   ├── graph-operations.ts     # Pure functions: createNode, removeNode, updateField, etc.
+│   ├── graph-operations.ts     # Pure functions: createNode, removeNode, updateField, duplicate, clipboard, rewire, etc.
+│   ├── history-operations.ts   # HistorySnapshot type, createSnapshot, MAX_HISTORY_SIZE
 │   ├── campaign-operations.ts  # createCampaign, createDefaultSettings, schema version
 │   └── playthrough-operations.ts # Session CRUD, node visit tracking, diff maps, markdown export
 │
 ├── application/                # State management, orchestration
-│   ├── graph-store.ts          # useGraphStore — nodes, edges, viewport, scroll direction
+│   ├── graph-store.ts          # useGraphStore — nodes, edges, viewport, selection, clipboard, undo/redo
+│   ├── history-store.ts        # useHistoryStore — past/future snapshot stacks for undo/redo
 │   ├── campaign-store.ts       # useCampaignStore — campaign metadata
 │   ├── entity-store.ts         # useEntityStore — entity CRUD, registry, status tracking
 │   ├── session-store.ts        # useSessionStore — playthrough sessions, diff overlay, timeline toggle
 │   ├── ui-store.ts             # useUIStore — theme, overlay state, radial node, sidebar/panel toggles
-│   └── campaign-actions.ts     # assemble/hydrate/save/load campaign orchestration (incl. entity + session)
+│   └── campaign-actions.ts     # assemble/hydrate/save/load campaign orchestration (incl. entity + session + history)
 │
 ├── infrastructure/             # Browser APIs, serialization, file I/O
 │   ├── file-io.ts              # Save/load JSON via File System Access API + fallback
@@ -42,10 +44,10 @@ src/
 │   ├── graph/                  # React Flow canvas and custom nodes/edges
 │   │   ├── graph-canvas.tsx    # ReactFlow wrapper, interaction handlers, context menus
 │   │   ├── story-node.tsx      # Memoized custom node with SVG glass shapes + long press + entity highlight + diff overlay ring/dot
-│   │   ├── story-edge.tsx      # Custom edge with glass label pill
+│   │   ├── story-edge.tsx      # Custom edge with glass label pill + style-based rendering (default/conditional/secret)
 │   │   ├── node-shapes.ts      # SVG path data for 5 shapes (circle, square, triangle, diamond, hexagon)
 │   │   ├── use-flow-nodes.ts   # Domain → React Flow node/edge conversion
-│   │   ├── context-menu.tsx    # Right-click node: change type, duplicate, delete, playthrough status
+│   │   ├── context-menu.tsx    # Right-click node: change type, duplicate, delete, playthrough, clipboard (multi-select variant)
 │   │   ├── playthrough-notes-input.tsx # Inline notes input for "modified" playthrough status
 │   │   └── canvas-context-menu.tsx  # Right-click canvas: new node with type picker
 │   │
@@ -68,7 +70,7 @@ src/
 │   ├── hooks/                  # Shared React hooks
 │   │   ├── use-long-press.ts   # 500ms hold detection, cancels on 5px drag
 │   │   ├── use-escape-key.ts   # Global Escape keydown listener
-│   │   └── use-keyboard-shortcuts.ts  # Global shortcuts (Ctrl+/ legend, Ctrl+F search, Ctrl+E entities, Ctrl+T timeline, Ctrl+D diff)
+│   │   └── use-keyboard-shortcuts.ts  # Global shortcuts (Ctrl+/ legend, Ctrl+F search, Ctrl+E entities, Ctrl+T timeline, Ctrl+D diff, Ctrl+Z undo, Ctrl+Shift+Z redo, Ctrl+C/X/V clipboard, Delete)
 │   │
 │   ├── entities/               # Entity registry UI
 │   │   ├── entity-sidebar.tsx  # Slide-in entity registry sidebar panel
@@ -85,7 +87,7 @@ src/
 │   │
 │   └── layout/                 # App shell and chrome
 │       ├── app-shell.tsx       # Main layout: Toolbar / Canvas+Overlays / StatusBar + panels + shortcuts
-│       ├── toolbar.tsx         # New Node, Save, Load, scroll direction, theme + Search, Entities, Legend, Session, Diff
+│       ├── toolbar.tsx         # New Node, Save, Load, Undo/Redo, scroll direction, theme + Search, Entities, Legend, Session, Diff
 │       ├── session-selector.tsx # Session lifecycle dropdown: start/end session, session list, delete
 │       ├── scene-type-picker.tsx # Dropdown for selecting scene type on new node
 │       ├── status-bar.tsx      # Campaign name, node count, edge count, entity count, active session
@@ -206,6 +208,40 @@ User opens timeline (Ctrl+T or toolbar button)
   → shows chronological node visits with status dots, notes, click-to-select
   → "Export MD" button: domain/playthrough-operations.exportSessionAsMarkdown()
     → infrastructure/markdown-export.ts.downloadMarkdown() → Blob download
+```
+
+### Multi-Select and Clipboard (Phase 4)
+
+```
+Shift+click / lasso drag → React Flow onSelectionChange → graphStore.selectNodes(ids[])
+  → selectedNodeIds: Set<string> stored in Zustand
+  → use-flow-nodes.ts sets selected: true on matching flow nodes
+
+Ctrl+C → graphStore.copySelectedNodes()
+  → extractSubgraph(nodes, edges, selectedIds) → clipboard = { nodes[], edges[] }
+Ctrl+V → graphStore.pasteClipboard()
+  → pasteSubgraph(clipboard, offset) → new IDs, remapped edges → merge into graph
+Ctrl+X → copySelectedNodes() then deleteSelectedNodes()
+Delete → graphStore.deleteSelectedNodes() → removeNodes for all selected
+```
+
+### Undo/Redo (Phase 4)
+
+```
+Any mutating action (addNode, deleteNode, etc.)
+  → saveHistory() captures { nodes, edges } as HistorySnapshot
+  → pushes to useHistoryStore.past[], clears future[]
+  → MAX_HISTORY_SIZE = 50 entries
+
+Ctrl+Z → graphStore.undo()
+  → popUndo(current) → pops past[], pushes current to future[]
+  → restores snapshot into graph state
+Ctrl+Shift+Z → graphStore.redo()
+  → popRedo(current) → pops future[], pushes current to past[]
+  → restores snapshot into graph state
+
+moveNode: NO auto-push — canvas calls pushHistory() on drag start
+Campaign load/reset: clears history stacks
 ```
 
 ## Cross-Cutting Concerns
