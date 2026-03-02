@@ -6,6 +6,8 @@ import type {
   RichContent,
   Position2D,
   SceneType,
+  PlaythroughEntry,
+  PlaythroughStatus,
 } from '@/domain/types'
 import type { Entity, EntityType, EntityRegistry } from '@/domain/entity-types'
 import { createEmptyNodeFields, createEmptyRichContent } from '@/domain/graph-operations'
@@ -76,5 +78,27 @@ export function createTestEntity(overrides?: Partial<Entity>): Entity {
 export function createTestEntityRegistry(entities: Entity[] = []): EntityRegistry {
   return {
     entities: Object.fromEntries(entities.map((e) => [e.id, e])),
+  }
+}
+
+export function createTestPlaythroughEntry(
+  overrides?: Partial<PlaythroughEntry>,
+): PlaythroughEntry {
+  return {
+    id: crypto.randomUUID(),
+    sessionDate: '2026-03-02',
+    nodesVisited: [],
+    ...overrides,
+  }
+}
+
+export function createTestNodeVisit(
+  overrides?: Partial<PlaythroughEntry['nodesVisited'][0]>,
+): PlaythroughEntry['nodesVisited'][0] {
+  return {
+    nodeId: crypto.randomUUID(),
+    status: 'played_as_planned' as PlaythroughStatus,
+    timestamp: new Date().toISOString(),
+    ...overrides,
   }
 }
