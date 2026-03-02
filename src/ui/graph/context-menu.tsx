@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useRef } from 'react'
-import { Trash2, Copy } from 'lucide-react'
-import type { SceneType } from '@/domain/types'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Trash2, Copy, CheckCircle, Edit3, XCircle, Circle } from 'lucide-react'
+import type { SceneType, PlaythroughStatus } from '@/domain/types'
 import { SCENE_TYPES, SCENE_TYPE_CONFIG } from '@/domain/types'
+import { PLAYTHROUGH_STATUSES, PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
 import { useGraphStore } from '@/application/graph-store'
+import { useSessionStore } from '@/application/session-store'
+import { PlaythroughNotesInput } from './playthrough-notes-input'
 
 type ContextMenuProps = {
   nodeId: string
@@ -18,12 +21,25 @@ const SHAPE_ICONS: Record<SceneType, string> = {
   investigation: '⬡',
 }
 
+const STATUS_ICONS: Record<string, React.ReactNode> = {
+  played_as_planned: <CheckCircle size={13} />,
+  modified: <Edit3 size={13} />,
+  skipped: <XCircle size={13} />,
+  unvisited: <Circle size={13} />,
+}
+
 export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps) {
   const deleteNode = useGraphStore((s) => s.deleteNode)
   const duplicateNode = useGraphStore((s) => s.duplicateNode)
   const changeSceneType = useGraphStore((s) => s.changeSceneType)
+  const setPlaythroughStatus = useGraphStore((s) => s.setPlaythroughStatus)
   const currentType = useGraphStore((s) => s.nodes[nodeId]?.sceneType)
+  const currentPlaythroughStatus = useGraphStore((s) => s.nodes[nodeId]?.playthroughStatus)
+  const recordNodeVisit = useSessionStore((s) => s.recordNodeVisit)
+  const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const ref = useRef<HTMLDivElement>(null)
+
+  const [awaitingNotes, setAwaitingNotes] = useState(false)
 
   const handleDelete = useCallback(() => {
     deleteNode(nodeId)
@@ -43,20 +59,37 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
     [changeSceneType, nodeId, onClose],
   )
 
+  const handleSetStatus = useCallback(
+    (status: PlaythroughStatus, notes?: string) => {
+      setPlaythroughStatus(nodeId, status, notes)
+      if (activeSessionId) {
+        recordNodeVisit(nodeId, status, notes)
+      }
+      onClose()
+    },
+    [setPlaythroughStatus, recordNodeVisit, nodeId, activeSessionId, onClose],
+  )
+
+  const handleStatusClick = useCallback(
+    (status: PlaythroughStatus) => {
+      if (status === 'modified') {
+        setAwaitingNotes(true)
+      } else {
+        handleSetStatus(status)
+      }
+    },
+    [handleSetStatus],
+  )
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         onClose()
       }
     }
-    function handleEscape(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
     document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('keydown', handleEscape)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('keydown', handleEscape)
     }
   }, [onClose])
 
@@ -90,6 +123,37 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
           />
         )
       })}
+
+      <div className="h-px bg-border my-1 mx-2" />
+
+      {/* Playthrough status submenu */}
+      <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-text-muted font-medium">
+        Playthrough
+      </div>
+      {PLAYTHROUGH_STATUSES.map((status) => {
+        const config = PLAYTHROUGH_STATUS_CONFIG[status]
+        const isActive = status === currentPlaythroughStatus
+        return (
+          <MenuItem
+            key={status}
+            icon={
+              <span style={{ color: `var(--color-${config.color})` }}>
+                {STATUS_ICONS[status]}
+              </span>
+            }
+            label={config.label}
+            active={isActive}
+            onClick={() => handleStatusClick(status)}
+          />
+        )
+      })}
+
+      {awaitingNotes && (
+        <PlaythroughNotesInput
+          onConfirm={(notes) => handleSetStatus('modified', notes)}
+          onCancel={onClose}
+        />
+      )}
 
       <div className="h-px bg-border my-1 mx-2" />
 
