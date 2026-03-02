@@ -1,10 +1,12 @@
-import { memo } from 'react'
+import { memo, useCallback } from 'react'
 import { Handle, Position } from '@xyflow/react'
 import type { NodeProps, Node } from '@xyflow/react'
 import type { StoryNode } from '@/domain/types'
 import { SCENE_TYPE_CONFIG } from '@/domain/types'
 import { getShapePath, NODE_DIMENSIONS } from './node-shapes'
 import { useGraphStore } from '@/application/graph-store'
+import { useUIStore } from '@/application/ui-store'
+import { useLongPress } from '@/ui/hooks/use-long-press'
 
 export type StoryNodeData = {
   storyNode: StoryNode
@@ -17,7 +19,15 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
   selected,
 }: NodeProps<StoryFlowNode>) {
   const scrollDirection = useGraphStore((s) => s.scrollDirection)
+  const showRadialSubnodes = useUIStore((s) => s.showRadialSubnodes)
   const { storyNode } = data
+
+  const handleLongPress = useCallback(() => {
+    showRadialSubnodes(storyNode.id)
+  }, [showRadialSubnodes, storyNode.id])
+
+  const longPressHandlers = useLongPress(handleLongPress)
+
   const config = SCENE_TYPE_CONFIG[storyNode.sceneType]
   const dim = NODE_DIMENSIONS[config.shape]
   const shapePath = getShapePath(config.shape)
@@ -30,6 +40,7 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
     <div
       className="relative group"
       style={{ width: dim.width, height: dim.height }}
+      {...longPressHandlers}
     >
       {/* SVG shape with glass effect */}
       <svg

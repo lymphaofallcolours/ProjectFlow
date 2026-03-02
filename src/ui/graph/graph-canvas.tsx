@@ -24,6 +24,7 @@ import { StoryEdgeComponent } from './story-edge'
 import { useFlowNodes } from './use-flow-nodes'
 import { NodeContextMenu } from './context-menu'
 import { CanvasContextMenu } from './canvas-context-menu'
+import { RadialSubnodes } from '@/ui/overlays/radial-subnodes'
 
 // MUST be defined at module level — prevents re-registration on re-render
 const nodeTypes = { story: StoryNodeComponent }
@@ -54,6 +55,8 @@ function GraphCanvasInner() {
   const connectNodes = useGraphStore((s) => s.connectNodes)
   const setViewport = useGraphStore((s) => s.setViewport)
   const hideRadialSubnodes = useUIStore((s) => s.hideRadialSubnodes)
+  const showRadialSubnodes = useUIStore((s) => s.showRadialSubnodes)
+  const radialNodeId = useUIStore((s) => s.radialNodeId)
   const openCockpit = useUIStore((s) => s.openCockpit)
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null)
@@ -117,6 +120,15 @@ function GraphCanvasInner() {
     [screenToFlowPosition],
   )
 
+  const onNodeClick: NodeMouseHandler = useCallback(
+    (event, node) => {
+      if (event.altKey) {
+        showRadialSubnodes(node.id)
+      }
+    },
+    [showRadialSubnodes],
+  )
+
   const onNodeDoubleClick: NodeMouseHandler = useCallback(
     (_event, node) => {
       hideRadialSubnodes()
@@ -136,6 +148,7 @@ function GraphCanvasInner() {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onPaneClick={onPaneClick}
+        onNodeClick={onNodeClick}
         onNodeContextMenu={onNodeContextMenu}
         onPaneContextMenu={onPaneContextMenu}
         onNodeDoubleClick={onNodeDoubleClick}
@@ -188,6 +201,9 @@ function GraphCanvasInner() {
           onClose={() => setContextMenu(null)}
         />
       )}
+
+      {/* Radial subnodes — rendered here for React Flow context access */}
+      {radialNodeId && <RadialSubnodes nodeId={radialNodeId} />}
     </>
   )
 }
