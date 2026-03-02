@@ -68,7 +68,9 @@ export function removeNode(
   edges: Record<string, StoryEdge>,
   nodeId: string,
 ): { nodes: Record<string, StoryNode>; edges: Record<string, StoryEdge> } {
-  const { [nodeId]: _, ...remainingNodes } = nodes
+  const remainingNodes = Object.fromEntries(
+    Object.entries(nodes).filter(([id]) => id !== nodeId),
+  )
 
   const remainingEdges: Record<string, StoryEdge> = {}
   for (const [id, edge] of Object.entries(edges)) {
@@ -84,8 +86,9 @@ export function removeEdge(
   edges: Record<string, StoryEdge>,
   edgeId: string,
 ): Record<string, StoryEdge> {
-  const { [edgeId]: _, ...remaining } = edges
-  return remaining
+  return Object.fromEntries(
+    Object.entries(edges).filter(([id]) => id !== edgeId),
+  )
 }
 
 export function updateNodeLabel(node: StoryNode, label: string): StoryNode {

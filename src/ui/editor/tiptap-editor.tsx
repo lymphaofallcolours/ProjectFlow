@@ -4,8 +4,9 @@ import Placeholder from '@tiptap/extension-placeholder'
 import type { AnyExtension } from '@tiptap/react'
 import { useEffect, useRef } from 'react'
 import { EntityPresentMention, EntityMentionedMention, detectPrefixType } from './entity-mention-extension'
-import { EntitySuggestionList, buildSuggestionItems } from './entity-suggestion'
+import { EntitySuggestionList } from './entity-suggestion'
 import type { EntitySuggestionListRef } from './entity-suggestion'
+import { buildSuggestionItems } from './suggestion-items'
 import { useEntityStore } from '@/application/entity-store'
 
 type TipTapEditorProps = {
@@ -129,7 +130,9 @@ export function TipTapEditor({
   enableEntityMentions = true,
 }: TipTapEditorProps) {
   const onUpdateRef = useRef(onUpdate)
-  onUpdateRef.current = onUpdate
+  useEffect(() => {
+    onUpdateRef.current = onUpdate
+  }, [onUpdate])
 
   const extensions: AnyExtension[] = [
     StarterKit,

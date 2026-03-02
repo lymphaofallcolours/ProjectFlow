@@ -2,6 +2,39 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## Phase 2 — Entity System (2026-03-02)
+
+### feat: add search panel, keyboard shortcuts, and entity graph highlighting
+- Search panel with text and entity search modes, debounced input, results grouped by node
+- Entity highlight filter dims non-matching nodes on graph canvas
+- Global keyboard shortcuts: Ctrl+/ (legend), Ctrl+F (search), Ctrl+E (entity sidebar)
+
+### feat: add entity registry UI, legend panel, and toolbar integration
+- Entity sidebar with search, type filter tabs, entity list, profile editing, create dialog
+- Legend panel showing tag syntax cheatsheet with all 6 entity types
+- Toolbar gains Search, Entities, and Legend buttons; status bar shows entity count
+
+### feat: add entity mention extension, chip rendering, and autocomplete
+- Two TipTap Mention extension instances (@ present, # mentioned) with prefix-based type detection
+- Inline EntityChip renders as colored pill with type icon, solid/dashed border, optional status badge
+- Autocomplete dropdown with keyboard navigation and "Create new" option
+
+### feat: replace textareas with TipTap rich text editor
+- TipTap v3.20.0 with StarterKit and Placeholder replaces all content textareas
+- ProseMirror styles for aeroglass aesthetic, content synced as plain text
+
+### feat: add entity store and campaign integration
+- Zustand useEntityStore with CRUD, type/name queries, load/reset
+- Campaign assemble/hydrate/reset now includes entity registry
+- Serialization validates entityRegistry in schema check
+
+### feat: add entity tag parser, entity operations, and search
+- Regex-based entity tag parser for 6 types × 2 modes with status markers
+- Pure entity CRUD operations: create, update, delete, add status
+- Full-text search and entity-aware search across all node fields
+
+---
+
 ## Phase 1 — Foundation MVP (2026-03-02)
 
 ### feat: implement Tier 3 — full cockpit overlay with responsive field grid

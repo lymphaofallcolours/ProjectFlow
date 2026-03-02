@@ -52,6 +52,22 @@
 **Alternatives rejected:** Adding subnodes as React Flow nodes (pollutes the graph model, creates selection/connection confusion), CSS-only positioning (can't account for zoom).
 **Consequences:** Must recalculate positions on viewport change. Positions scale with zoom via `getZoom()`. The component requires React Flow context, so it lives inside GraphCanvasInner.
 
+## 2026-03-02 — TipTap v3.20.0 with two named Mention extensions
+
+**Status:** Accepted
+**Context:** Entity tagging in text fields requires two trigger characters (`@` for present, `#` for mentioned), each detecting the type prefix from the preceding character (`!`, `%`, `$`, `~`, `&`). Needed to choose between a single custom ProseMirror plugin or multiple Mention extension instances.
+**Decision:** Two named Mention extensions (`entityPresent` with trigger `@`, `entityMentioned` with trigger `#`). Entity type detected from preceding character. Chips rendered via ReactNodeViewRenderer. Content stored as plain text via `renderText()` for backward compatibility.
+**Alternatives rejected:** Single custom ProseMirror plugin (more complex, harder to maintain), post-processing raw text (loses inline rendering), separate rich text format (breaks backward compat).
+**Consequences:** Each mention node stores `entityType`, `mode`, `prefix`, `status` as attributes. `renderText()` reconstructs exact raw tag text for storage. Two suggestion configs share the same autocomplete dropdown component.
+
+## 2026-03-02 — Entity search via linear scan with capitalize-aware name parsing
+
+**Status:** Accepted
+**Context:** Entity tag regex must handle multi-word names like "Hive Primus" while stopping at regular text like "leads the charge". A non-greedy regex with `\s` lookahead stops at the first space, breaking multi-word names.
+**Decision:** Capitalize-aware regex: first word accepts any case, continuation words require uppercase start after space/hyphen. Pattern: `[A-Za-z][a-zA-Z0-9']*(?:[ -][A-Z][a-zA-Z0-9']*)*`. Entity search uses linear scan over `Object.values(nodes)` which is fine for <100 entities.
+**Alternatives rejected:** Greedy match (captures too much), word boundary lookahead (too brittle), trie-based indexing (premature optimization).
+**Consequences:** Entity names with multi-word components must start each word with uppercase. Lowercase-only names are supported as single words. Performance is O(nodes × fields) per search — acceptable for campaign-scale data.
+
 ---
 
 <!-- Entries above — newest first -->

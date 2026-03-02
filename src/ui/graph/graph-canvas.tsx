@@ -13,7 +13,6 @@ import type {
   OnEdgesChange,
   OnConnect,
   NodeChange,
-  EdgeChange,
   Connection,
   NodeMouseHandler,
 } from '@xyflow/react'
@@ -76,7 +75,7 @@ function GraphCanvasInner() {
   )
 
   const onEdgesChange: OnEdgesChange = useCallback(
-    (_changes: EdgeChange[]) => {},
+    () => {},
     [],
   )
 

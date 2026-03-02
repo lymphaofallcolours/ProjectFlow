@@ -5,43 +5,41 @@
 ## Current Session
 
 **Date:** 2026-03-02
-**Goal:** Phase 1 — Foundation MVP (complete)
+**Goal:** Phase 2 — Entity System (complete)
 
 ### Completed This Session
 
-- **Commit 1:** Tooling & dependencies — installed all Phase 1 deps, configured path aliases, Tailwind v4, Vitest, directory skeleton
-- **Commit 2:** Domain types & graph operations — complete type system, 30 unit tests for pure functions
-- **Commit 3:** Zustand stores — useGraphStore, useCampaignStore, useUIStore with 29 store tests
-- **Commit 4:** Infrastructure — serialization (roundtrip + validation), file I/O (File System Access API + fallback), theme persistence
-- **Commit 5:** React Flow canvas — 5 custom glass-style node shapes (circle, square, triangle, diamond, hexagon), memoized, adaptive handles
-- **Commit 6:** App shell — toolbar (new node, save, load, scroll direction, theme toggle), status bar, campaign actions
-- **Commit 7:** Tier 1 interactions — single-click selection, node context menu (change type, duplicate, delete), canvas context menu (new node at position)
-- **Commit 8:** Tier 2 interactions — long press / Alt+click for radial subnodes, field panel with 5 editor types, overlay backdrop with blur
-- **Commit 9:** Tier 3 interactions — double-click cockpit overlay with responsive 3/2/1 grid of all 11 collapsible field panels, inline-editable node label
-- **Commit 10:** Integration tests (campaign roundtrip + overlay state machine), docs update, polish
+- **Commit 1:** Entity tag parser, entity operations, and search — regex-based parser for 6 types × 2 modes, CRUD operations, full-text and entity-aware search. 108 new tests.
+- **Commit 2:** Entity store & campaign integration — useEntityStore Zustand store, campaign assemble/hydrate/reset include entities, serialization validates entityRegistry. 25 new tests.
+- **Commit 3:** TipTap editor foundation — replaced plain textareas with TipTap v3.20.0 (StarterKit + Placeholder), ProseMirror glass styles.
+- **Commit 4:** Entity mention extension & chip rendering — two Mention extension instances (@ present, # mentioned), inline EntityChip with type-colored pills, autocomplete dropdown. 12 new tests.
+- **Commit 5:** Entity registry UI — sidebar with search/filter/list/profile/create, legend panel, toolbar integration, status bar entity count. 8 new UI store tests.
+- **Commit 6:** Search panel & entity graph highlighting — text and entity search modes, debounced input, entity highlight dims non-matching nodes, keyboard shortcuts (Ctrl+/, Ctrl+F, Ctrl+E). 3 new tests.
+- **Commit 7:** Integration tests, docs, polish — entity roundtrip and search integration tests, all docs updated. 9 new integration tests.
 
 ### Test Coverage
 
-- 83 tests total: 30 domain, 19 graph store, 10 UI store, 10 serialization, 5 campaign roundtrip integration, 8 overlay state integration, 1 app smoke test
+- 248 tests total: 108 domain (65 parser + 22 entity ops + 21 search), 60 application (23 entity store + 19 graph store + 18 UI store), 10 serialization, 12 entity chip, 3 keyboard shortcuts, 12 integration (7 campaign roundtrip + 3 entity roundtrip + 6 entity search + 8 overlay state), 1 app smoke test
 
 ### Blocked / Needs Attention
 
 - (none)
 
-### Next Steps (Phase 2)
+### Next Steps (Phase 3)
 
-1. **TipTap integration** — replace plain textarea in RichContentEditor with TipTap rich text editor
-2. **Entity tag system** — implement entity-tag-parser.ts, TipTap autocomplete extension, entity registry store
-3. **Entity registry page** — search, filter, entity profiles
-4. **Playthrough mode** — session tracking, node status markers (visited, active, skipped)
-5. **E2E tests** — Playwright tests for critical flows
+1. **Playthrough tracking** — right-click context menu for node status, session log, diff overlay
+2. **Status change markers** — entity status tracking from tags (+wounded, +dead), status history timeline
+3. **Session timeline sidebar** — chronological list of visited nodes with status and notes
+4. **Export session log** — markdown export for campaign journaling
 
 ### TODOs in Code
 
-- (none — no TODOs or FIXMEs left in codebase)
+- (none — no TODOs or FIXMEs in codebase)
 
 ---
 
 ## Previous Sessions
 
-(Phase 1 was completed in a single session)
+### Phase 1 — Foundation MVP (2026-03-02)
+- 10 commits, 83 tests
+- Graph editor with custom node shapes, three-tier drill-down, save/load, theming

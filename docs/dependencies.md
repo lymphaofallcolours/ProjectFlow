@@ -28,11 +28,11 @@
 **Removal risk:** Low — purely visual, replaceable by any icon set.
 **Added:** Phase 1, Commit 1.
 
-### @tiptap/react + @tiptap/starter-kit + @tiptap/extension-* (not yet installed)
-**Purpose:** Rich text editor for node content fields. Extensible for entity tag autocomplete and chip rendering.
+### @tiptap/react (3.20.0) + @tiptap/pm + @tiptap/starter-kit + @tiptap/extension-placeholder + @tiptap/extension-mention
+**Purpose:** Rich text editor for all node content fields. StarterKit provides base editing; Mention extension drives entity tag autocomplete (two instances: @ for present, # for mentioned); Placeholder provides empty-state hints.
 **Chosen over:** Slate.js (steeper learning curve), Draft.js (deprecated), CodeMirror (code-focused, not prose).
-**Removal risk:** High — all content editing will use TipTap. Custom extensions for entity system.
-**Added:** Phase 2.
+**Removal risk:** High — all content editing uses TipTap. Custom EntityChip NodeView renders inline entity chips.
+**Added:** Phase 2, Commit 3.
 
 ### tailwindcss (^4.2.1)
 **Purpose:** Utility-first CSS — fast styling, custom theme via `@theme` blocks and CSS custom properties. Aeroglass theme with frosted translucent surfaces.
