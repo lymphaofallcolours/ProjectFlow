@@ -1,5 +1,6 @@
 import { useUIStore } from '@/application/ui-store'
 import { FieldPanel } from './field-panel'
+import { CockpitOverlay } from './cockpit-overlay'
 
 /**
  * Top-level overlay renderer. Reads the activeOverlay state from useUIStore
@@ -23,7 +24,6 @@ export function OverlayRoot() {
         />
       )
     case 'cockpit':
-      // Cockpit overlay — implemented in Commit 9
-      return null
+      return <CockpitOverlay nodeId={activeOverlay.nodeId} />
   }
 }
