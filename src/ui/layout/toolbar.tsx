@@ -7,6 +7,9 @@ import {
   Moon,
   ArrowRightLeft,
   ArrowUpDown,
+  Users,
+  HelpCircle,
+  Search,
 } from 'lucide-react'
 import { useUIStore } from '@/application/ui-store'
 import { useGraphStore } from '@/application/graph-store'
@@ -20,6 +23,9 @@ export function Toolbar() {
   const toggleTheme = useUIStore((s) => s.toggleTheme)
   const scrollDirection = useGraphStore((s) => s.scrollDirection)
   const setScrollDirection = useGraphStore((s) => s.setScrollDirection)
+  const toggleEntitySidebar = useUIStore((s) => s.toggleEntitySidebar)
+  const toggleLegendPanel = useUIStore((s) => s.toggleLegendPanel)
+  const toggleSearchPanel = useUIStore((s) => s.toggleSearchPanel)
 
   const handleThemeToggle = useCallback(() => {
     const next = theme === 'dark' ? 'light' : 'dark'
@@ -58,8 +64,14 @@ export function Toolbar() {
       {/* Center spacer */}
       <div className="flex-1" />
 
-      {/* Right group: file ops + settings */}
+      {/* Right group: panels + file ops + settings */}
       <div className="flex items-center gap-1">
+        <ToolbarButton icon={<Search size={16} />} label="Search" onClick={toggleSearchPanel} />
+        <ToolbarButton icon={<Users size={16} />} label="Entities" onClick={toggleEntitySidebar} />
+        <ToolbarButton icon={<HelpCircle size={16} />} label="Legend" onClick={toggleLegendPanel} />
+
+        <div className="w-px h-5 bg-border mx-1" />
+
         <ToolbarButton icon={<Save size={16} />} label="Save" onClick={handleSave} />
         <ToolbarButton icon={<FolderOpen size={16} />} label="Load" onClick={handleLoad} />
 

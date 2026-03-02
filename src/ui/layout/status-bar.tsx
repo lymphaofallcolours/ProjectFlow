@@ -1,9 +1,11 @@
 import { useGraphStore } from '@/application/graph-store'
 import { useCampaignStore } from '@/application/campaign-store'
+import { useEntityStore } from '@/application/entity-store'
 
 export function StatusBar() {
   const nodeCount = useGraphStore((s) => Object.keys(s.nodes).length)
   const edgeCount = useGraphStore((s) => Object.keys(s.edges).length)
+  const entityCount = useEntityStore((s) => Object.keys(s.entities).length)
   const name = useCampaignStore((s) => s.name)
 
   return (
@@ -17,6 +19,8 @@ export function StatusBar() {
       <span>{nodeCount} node{nodeCount !== 1 ? 's' : ''}</span>
       <span className="opacity-30">|</span>
       <span>{edgeCount} edge{edgeCount !== 1 ? 's' : ''}</span>
+      <span className="opacity-30">|</span>
+      <span>{entityCount} entit{entityCount !== 1 ? 'ies' : 'y'}</span>
     </div>
   )
 }
