@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Trash2, Copy, Scissors, Clipboard, CheckCircle, Edit3, XCircle, Circle } from 'lucide-react'
+import { Trash2, Copy, Scissors, Clipboard, CheckCircle, Edit3, XCircle, Circle, Tag } from 'lucide-react'
 import type { SceneType, PlaythroughStatus } from '@/domain/types'
 import { SCENE_TYPES, SCENE_TYPE_CONFIG } from '@/domain/types'
 import { PLAYTHROUGH_STATUSES, PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
 import { useGraphStore } from '@/application/graph-store'
 import { useSessionStore } from '@/application/session-store'
 import { PlaythroughNotesInput } from './playthrough-notes-input'
+import { EdgeLabelInput } from './edge-label-input'
 
 type ContextMenuProps = {
   nodeId: string
@@ -37,6 +38,8 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
   const setPlaythroughStatus = useGraphStore((s) => s.setPlaythroughStatus)
   const currentType = useGraphStore((s) => s.nodes[nodeId]?.sceneType)
   const currentPlaythroughStatus = useGraphStore((s) => s.nodes[nodeId]?.playthroughStatus)
+  const currentArcLabel = useGraphStore((s) => s.nodes[nodeId]?.arcLabel)
+  const setArcLabel = useGraphStore((s) => s.setArcLabel)
   const recordNodeVisit = useSessionStore((s) => s.recordNodeVisit)
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const selectedNodeIds = useGraphStore((s) => s.selectedNodeIds)
@@ -47,6 +50,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
   const ref = useRef<HTMLDivElement>(null)
 
   const [awaitingNotes, setAwaitingNotes] = useState(false)
+  const [editingArcLabel, setEditingArcLabel] = useState(false)
 
   const isMultiSelect = selectedNodeIds.size > 1 && selectedNodeIds.has(nodeId)
   const selCount = selectedNodeIds.size
@@ -185,6 +189,34 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
               />
             )
           })}
+
+          <div className="h-px bg-border my-1 mx-2" />
+
+          {/* Arc label section */}
+          <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-text-muted font-medium">
+            Arc Label
+          </div>
+          {editingArcLabel ? (
+            <EdgeLabelInput
+              initialValue={currentArcLabel ?? ''}
+              placeholder="Arc label..."
+              onConfirm={(label) => {
+                setArcLabel(nodeId, label)
+                onClose()
+              }}
+              onCancel={() => setEditingArcLabel(false)}
+              onClear={() => {
+                setArcLabel(nodeId, undefined)
+                onClose()
+              }}
+            />
+          ) : (
+            <MenuItem
+              icon={<Tag size={14} className="text-text-muted" />}
+              label={currentArcLabel ?? 'Set arc label...'}
+              onClick={() => setEditingArcLabel(true)}
+            />
+          )}
 
           <div className="h-px bg-border my-1 mx-2" />
 

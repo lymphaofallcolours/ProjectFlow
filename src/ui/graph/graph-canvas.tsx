@@ -25,6 +25,7 @@ import { StoryNodeComponent } from './story-node'
 import { StoryEdgeComponent } from './story-edge'
 import { useFlowNodes } from './use-flow-nodes'
 import { NodeContextMenu } from './context-menu'
+import { EdgeContextMenu } from './edge-context-menu'
 import { CanvasContextMenu } from './canvas-context-menu'
 import { RadialSubnodes } from '@/ui/overlays/radial-subnodes'
 
@@ -34,6 +35,7 @@ const edgeTypes = { story: StoryEdgeComponent }
 
 type ContextMenuState =
   | { type: 'node'; nodeId: string; position: { x: number; y: number } }
+  | { type: 'edge'; edgeId: string; position: { x: number; y: number } }
   | { type: 'canvas'; position: { x: number; y: number }; flowPosition: { x: number; y: number } }
   | null
 
@@ -130,11 +132,10 @@ function GraphCanvasInner() {
     (event, edge) => {
       event.preventDefault()
       setContextMenu({
-        type: 'node',
-        nodeId: edge.id,
+        type: 'edge',
+        edgeId: edge.id,
         position: { x: event.clientX, y: event.clientY },
       })
-      // We'll handle edge context menu in Commit 3
     },
     [],
   )
@@ -229,6 +230,13 @@ function GraphCanvasInner() {
       {contextMenu?.type === 'node' && (
         <NodeContextMenu
           nodeId={contextMenu.nodeId}
+          position={contextMenu.position}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+      {contextMenu?.type === 'edge' && (
+        <EdgeContextMenu
+          edgeId={contextMenu.edgeId}
           position={contextMenu.position}
           onClose={() => setContextMenu(null)}
         />

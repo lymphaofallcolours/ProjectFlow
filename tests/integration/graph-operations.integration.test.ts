@@ -174,6 +174,62 @@ describe('Graph operations integration', () => {
     })
   })
 
+  describe('edge label persistence', () => {
+    it('edge label persists through save/load', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      const edgeId = useGraphStore.getState().connectNodes(a, b)
+      useGraphStore.getState().setEdgeLabel(edgeId, 'if players agree')
+
+      useCampaignStore.getState().setName('Label Test')
+      const json = serializeCampaign(assembleCampaign())
+
+      useGraphStore.getState().reset()
+      hydrateCampaign(deserializeCampaign(json))
+
+      expect(useGraphStore.getState().edges[edgeId].label).toBe('if players agree')
+    })
+
+    it('clearing edge label persists as undefined', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      const edgeId = useGraphStore.getState().connectNodes(a, b)
+      useGraphStore.getState().setEdgeLabel(edgeId, 'some label')
+      useGraphStore.getState().setEdgeLabel(edgeId, undefined)
+
+      useCampaignStore.getState().setName('Clear Label Test')
+      const json = serializeCampaign(assembleCampaign())
+
+      useGraphStore.getState().reset()
+      hydrateCampaign(deserializeCampaign(json))
+
+      expect(useGraphStore.getState().edges[edgeId].label).toBeUndefined()
+    })
+  })
+
+  describe('edge style + undo interaction', () => {
+    it('undo reverts edge style change', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      const edgeId = useGraphStore.getState().connectNodes(a, b)
+
+      useGraphStore.getState().setEdgeStyle(edgeId, 'secret')
+      expect(useGraphStore.getState().edges[edgeId].style).toBe('secret')
+
+      useGraphStore.getState().undo()
+      expect(useGraphStore.getState().edges[edgeId].style).toBe('default')
+    })
+
+    it('undo reverts arc label change', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().setArcLabel(id, 'ARC 5')
+      expect(useGraphStore.getState().nodes[id].arcLabel).toBe('ARC 5')
+
+      useGraphStore.getState().undo()
+      expect(useGraphStore.getState().nodes[id].arcLabel).toBeUndefined()
+    })
+  })
+
   describe('rewire edge', () => {
     it('rewire edge updates source/target correctly', () => {
       const store = useGraphStore.getState()
