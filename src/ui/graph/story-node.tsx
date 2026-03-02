@@ -6,8 +6,10 @@ import { SCENE_TYPE_CONFIG } from '@/domain/types'
 import { getShapePath, NODE_DIMENSIONS } from './node-shapes'
 import { useGraphStore } from '@/application/graph-store'
 import { useUIStore } from '@/application/ui-store'
+import { useSessionStore } from '@/application/session-store'
 import { useLongPress } from '@/ui/hooks/use-long-press'
 import { searchNodesByEntity } from '@/domain/search'
+import { buildDiffMap, PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
 
 export type StoryNodeData = {
   storyNode: StoryNode
@@ -23,6 +25,9 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
   const nodes = useGraphStore((s) => s.nodes)
   const showRadialSubnodes = useUIStore((s) => s.showRadialSubnodes)
   const entityHighlightFilter = useUIStore((s) => s.entityHighlightFilter)
+  const diffOverlayActive = useSessionStore((s) => s.diffOverlayActive)
+  const activeSessionId = useSessionStore((s) => s.activeSessionId)
+  const playthroughLog = useSessionStore((s) => s.playthroughLog)
   const { storyNode } = data
 
   // Entity highlight: check if this node matches the filter
@@ -34,6 +39,15 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
     )
     return results.length > 0
   }, [entityHighlightFilter, storyNode, nodes])
+
+  // Diff overlay: compute status for this node from selected session
+  const diffStatus = useMemo(() => {
+    if (!diffOverlayActive || !activeSessionId) return null
+    const session = playthroughLog.find((e) => e.id === activeSessionId)
+    if (!session) return null
+    const map = buildDiffMap(session)
+    return map[storyNode.id] ?? 'unvisited'
+  }, [diffOverlayActive, activeSessionId, playthroughLog, storyNode.id])
 
   const handleLongPress = useCallback(() => {
     showRadialSubnodes(storyNode.id)
@@ -50,7 +64,20 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
   const sourcePos = scrollDirection === 'horizontal' ? Position.Right : Position.Bottom
 
   // Dim if entity filter is active and this node doesn't match
-  const dimmed = isHighlighted === false
+  const entityDimmed = isHighlighted === false
+  // Dim if diff overlay is active and this node is unvisited
+  const diffDimmed = diffStatus === 'unvisited'
+  const dimmed = entityDimmed || diffDimmed
+
+  // Diff overlay ring color
+  const diffRingColor = diffStatus && diffStatus !== 'unvisited'
+    ? `var(--color-${PLAYTHROUGH_STATUS_CONFIG[diffStatus].color})`
+    : null
+
+  // Status dot: always show if node has a playthrough status
+  const statusDotColor = storyNode.playthroughStatus && storyNode.playthroughStatus !== 'unvisited'
+    ? `var(--color-${PLAYTHROUGH_STATUS_CONFIG[storyNode.playthroughStatus].color})`
+    : null
 
   return (
     <div
@@ -58,7 +85,7 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
       style={{
         width: dim.width,
         height: dim.height,
-        opacity: dimmed ? 0.25 : 1,
+        opacity: dimmed ? 0.3 : 1,
       }}
       {...longPressHandlers}
     >
@@ -80,8 +107,20 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
           </filter>
         </defs>
 
+        {/* Diff overlay ring — shown behind glass fill when diff is active */}
+        {diffRingColor && (
+          <path
+            d={shapePath}
+            fill="none"
+            stroke={diffRingColor}
+            strokeWidth="3.5"
+            opacity="0.7"
+            filter={`url(#glow-${storyNode.id})`}
+          />
+        )}
+
         {/* Outer glow on selection */}
-        {selected && (
+        {selected && !diffRingColor && (
           <path
             d={shapePath}
             fill="none"
@@ -96,8 +135,8 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
         <path
           d={shapePath}
           fill={`url(#glass-${storyNode.id})`}
-          stroke={selected ? accentColor : 'var(--color-surface-glass-border)'}
-          strokeWidth={selected ? 2 : 1}
+          stroke={diffRingColor ?? (selected ? accentColor : 'var(--color-surface-glass-border)')}
+          strokeWidth={diffRingColor ? 2 : selected ? 2 : 1}
           className="transition-all duration-150"
         />
 
@@ -138,6 +177,17 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
           {config.label}
         </span>
       </div>
+
+      {/* Status dot — bottom right, always visible when status is set */}
+      {statusDotColor && (
+        <div
+          className="absolute -bottom-0.5 -right-0.5 w-[7px] h-[7px] rounded-full border border-surface-glass"
+          style={{ backgroundColor: statusDotColor }}
+          title={storyNode.playthroughStatus
+            ? PLAYTHROUGH_STATUS_CONFIG[storyNode.playthroughStatus].label
+            : undefined}
+        />
+      )}
 
       {/* Handles */}
       <Handle

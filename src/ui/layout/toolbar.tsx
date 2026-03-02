@@ -10,12 +10,16 @@ import {
   Users,
   HelpCircle,
   Search,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import { useUIStore } from '@/application/ui-store'
 import { useGraphStore } from '@/application/graph-store'
+import { useSessionStore } from '@/application/session-store'
 import { applyTheme } from '@/infrastructure/theme'
 import { saveCampaignAction, loadCampaignAction } from '@/application/campaign-actions'
 import { SceneTypePicker } from './scene-type-picker'
+import { SessionSelector } from './session-selector'
 
 export function Toolbar() {
   const [showPicker, setShowPicker] = useState(false)
@@ -26,6 +30,8 @@ export function Toolbar() {
   const toggleEntitySidebar = useUIStore((s) => s.toggleEntitySidebar)
   const toggleLegendPanel = useUIStore((s) => s.toggleLegendPanel)
   const toggleSearchPanel = useUIStore((s) => s.toggleSearchPanel)
+  const diffOverlayActive = useSessionStore((s) => s.diffOverlayActive)
+  const toggleDiffOverlay = useSessionStore((s) => s.toggleDiffOverlay)
 
   const handleThemeToggle = useCallback(() => {
     const next = theme === 'dark' ? 'light' : 'dark'
@@ -47,7 +53,7 @@ export function Toolbar() {
 
   return (
     <div className="relative z-10 flex items-center gap-1 px-3 py-2 glass-panel border-b border-border">
-      {/* Left group: graph actions */}
+      {/* Left group: graph actions + session */}
       <div className="flex items-center gap-1">
         <div className="relative">
           <ToolbarButton
@@ -59,6 +65,16 @@ export function Toolbar() {
             <SceneTypePicker onClose={() => setShowPicker(false)} />
           )}
         </div>
+
+        <div className="w-px h-5 bg-border mx-1" />
+
+        <SessionSelector />
+        <ToolbarButton
+          icon={diffOverlayActive ? <EyeOff size={16} /> : <Eye size={16} />}
+          label={diffOverlayActive ? 'Hide Diff' : 'Show Diff'}
+          onClick={toggleDiffOverlay}
+          active={diffOverlayActive}
+        />
       </div>
 
       {/* Center spacer */}
@@ -99,18 +115,22 @@ function ToolbarButton({
   icon,
   label,
   onClick,
+  active,
 }: {
   icon: React.ReactNode
   label: string
   onClick: () => void
+  active?: boolean
 }) {
   return (
     <button
       onClick={onClick}
       title={label}
-      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-text-secondary
-        hover:text-text-primary hover:bg-surface-glass
-        active:scale-[0.97] transition-all duration-100 text-xs font-medium cursor-pointer"
+      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
+        active:scale-[0.97] transition-all duration-100 cursor-pointer
+        ${active
+          ? 'text-status-modified bg-status-modified/10 hover:bg-status-modified/15'
+          : 'text-text-secondary hover:text-text-primary hover:bg-surface-glass'}`}
       style={{ fontFamily: 'var(--font-display)' }}
     >
       {icon}

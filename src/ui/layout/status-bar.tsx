@@ -1,12 +1,18 @@
 import { useGraphStore } from '@/application/graph-store'
 import { useCampaignStore } from '@/application/campaign-store'
 import { useEntityStore } from '@/application/entity-store'
+import { useSessionStore } from '@/application/session-store'
 
 export function StatusBar() {
   const nodeCount = useGraphStore((s) => Object.keys(s.nodes).length)
   const edgeCount = useGraphStore((s) => Object.keys(s.edges).length)
   const entityCount = useEntityStore((s) => Object.keys(s.entities).length)
   const name = useCampaignStore((s) => s.name)
+  const activeSessionId = useSessionStore((s) => s.activeSessionId)
+  const playthroughLog = useSessionStore((s) => s.playthroughLog)
+  const diffOverlayActive = useSessionStore((s) => s.diffOverlayActive)
+
+  const activeSession = playthroughLog.find((e) => e.id === activeSessionId)
 
   return (
     <div
@@ -21,6 +27,20 @@ export function StatusBar() {
       <span>{edgeCount} edge{edgeCount !== 1 ? 's' : ''}</span>
       <span className="opacity-30">|</span>
       <span>{entityCount} entit{entityCount !== 1 ? 'ies' : 'y'}</span>
+      {activeSession && (
+        <>
+          <span className="opacity-30">|</span>
+          <span className="text-status-played">
+            ● {activeSession.sessionLabel ?? 'Session'} ({activeSession.nodesVisited.length} visited)
+          </span>
+        </>
+      )}
+      {diffOverlayActive && (
+        <>
+          <span className="opacity-30">|</span>
+          <span className="text-status-modified">◉ Diff</span>
+        </>
+      )}
     </div>
   )
 }
