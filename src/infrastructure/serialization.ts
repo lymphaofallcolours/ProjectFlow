@@ -38,5 +38,12 @@ export function validateCampaignSchema(data: unknown): data is Campaign {
 
   if (typeof obj.settings !== 'object' || obj.settings === null) return false
 
+  // entityRegistry is optional for backward compat, but must be valid if present
+  if (obj.entityRegistry !== undefined) {
+    if (typeof obj.entityRegistry !== 'object' || obj.entityRegistry === null) return false
+    const registry = obj.entityRegistry as Record<string, unknown>
+    if (typeof registry.entities !== 'object' || registry.entities === null) return false
+  }
+
   return true
 }

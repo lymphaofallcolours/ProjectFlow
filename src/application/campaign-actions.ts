@@ -4,10 +4,12 @@ import { serializeCampaign, deserializeCampaign } from '@/infrastructure/seriali
 import { saveToFile, loadFromFile } from '@/infrastructure/file-io'
 import { useGraphStore } from './graph-store'
 import { useCampaignStore } from './campaign-store'
+import { useEntityStore } from './entity-store'
 
 export function assembleCampaign(): Campaign {
   const graph = useGraphStore.getState()
   const campaign = useCampaignStore.getState()
+  const entityStore = useEntityStore.getState()
 
   const base = createCampaign(campaign.name)
   return {
@@ -22,6 +24,7 @@ export function assembleCampaign(): Campaign {
       viewport: graph.viewport,
       scrollDirection: graph.scrollDirection,
     },
+    entityRegistry: { entities: entityStore.entities },
     schemaVersion: campaign.schemaVersion,
   }
 }
@@ -34,6 +37,7 @@ export function hydrateCampaign(campaign: Campaign): void {
     campaign.graph.scrollDirection,
   )
   useCampaignStore.getState().loadCampaign(campaign)
+  useEntityStore.getState().loadRegistry(campaign.entityRegistry)
 }
 
 export async function saveCampaignAction(): Promise<void> {
@@ -55,5 +59,6 @@ export async function loadCampaignAction(): Promise<boolean> {
 export function newCampaignAction(name: string): void {
   useGraphStore.getState().reset()
   useCampaignStore.getState().reset()
+  useEntityStore.getState().reset()
   useCampaignStore.getState().setName(name)
 }

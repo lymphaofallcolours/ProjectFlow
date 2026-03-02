@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useGraphStore } from '@/application/graph-store'
 import { useCampaignStore } from '@/application/campaign-store'
+import { useEntityStore } from '@/application/entity-store'
 import { assembleCampaign, hydrateCampaign, newCampaignAction } from '@/application/campaign-actions'
 import { serializeCampaign, deserializeCampaign } from '@/infrastructure/serialization'
 
@@ -8,6 +9,7 @@ describe('Campaign roundtrip (integration)', () => {
   beforeEach(() => {
     useGraphStore.getState().reset()
     useCampaignStore.getState().reset()
+    useEntityStore.getState().reset()
   })
 
   it('serializes and deserializes a campaign with nodes and edges', () => {
@@ -128,5 +130,39 @@ describe('Campaign roundtrip (integration)', () => {
     expect(() => deserializeCampaign('not json')).toThrow()
     expect(() => deserializeCampaign('{}')).toThrow('Invalid campaign file')
     expect(() => deserializeCampaign('{"id":"x"}')).toThrow('Invalid campaign file')
+  })
+
+  it('roundtrips entities through save/load cycle', () => {
+    const entityStore = useEntityStore.getState()
+    const id1 = entityStore.addEntity('pc', 'Alfa', 'Kill-Team Leader')
+    const id2 = entityStore.addEntity('npc', 'Voss', 'Stern sergeant')
+    entityStore.addStatus(id1, 'node-1', 'wounded', 'Hit by shrapnel')
+    useCampaignStore.getState().setName('Entity Test')
+
+    const json = serializeCampaign(assembleCampaign())
+    useGraphStore.getState().reset()
+    useCampaignStore.getState().reset()
+    useEntityStore.getState().reset()
+    expect(useEntityStore.getState().getAllEntities()).toHaveLength(0)
+
+    hydrateCampaign(deserializeCampaign(json))
+
+    const restored = useEntityStore.getState()
+    expect(restored.getAllEntities()).toHaveLength(2)
+    expect(restored.entities[id1].name).toBe('Alfa')
+    expect(restored.entities[id1].description).toBe('Kill-Team Leader')
+    expect(restored.entities[id1].statusHistory).toHaveLength(1)
+    expect(restored.entities[id1].statusHistory[0].status).toBe('wounded')
+    expect(restored.entities[id2].name).toBe('Voss')
+    expect(restored.entities[id2].type).toBe('npc')
+  })
+
+  it('newCampaignAction resets entity store', () => {
+    useEntityStore.getState().addEntity('pc', 'Alfa')
+    expect(useEntityStore.getState().getAllEntities()).toHaveLength(1)
+
+    newCampaignAction('Fresh Start 2')
+
+    expect(useEntityStore.getState().getAllEntities()).toHaveLength(0)
   })
 })
