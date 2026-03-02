@@ -5,6 +5,7 @@ import { OverlayRoot } from '@/ui/overlays/overlay-root'
 import { EntitySidebar } from '@/ui/entities/entity-sidebar'
 import { LegendPanel } from '@/ui/components/legend-panel'
 import { SearchPanel } from '@/ui/components/search-panel'
+import { SessionTimeline } from '@/ui/components/session-timeline'
 import { useKeyboardShortcuts } from '@/ui/hooks/use-keyboard-shortcuts'
 
 export function AppShell() {
@@ -18,6 +19,7 @@ export function AppShell() {
         <OverlayRoot />
         <SearchPanel />
         <EntitySidebar />
+        <SessionTimeline />
         <LegendPanel />
       </main>
       <StatusBar />

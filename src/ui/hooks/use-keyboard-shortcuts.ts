@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useUIStore } from '@/application/ui-store'
+import { useSessionStore } from '@/application/session-store'
 
 export function useKeyboardShortcuts() {
   useEffect(() => {
@@ -34,6 +35,20 @@ export function useKeyboardShortcuts() {
       if (ctrl && e.key === 'e') {
         e.preventDefault()
         useUIStore.getState().toggleEntitySidebar()
+        return
+      }
+
+      // Ctrl+T → toggle session timeline
+      if (ctrl && e.key === 't') {
+        e.preventDefault()
+        useSessionStore.getState().toggleSessionTimeline()
+        return
+      }
+
+      // Ctrl+D → toggle diff overlay
+      if (ctrl && e.key === 'd') {
+        e.preventDefault()
+        useSessionStore.getState().toggleDiffOverlay()
         return
       }
     }
