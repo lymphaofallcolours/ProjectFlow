@@ -4,57 +4,75 @@
 
 ## Production Dependencies
 
-### react / react-dom
+### react / react-dom (^19.1.0)
 **Purpose:** UI framework — component model for the entire application.
 **Chosen over:** Vue (less TypeScript integration), Svelte (smaller ecosystem for graph libraries).
 **Removal risk:** High — foundational.
 **Added:** Project init.
 
-### @xyflow/react (React Flow)
-**Purpose:** Graph canvas rendering — nodes, edges, pan, zoom, drag, custom shapes.
+### @xyflow/react (^12.10.1)
+**Purpose:** Graph canvas rendering — nodes, edges, pan, zoom, drag, custom shapes. Provides ReactFlow component, node/edge types, viewport management, and coordinate conversion (flowToScreenPosition, screenToFlowPosition).
 **Chosen over:** Cytoscape (less React-native), D3 force graph (too low-level), vis-network (less maintained).
 **Removal risk:** High — core UI component. Custom node shapes and interaction model built on top.
-**Added:** Phase 1.
+**Added:** Phase 1, Commit 1.
 
-### zustand
-**Purpose:** Global state management — graph state, entity registry, campaign settings, playthrough log.
+### zustand (^5.0.11)
+**Purpose:** Global state management — graph state (nodes, edges, viewport), UI state (overlays, theme), campaign metadata.
 **Chosen over:** Redux (too much boilerplate), Jotai (atomic model doesn't fit nested graph state), React Context (poor performance for frequent updates).
-**Removal risk:** High — all application state flows through Zustand stores.
-**Added:** Phase 1.
+**Removal risk:** High — all application state flows through 3 Zustand stores.
+**Added:** Phase 1, Commit 1.
 
-### @tiptap/react + @tiptap/starter-kit + @tiptap/extension-*
+### lucide-react (^0.576.0)
+**Purpose:** Icon library — provides the 11 field icons (Mic, MessageSquare, StickyNote, etc.) and UI icons (Plus, X, Check, ChevronDown, etc.) used throughout the interface.
+**Chosen over:** Heroicons (less variety), React Icons (larger bundle), custom SVGs (more maintenance).
+**Removal risk:** Low — purely visual, replaceable by any icon set.
+**Added:** Phase 1, Commit 1.
+
+### @tiptap/react + @tiptap/starter-kit + @tiptap/extension-* (not yet installed)
 **Purpose:** Rich text editor for node content fields. Extensible for entity tag autocomplete and chip rendering.
 **Chosen over:** Slate.js (steeper learning curve), Draft.js (deprecated), CodeMirror (code-focused, not prose).
-**Removal risk:** High — all content editing uses TipTap. Custom extensions for entity system.
+**Removal risk:** High — all content editing will use TipTap. Custom extensions for entity system.
 **Added:** Phase 2.
 
-### tailwindcss
-**Purpose:** Utility-first CSS — fast styling, easy dark/light mode via `dark:` variants.
+### tailwindcss (^4.2.1)
+**Purpose:** Utility-first CSS — fast styling, custom theme via `@theme` blocks and CSS custom properties. Aeroglass theme with frosted translucent surfaces.
 **Chosen over:** CSS Modules (more verbose), Styled Components (runtime overhead), vanilla CSS (slower dev).
 **Removal risk:** Medium — deeply integrated in component classes but replaceable with effort.
-**Added:** Phase 1.
+**Added:** Phase 1, Commit 1.
 
 ---
 
 ## Dev Dependencies
 
-### vite
+### vite (^7.3.1)
 **Purpose:** Build tool and dev server. Fast HMR, optimized production builds.
 **Added:** Project init.
 
-### vitest
-**Purpose:** Unit and integration test runner. Vite-native, fast, compatible with Jest API.
-**Added:** Phase 1.
+### @tailwindcss/vite (^4.2.1)
+**Purpose:** Vite plugin for Tailwind CSS v4. Required for the v4 `@import "tailwindcss"` syntax.
+**Added:** Phase 1, Commit 1.
 
-### @playwright/test
+### vitest (^4.0.18)
+**Purpose:** Unit and integration test runner. Vite-native, fast, compatible with Jest API. Uses jsdom environment for component tests.
+**Added:** Phase 1, Commit 1.
+
+### @testing-library/react (^16.3.2) + @testing-library/jest-dom (^6.6.5)
+**Purpose:** DOM testing utilities for React components. `jest-dom` provides custom matchers like `toBeInTheDocument()`.
+**Added:** Phase 1, Commit 1.
+
+### jsdom (^28.1.0)
+**Purpose:** Browser environment for Vitest. Simulates DOM APIs for component and store testing.
+**Added:** Phase 1, Commit 1.
+
+### @playwright/test (not yet installed)
 **Purpose:** E2E testing for critical user flows.
-**Added:** Phase 1 (configured), used from Phase 2+.
+**Added:** (planned for Phase 2+)
 
-### eslint + typescript-eslint + prettier
+### eslint + typescript-eslint
 **Purpose:** Code quality and formatting. Catches type errors, enforces conventions.
-**Added:** Phase 1.
+**Added:** Project init.
 
-### immer (if added)
+### immer (not yet installed)
 **Purpose:** Ergonomic immutable state updates inside Zustand stores for deeply nested graph/entity state.
 **Chosen over:** Manual spread operators (error-prone for deep nesting).
 **Removal risk:** Low — convenience layer, easily removed.
