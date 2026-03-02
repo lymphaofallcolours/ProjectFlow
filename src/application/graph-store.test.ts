@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useGraphStore } from './graph-store'
+import { useHistoryStore } from './history-store'
 
 beforeEach(() => {
   useGraphStore.getState().reset()
+  useHistoryStore.getState().reset()
 })
 
 describe('useGraphStore', () => {
@@ -411,6 +413,121 @@ describe('useGraphStore', () => {
       useGraphStore.getState().reset()
       expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(0)
       expect(useGraphStore.getState().selectedNodeIds.size).toBe(0)
+    })
+  })
+
+  describe('undo / redo', () => {
+    it('undo restores previous state after addNode', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(1)
+      useGraphStore.getState().undo()
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(0)
+      expect(useGraphStore.getState().nodes[id]).toBeUndefined()
+    })
+
+    it('redo re-applies undone state', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().undo()
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(0)
+      useGraphStore.getState().redo()
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(1)
+      expect(useGraphStore.getState().nodes[id]).toBeDefined()
+    })
+
+    it('undo after deleteNode restores the node', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 10, y: 20 }, 'Test')
+      useGraphStore.getState().deleteNode(id)
+      expect(useGraphStore.getState().nodes[id]).toBeUndefined()
+      useGraphStore.getState().undo()
+      // undoes the delete — node is back
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(1)
+    })
+
+    it('undo after deleteNode restores connected edges', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      const edgeId = useGraphStore.getState().connectNodes(a, b)
+      useGraphStore.getState().deleteNode(a)
+      useGraphStore.getState().undo()
+      // undoes the delete — node + edge are back
+      expect(useGraphStore.getState().edges[edgeId]).toBeDefined()
+    })
+
+    it('undo is a no-op when history is empty', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      // Clear history so undo has nothing to work with
+      useHistoryStore.getState().clear()
+      useGraphStore.getState().undo()
+      expect(useGraphStore.getState().nodes[id]).toBeDefined()
+    })
+
+    it('redo is a no-op when future is empty', () => {
+      useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().redo()
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(1)
+    })
+
+    it('new mutation clears redo stack', () => {
+      useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      useGraphStore.getState().undo()
+      expect(useHistoryStore.getState().canRedo()).toBe(true)
+      // New mutation clears future
+      useGraphStore.getState().addNode('combat', { x: 200, y: 0 })
+      expect(useHistoryStore.getState().canRedo()).toBe(false)
+    })
+
+    it('undo clears selection', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().selectNodes([id])
+      useGraphStore.getState().undo()
+      expect(useGraphStore.getState().selectedNodeIds.size).toBe(0)
+    })
+
+    it('multiple undo then redo roundtrip', () => {
+      useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      useGraphStore.getState().addNode('combat', { x: 200, y: 0 })
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(3)
+
+      useGraphStore.getState().undo()
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(2)
+      useGraphStore.getState().undo()
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(1)
+      useGraphStore.getState().redo()
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(2)
+      useGraphStore.getState().redo()
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(3)
+    })
+
+    it('pushHistory saves a snapshot without mutation', () => {
+      useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      // pushHistory adds one more entry (2 total: initial add + manual push)
+      useGraphStore.getState().pushHistory()
+      useGraphStore.getState().moveNode(
+        Object.keys(useGraphStore.getState().nodes)[0],
+        { x: 500, y: 500 },
+      )
+      // Undo should restore pre-move state
+      useGraphStore.getState().undo()
+      const node = Object.values(useGraphStore.getState().nodes)[0]
+      expect(node.position).toEqual({ x: 0, y: 0 })
+    })
+
+    it('mutating actions save history automatically', () => {
+      expect(useHistoryStore.getState().past).toHaveLength(0)
+      useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      expect(useHistoryStore.getState().past).toHaveLength(1)
+      const id = Object.keys(useGraphStore.getState().nodes)[0]
+      useGraphStore.getState().renameNode(id, 'New Name')
+      expect(useHistoryStore.getState().past).toHaveLength(2)
+    })
+
+    it('moveNode does not save history automatically', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const historyBefore = useHistoryStore.getState().past.length
+      useGraphStore.getState().moveNode(id, { x: 100, y: 100 })
+      expect(useHistoryStore.getState().past).toHaveLength(historyBefore)
     })
   })
 })

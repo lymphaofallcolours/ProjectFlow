@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { useUIStore } from '@/application/ui-store'
 import { useSessionStore } from '@/application/session-store'
 import { useGraphStore } from '@/application/graph-store'
+import { useHistoryStore } from '@/application/history-store'
 
 // Test the keyboard shortcut logic directly against the store
 // (the hook just dispatches to store actions)
@@ -14,6 +15,7 @@ describe('keyboard shortcut actions', () => {
     })
     useSessionStore.getState().reset()
     useGraphStore.getState().reset()
+    useHistoryStore.getState().reset()
   })
 
   it('toggles legend panel (Ctrl+/)', () => {
@@ -85,5 +87,19 @@ describe('keyboard shortcut actions', () => {
     useGraphStore.getState().selectNodes([id])
     useGraphStore.getState().deleteSelectedNodes()
     expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(0)
+  })
+
+  it('undo restores previous state (Ctrl+Z)', () => {
+    useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+    expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(1)
+    useGraphStore.getState().undo()
+    expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(0)
+  })
+
+  it('redo re-applies undone state (Ctrl+Shift+Z)', () => {
+    useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+    useGraphStore.getState().undo()
+    useGraphStore.getState().redo()
+    expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(1)
   })
 })

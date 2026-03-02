@@ -26,7 +26,7 @@ export const StoryEdgeComponent = memo(function StoryEdgeComponent({
   label,
   selected,
   data,
-}: EdgeProps<StoryEdgeData>) {
+}: EdgeProps) {
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -37,7 +37,8 @@ export const StoryEdgeComponent = memo(function StoryEdgeComponent({
     borderRadius: 16,
   })
 
-  const edgeStyle = data?.storyEdge?.style ?? 'default'
+  const storyEdge = (data as StoryEdgeData | undefined)?.storyEdge
+  const edgeStyle = storyEdge?.style ?? 'default'
   const config = EDGE_STYLE_CONFIG[edgeStyle]
 
   return (

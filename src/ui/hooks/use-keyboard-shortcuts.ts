@@ -74,15 +74,17 @@ export function useKeyboardShortcuts() {
         return
       }
 
-      // Ctrl+Z → undo (will be wired in Commit 5)
+      // Ctrl+Z → undo
       if (ctrl && !e.shiftKey && e.key === 'z') {
         e.preventDefault()
+        useGraphStore.getState().undo()
         return
       }
 
-      // Ctrl+Shift+Z → redo (will be wired in Commit 5)
+      // Ctrl+Shift+Z → redo
       if (ctrl && e.shiftKey && e.key === 'Z') {
         e.preventDefault()
+        useGraphStore.getState().redo()
         return
       }
 

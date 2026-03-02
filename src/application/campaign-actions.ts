@@ -6,6 +6,7 @@ import { useGraphStore } from './graph-store'
 import { useCampaignStore } from './campaign-store'
 import { useEntityStore } from './entity-store'
 import { useSessionStore } from './session-store'
+import { useHistoryStore } from './history-store'
 
 export function assembleCampaign(): Campaign {
   const graph = useGraphStore.getState()
@@ -42,6 +43,7 @@ export function hydrateCampaign(campaign: Campaign): void {
   useCampaignStore.getState().loadCampaign(campaign)
   useEntityStore.getState().loadRegistry(campaign.entityRegistry)
   useSessionStore.getState().loadPlaythroughLog(campaign.playthroughLog ?? [])
+  useHistoryStore.getState().clear()
 }
 
 export async function saveCampaignAction(): Promise<void> {
@@ -65,5 +67,6 @@ export function newCampaignAction(name: string): void {
   useCampaignStore.getState().reset()
   useEntityStore.getState().reset()
   useSessionStore.getState().reset()
+  useHistoryStore.getState().reset()
   useCampaignStore.getState().setName(name)
 }

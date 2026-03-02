@@ -53,6 +53,7 @@ function GraphCanvasInner() {
   const { flowNodes, flowEdges } = useFlowNodes()
   const { screenToFlowPosition } = useReactFlow()
   const moveNode = useGraphStore((s) => s.moveNode)
+  const pushHistory = useGraphStore((s) => s.pushHistory)
   const selectNodes = useGraphStore((s) => s.selectNodes)
   const clearSelection = useGraphStore((s) => s.clearSelection)
   const connectNodes = useGraphStore((s) => s.connectNodes)
@@ -76,12 +77,13 @@ function GraphCanvasInner() {
           }
           if (!change.dragging && isDraggingRef.current) {
             isDraggingRef.current = false
+            pushHistory()
             moveNode(change.id, change.position)
           }
         }
       }
     },
-    [moveNode],
+    [moveNode, pushHistory],
   )
 
   const onSelectionChange: OnSelectionChangeFunc = useCallback(

@@ -33,6 +33,8 @@ import {
   setNodePlaythroughStatus as setPlaythroughOp,
   clearNodePlaythroughStatus as clearPlaythroughOp,
 } from '@/domain/playthrough-operations'
+import { createSnapshot } from '@/domain/history-operations'
+import { useHistoryStore } from './history-store'
 
 type GraphState = {
   nodes: Record<string, StoryNode>
@@ -67,6 +69,9 @@ type GraphState = {
   setEdgeLabel: (edgeId: string, label: string | undefined) => void
   setArcLabel: (nodeId: string, arcLabel: string | undefined) => void
   rewireEdge: (edgeId: string, newSource?: string, newTarget?: string) => void
+  undo: () => void
+  redo: () => void
+  pushHistory: () => void
   loadGraph: (
     nodes: Record<string, StoryNode>,
     edges: Record<string, StoryEdge>,
@@ -85,16 +90,24 @@ const initialState = {
   clipboard: null as { nodes: StoryNode[]; edges: StoryEdge[] } | null,
 }
 
+function saveHistory() {
+  const { nodes, edges } = useGraphStore.getState()
+  useHistoryStore.getState().pushSnapshot(createSnapshot(nodes, edges))
+}
+
 export const useGraphStore = create<GraphState>((set, get) => ({
   ...initialState,
 
   addNode: (sceneType, position, label) => {
+    saveHistory()
     const node = createNode(sceneType, position, label)
     set((state) => ({ nodes: { ...state.nodes, [node.id]: node } }))
     return node.id
   },
 
   deleteNode: (id) => {
+    if (!get().nodes[id]) return
+    saveHistory()
     set((state) => {
       const result = removeNodeOp(state.nodes, state.edges, id)
       const nextSelected = new Set(state.selectedNodeIds)
@@ -104,24 +117,29 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   },
 
   deleteSelectedNodes: () => {
+    const ids = Array.from(get().selectedNodeIds)
+    if (ids.length === 0) return
+    saveHistory()
     set((state) => {
-      const ids = Array.from(state.selectedNodeIds)
-      if (ids.length === 0) return state
       const result = removeNodesOp(state.nodes, state.edges, ids)
       return { ...result, selectedNodeIds: new Set<string>() }
     })
   },
 
   connectNodes: (sourceId, targetId, label) => {
+    saveHistory()
     const edge = createEdge(sourceId, targetId, label)
     set((state) => ({ edges: { ...state.edges, [edge.id]: edge } }))
     return edge.id
   },
 
   disconnectEdge: (edgeId) => {
+    if (!get().edges[edgeId]) return
+    saveHistory()
     set((state) => ({ edges: removeEdgeOp(state.edges, edgeId) }))
   },
 
+  // moveNode does NOT save history — canvas calls pushHistory() on drag start
   moveNode: (id, position) => {
     set((state) => {
       const node = state.nodes[id]
@@ -131,6 +149,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   },
 
   renameNode: (id, label) => {
+    if (!get().nodes[id]) return
+    saveHistory()
     set((state) => {
       const node = state.nodes[id]
       if (!node) return state
@@ -139,6 +159,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   },
 
   changeSceneType: (id, sceneType) => {
+    if (!get().nodes[id]) return
+    saveHistory()
     set((state) => {
       const node = state.nodes[id]
       if (!node) return state
@@ -147,6 +169,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   },
 
   updateField: (nodeId, fieldKey, value) => {
+    if (!get().nodes[nodeId]) return
+    saveHistory()
     set((state) => {
       const node = state.nodes[nodeId]
       if (!node) return state
@@ -157,6 +181,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   duplicateNode: (id) => {
     const node = get().nodes[id]
     if (!node) return null
+    saveHistory()
     const offset = 50
     const copy = duplicateNode(node, {
       x: node.position.x + offset,
@@ -170,6 +195,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     const state = get()
     const ids = Array.from(state.selectedNodeIds)
     if (ids.length === 0) return []
+    saveHistory()
     const { nodes: newNodes, edges: newEdges, idMap } = duplicateNodesOp(
       state.nodes,
       state.edges,
@@ -186,6 +212,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   },
 
   setPlaythroughStatus: (nodeId, status, notes) => {
+    if (!get().nodes[nodeId]) return
+    saveHistory()
     set((state) => {
       const node = state.nodes[nodeId]
       if (!node) return state
@@ -194,6 +222,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   },
 
   clearPlaythroughStatus: (nodeId) => {
+    if (!get().nodes[nodeId]) return
+    saveHistory()
     set((state) => {
       const node = state.nodes[nodeId]
       if (!node) return state
@@ -227,12 +257,14 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   cutSelectedNodes: () => {
     const store = get()
     store.copySelectedNodes()
+    // deleteSelectedNodes saves history before deleting
     store.deleteSelectedNodes()
   },
 
   pasteClipboard: (offset) => {
     const { clipboard } = get()
     if (!clipboard || clipboard.nodes.length === 0) return
+    saveHistory()
     const pasteOffset = offset ?? { x: 50, y: 50 }
     const { nodes: newNodes, edges: newEdges } = pasteSubgraph(
       clipboard.nodes,
@@ -248,6 +280,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   },
 
   setEdgeStyle: (edgeId, style) => {
+    if (!get().edges[edgeId]) return
+    saveHistory()
     set((state) => {
       const edge = state.edges[edgeId]
       if (!edge) return state
@@ -256,6 +290,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   },
 
   setEdgeLabel: (edgeId, label) => {
+    if (!get().edges[edgeId]) return
+    saveHistory()
     set((state) => {
       const edge = state.edges[edgeId]
       if (!edge) return state
@@ -264,6 +300,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   },
 
   setArcLabel: (nodeId, arcLabel) => {
+    if (!get().nodes[nodeId]) return
+    saveHistory()
     set((state) => {
       const node = state.nodes[nodeId]
       if (!node) return state
@@ -272,9 +310,29 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   },
 
   rewireEdge: (edgeId, newSource, newTarget) => {
+    if (!get().edges[edgeId]) return
+    saveHistory()
     set((state) => ({
       edges: rewireEdgeOp(state.edges, edgeId, newSource, newTarget),
     }))
+  },
+
+  undo: () => {
+    const { nodes, edges } = get()
+    const snapshot = useHistoryStore.getState().popUndo(createSnapshot(nodes, edges))
+    if (!snapshot) return
+    set({ nodes: snapshot.nodes, edges: snapshot.edges, selectedNodeIds: new Set<string>() })
+  },
+
+  redo: () => {
+    const { nodes, edges } = get()
+    const snapshot = useHistoryStore.getState().popRedo(createSnapshot(nodes, edges))
+    if (!snapshot) return
+    set({ nodes: snapshot.nodes, edges: snapshot.edges, selectedNodeIds: new Set<string>() })
+  },
+
+  pushHistory: () => {
+    saveHistory()
   },
 
   loadGraph: (nodes, edges, viewport, scrollDirection) => {

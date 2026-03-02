@@ -12,10 +12,13 @@ import {
   Search,
   Eye,
   EyeOff,
+  Undo2,
+  Redo2,
 } from 'lucide-react'
 import { useUIStore } from '@/application/ui-store'
 import { useGraphStore } from '@/application/graph-store'
 import { useSessionStore } from '@/application/session-store'
+import { useHistoryStore } from '@/application/history-store'
 import { applyTheme } from '@/infrastructure/theme'
 import { saveCampaignAction, loadCampaignAction } from '@/application/campaign-actions'
 import { SceneTypePicker } from './scene-type-picker'
@@ -32,6 +35,10 @@ export function Toolbar() {
   const toggleSearchPanel = useUIStore((s) => s.toggleSearchPanel)
   const diffOverlayActive = useSessionStore((s) => s.diffOverlayActive)
   const toggleDiffOverlay = useSessionStore((s) => s.toggleDiffOverlay)
+  const canUndo = useHistoryStore((s) => s.past.length > 0)
+  const canRedo = useHistoryStore((s) => s.future.length > 0)
+  const undo = useGraphStore((s) => s.undo)
+  const redo = useGraphStore((s) => s.redo)
 
   const handleThemeToggle = useCallback(() => {
     const next = theme === 'dark' ? 'light' : 'dark'
@@ -75,6 +82,21 @@ export function Toolbar() {
           onClick={toggleDiffOverlay}
           active={diffOverlayActive}
         />
+
+        <div className="w-px h-5 bg-border mx-1" />
+
+        <ToolbarButton
+          icon={<Undo2 size={16} />}
+          label="Undo"
+          onClick={undo}
+          disabled={!canUndo}
+        />
+        <ToolbarButton
+          icon={<Redo2 size={16} />}
+          label="Redo"
+          onClick={redo}
+          disabled={!canRedo}
+        />
       </div>
 
       {/* Center spacer */}
@@ -116,21 +138,26 @@ function ToolbarButton({
   label,
   onClick,
   active,
+  disabled,
 }: {
   icon: React.ReactNode
   label: string
   onClick: () => void
   active?: boolean
+  disabled?: boolean
 }) {
   return (
     <button
       onClick={onClick}
       title={label}
+      disabled={disabled}
       className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
-        active:scale-[0.97] transition-all duration-100 cursor-pointer
-        ${active
-          ? 'text-status-modified bg-status-modified/10 hover:bg-status-modified/15'
-          : 'text-text-secondary hover:text-text-primary hover:bg-surface-glass'}`}
+        transition-all duration-100
+        ${disabled
+          ? 'text-text-muted opacity-40 cursor-default'
+          : active
+            ? 'text-status-modified bg-status-modified/10 hover:bg-status-modified/15 active:scale-[0.97] cursor-pointer'
+            : 'text-text-secondary hover:text-text-primary hover:bg-surface-glass active:scale-[0.97] cursor-pointer'}`}
       style={{ fontFamily: 'var(--font-display)' }}
     >
       {icon}
