@@ -5,6 +5,7 @@ import { App } from './App'
 describe('App', () => {
   it('renders without crashing', () => {
     render(<App />)
-    expect(screen.getByText('ProjectFlow')).toBeInTheDocument()
+    // Status bar shows the default campaign name
+    expect(screen.getByText('Untitled Campaign')).toBeInTheDocument()
   })
 })

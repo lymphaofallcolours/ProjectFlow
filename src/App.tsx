@@ -1,7 +1,11 @@
+import { AppShell } from '@/ui/layout/app-shell'
+import { ThemeInitializer } from '@/ui/layout/theme-initializer'
+
 export function App() {
   return (
-    <div className="h-full bg-canvas text-text-primary flex items-center justify-center">
-      <p className="text-text-secondary">ProjectFlow</p>
-    </div>
+    <>
+      <ThemeInitializer />
+      <AppShell />
+    </>
   )
 }
