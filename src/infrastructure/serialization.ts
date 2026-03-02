@@ -45,5 +45,10 @@ export function validateCampaignSchema(data: unknown): data is Campaign {
     if (typeof registry.entities !== 'object' || registry.entities === null) return false
   }
 
+  // playthroughLog is optional for backward compat, but must be an array if present
+  if (obj.playthroughLog !== undefined) {
+    if (!Array.isArray(obj.playthroughLog)) return false
+  }
+
   return true
 }

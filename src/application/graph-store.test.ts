@@ -155,6 +155,38 @@ describe('useGraphStore', () => {
     })
   })
 
+  describe('setPlaythroughStatus', () => {
+    it('sets playthrough status on a node', () => {
+      const id = useGraphStore.getState().addNode('combat', { x: 0, y: 0 })
+      useGraphStore.getState().setPlaythroughStatus(id, 'played_as_planned')
+      expect(useGraphStore.getState().nodes[id].playthroughStatus).toBe('played_as_planned')
+    })
+
+    it('sets notes when status is modified', () => {
+      const id = useGraphStore.getState().addNode('combat', { x: 0, y: 0 })
+      useGraphStore.getState().setPlaythroughStatus(id, 'modified', 'Team split up')
+      const node = useGraphStore.getState().nodes[id]
+      expect(node.playthroughStatus).toBe('modified')
+      expect(node.playthroughNotes).toBe('Team split up')
+    })
+
+    it('is a no-op for missing node', () => {
+      useGraphStore.getState().setPlaythroughStatus('nonexistent', 'skipped')
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(0)
+    })
+  })
+
+  describe('clearPlaythroughStatus', () => {
+    it('clears playthrough status and notes', () => {
+      const id = useGraphStore.getState().addNode('combat', { x: 0, y: 0 })
+      useGraphStore.getState().setPlaythroughStatus(id, 'modified', 'Note')
+      useGraphStore.getState().clearPlaythroughStatus(id)
+      const node = useGraphStore.getState().nodes[id]
+      expect(node.playthroughStatus).toBeUndefined()
+      expect(node.playthroughNotes).toBeUndefined()
+    })
+  })
+
   describe('reset', () => {
     it('clears all state', () => {
       useGraphStore.getState().addNode('event', { x: 0, y: 0 })

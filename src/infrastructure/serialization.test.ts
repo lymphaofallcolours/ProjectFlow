@@ -67,4 +67,27 @@ describe('validateCampaignSchema', () => {
     const broken = { ...campaign, schemaVersion: undefined }
     expect(validateCampaignSchema(broken)).toBe(false)
   })
+
+  it('accepts campaign without playthroughLog (backward compat)', () => {
+    const campaign = createTestCampaign()
+    const withoutLog = Object.fromEntries(
+      Object.entries(campaign).filter(([key]) => key !== 'playthroughLog'),
+    )
+    expect(validateCampaignSchema(withoutLog)).toBe(true)
+  })
+
+  it('returns false for non-array playthroughLog', () => {
+    const campaign = createTestCampaign()
+    const broken = { ...campaign, playthroughLog: 'not-an-array' }
+    expect(validateCampaignSchema(broken)).toBe(false)
+  })
+
+  it('accepts campaign with valid playthroughLog array', () => {
+    const campaign = createTestCampaign({
+      playthroughLog: [
+        { id: 's1', sessionDate: '2026-01-01', nodesVisited: [] },
+      ],
+    })
+    expect(validateCampaignSchema(campaign)).toBe(true)
+  })
 })

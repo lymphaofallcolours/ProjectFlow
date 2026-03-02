@@ -8,6 +8,7 @@ import type {
   ScrollDirection,
   NodeFields,
   FieldKey,
+  PlaythroughStatus,
 } from '@/domain/types'
 import {
   createNode,
@@ -20,6 +21,10 @@ import {
   updateNodeField,
   duplicateNode,
 } from '@/domain/graph-operations'
+import {
+  setNodePlaythroughStatus as setPlaythroughOp,
+  clearNodePlaythroughStatus as clearPlaythroughOp,
+} from '@/domain/playthrough-operations'
 
 type GraphState = {
   nodes: Record<string, StoryNode>
@@ -37,6 +42,8 @@ type GraphState = {
   changeSceneType: (id: string, sceneType: SceneType) => void
   updateField: (nodeId: string, fieldKey: FieldKey, value: NodeFields[FieldKey]) => void
   duplicateNode: (id: string) => string | null
+  setPlaythroughStatus: (nodeId: string, status: PlaythroughStatus, notes?: string) => void
+  clearPlaythroughStatus: (nodeId: string) => void
   setViewport: (viewport: ViewportState) => void
   setScrollDirection: (direction: ScrollDirection) => void
   selectNode: (id: string | null) => void
@@ -128,6 +135,22 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     })
     set((state) => ({ nodes: { ...state.nodes, [copy.id]: copy } }))
     return copy.id
+  },
+
+  setPlaythroughStatus: (nodeId, status, notes) => {
+    set((state) => {
+      const node = state.nodes[nodeId]
+      if (!node) return state
+      return { nodes: { ...state.nodes, [nodeId]: setPlaythroughOp(node, status, notes) } }
+    })
+  },
+
+  clearPlaythroughStatus: (nodeId) => {
+    set((state) => {
+      const node = state.nodes[nodeId]
+      if (!node) return state
+      return { nodes: { ...state.nodes, [nodeId]: clearPlaythroughOp(node) } }
+    })
   },
 
   setViewport: (viewport) => set({ viewport }),
