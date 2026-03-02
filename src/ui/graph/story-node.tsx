@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import { Handle, Position } from '@xyflow/react'
 import type { NodeProps, Node } from '@xyflow/react'
 import type { StoryNode } from '@/domain/types'
@@ -7,6 +7,7 @@ import { getShapePath, NODE_DIMENSIONS } from './node-shapes'
 import { useGraphStore } from '@/application/graph-store'
 import { useUIStore } from '@/application/ui-store'
 import { useLongPress } from '@/ui/hooks/use-long-press'
+import { searchNodesByEntity } from '@/domain/search'
 
 export type StoryNodeData = {
   storyNode: StoryNode
@@ -19,8 +20,20 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
   selected,
 }: NodeProps<StoryFlowNode>) {
   const scrollDirection = useGraphStore((s) => s.scrollDirection)
+  const nodes = useGraphStore((s) => s.nodes)
   const showRadialSubnodes = useUIStore((s) => s.showRadialSubnodes)
+  const entityHighlightFilter = useUIStore((s) => s.entityHighlightFilter)
   const { storyNode } = data
+
+  // Entity highlight: check if this node matches the filter
+  const isHighlighted = useMemo(() => {
+    if (!entityHighlightFilter) return null // null = no filter active
+    const results = searchNodesByEntity(
+      { [storyNode.id]: nodes[storyNode.id] ?? storyNode },
+      entityHighlightFilter.entityName,
+    )
+    return results.length > 0
+  }, [entityHighlightFilter, storyNode, nodes])
 
   const handleLongPress = useCallback(() => {
     showRadialSubnodes(storyNode.id)
@@ -36,10 +49,17 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
   const targetPos = scrollDirection === 'horizontal' ? Position.Left : Position.Top
   const sourcePos = scrollDirection === 'horizontal' ? Position.Right : Position.Bottom
 
+  // Dim if entity filter is active and this node doesn't match
+  const dimmed = isHighlighted === false
+
   return (
     <div
-      className="relative group"
-      style={{ width: dim.width, height: dim.height }}
+      className="relative group transition-opacity duration-200"
+      style={{
+        width: dim.width,
+        height: dim.height,
+        opacity: dimmed ? 0.25 : 1,
+      }}
       {...longPressHandlers}
     >
       {/* SVG shape with glass effect */}
