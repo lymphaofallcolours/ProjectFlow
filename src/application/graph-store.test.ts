@@ -578,4 +578,92 @@ describe('useGraphStore', () => {
       expect(useHistoryStore.getState().past).toHaveLength(historyBefore)
     })
   })
+
+  describe('createGroup', () => {
+    it('creates a group node with isGroup true', () => {
+      const gid = useGraphStore.getState().createGroup('event', { x: 0, y: 0 }, 'Act 1')
+      const group = useGraphStore.getState().nodes[gid]
+      expect(group.isGroup).toBe(true)
+      expect(group.label).toBe('Act 1')
+    })
+
+    it('saves history before creation', () => {
+      const before = useHistoryStore.getState().past.length
+      useGraphStore.getState().createGroup('combat', { x: 0, y: 0 })
+      expect(useHistoryStore.getState().past.length).toBe(before + 1)
+    })
+  })
+
+  describe('addToGroup', () => {
+    it('sets groupId on specified nodes', () => {
+      const gid = useGraphStore.getState().createGroup('event', { x: 0, y: 0 })
+      const nid = useGraphStore.getState().addNode('narration', { x: 50, y: 50 })
+      useGraphStore.getState().addToGroup(gid, [nid])
+      expect(useGraphStore.getState().nodes[nid].groupId).toBe(gid)
+    })
+  })
+
+  describe('removeFromGroup', () => {
+    it('clears groupId on specified nodes', () => {
+      const gid = useGraphStore.getState().createGroup('event', { x: 0, y: 0 })
+      const nid = useGraphStore.getState().addNode('narration', { x: 50, y: 50 })
+      useGraphStore.getState().addToGroup(gid, [nid])
+      useGraphStore.getState().removeFromGroup([nid])
+      expect(useGraphStore.getState().nodes[nid].groupId).toBeUndefined()
+    })
+  })
+
+  describe('deleteGroup', () => {
+    it('ungroups children when cascade is false', () => {
+      const gid = useGraphStore.getState().createGroup('event', { x: 0, y: 0 })
+      const nid = useGraphStore.getState().addNode('narration', { x: 50, y: 50 })
+      useGraphStore.getState().addToGroup(gid, [nid])
+      useGraphStore.getState().deleteGroup(gid, false)
+      expect(useGraphStore.getState().nodes[gid]).toBeUndefined()
+      expect(useGraphStore.getState().nodes[nid]).toBeDefined()
+      expect(useGraphStore.getState().nodes[nid].groupId).toBeUndefined()
+    })
+
+    it('deletes children when cascade is true', () => {
+      const gid = useGraphStore.getState().createGroup('event', { x: 0, y: 0 })
+      const nid = useGraphStore.getState().addNode('narration', { x: 50, y: 50 })
+      useGraphStore.getState().addToGroup(gid, [nid])
+      useGraphStore.getState().deleteGroup(gid, true)
+      expect(useGraphStore.getState().nodes[gid]).toBeUndefined()
+      expect(useGraphStore.getState().nodes[nid]).toBeUndefined()
+    })
+
+    it('is a no-op for missing group', () => {
+      useGraphStore.getState().deleteGroup('nonexistent', false)
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(0)
+    })
+  })
+
+  describe('toggleGroupCollapsed', () => {
+    it('toggles collapsed state on a group', () => {
+      const gid = useGraphStore.getState().createGroup('event', { x: 0, y: 0 })
+      expect(useGraphStore.getState().nodes[gid].collapsed).toBeUndefined()
+      useGraphStore.getState().toggleGroupCollapsed(gid)
+      expect(useGraphStore.getState().nodes[gid].collapsed).toBe(true)
+      useGraphStore.getState().toggleGroupCollapsed(gid)
+      expect(useGraphStore.getState().nodes[gid].collapsed).toBe(false)
+    })
+
+    it('is a no-op for non-group node', () => {
+      const nid = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().toggleGroupCollapsed(nid)
+      expect(useGraphStore.getState().nodes[nid].collapsed).toBeUndefined()
+    })
+  })
+
+  describe('moveNode with group', () => {
+    it('moves children when moving a group', () => {
+      const gid = useGraphStore.getState().createGroup('event', { x: 0, y: 0 })
+      const nid = useGraphStore.getState().addNode('narration', { x: 50, y: 100 })
+      useGraphStore.getState().addToGroup(gid, [nid])
+      useGraphStore.getState().moveNode(gid, { x: 100, y: 200 })
+      expect(useGraphStore.getState().nodes[gid].position).toEqual({ x: 100, y: 200 })
+      expect(useGraphStore.getState().nodes[nid].position).toEqual({ x: 150, y: 300 })
+    })
+  })
 })

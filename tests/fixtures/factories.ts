@@ -8,6 +8,7 @@ import type {
   SceneType,
   PlaythroughEntry,
   PlaythroughStatus,
+  Attachment,
 } from '@/domain/types'
 import type { Entity, EntityType, EntityRegistry } from '@/domain/entity-types'
 import { createEmptyNodeFields, createEmptyRichContent } from '@/domain/graph-operations'
@@ -92,6 +93,16 @@ export function createTestPlaythroughEntry(
     id: crypto.randomUUID(),
     sessionDate: '2026-03-02',
     nodesVisited: [],
+    ...overrides,
+  }
+}
+
+export function createTestAttachment(overrides?: Partial<Attachment>): Attachment {
+  return {
+    id: crypto.randomUUID(),
+    filename: 'test-image.png',
+    mimeType: 'image/png',
+    dataUrl: 'data:image/png;base64,iVBOR',
     ...overrides,
   }
 }

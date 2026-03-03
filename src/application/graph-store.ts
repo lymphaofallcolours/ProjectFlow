@@ -33,6 +33,15 @@ import {
   setNodePlaythroughStatus as setPlaythroughOp,
   clearNodePlaythroughStatus as clearPlaythroughOp,
 } from '@/domain/playthrough-operations'
+import {
+  createGroupNode as createGroupNodeOp,
+  addNodesToGroup as addNodesToGroupOp,
+  removeNodesFromGroup as removeNodesFromGroupOp,
+  deleteGroupKeepChildren as deleteGroupKeepChildrenOp,
+  deleteGroupWithChildren as deleteGroupWithChildrenOp,
+  toggleGroupCollapsed as toggleGroupCollapsedOp,
+  getGroupChildIds,
+} from '@/domain/group-operations'
 import { createSnapshot } from '@/domain/history-operations'
 import { useHistoryStore } from './history-store'
 
@@ -70,6 +79,11 @@ type GraphState = {
   setArcLabel: (nodeId: string, arcLabel: string | undefined) => void
   rewireEdge: (edgeId: string, newSource?: string, newTarget?: string) => void
   importSubgraph: (nodes: StoryNode[], edges: StoryEdge[]) => void
+  createGroup: (sceneType: SceneType, position: Position2D, label?: string) => string
+  addToGroup: (groupId: string, nodeIds: string[]) => void
+  removeFromGroup: (nodeIds: string[]) => void
+  deleteGroup: (groupId: string, cascade: boolean) => void
+  toggleGroupCollapsed: (groupId: string) => void
   undo: () => void
   redo: () => void
   pushHistory: () => void
@@ -145,7 +159,25 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     set((state) => {
       const node = state.nodes[id]
       if (!node) return state
-      return { nodes: { ...state.nodes, [id]: updateNodePosition(node, position) } }
+      const updatedNodes = { ...state.nodes, [id]: updateNodePosition(node, position) }
+
+      // If moving a group, translate all children by the same delta
+      if (node.isGroup) {
+        const dx = position.x - node.position.x
+        const dy = position.y - node.position.y
+        const childIds = getGroupChildIds(state.nodes, id)
+        for (const childId of childIds) {
+          const child = updatedNodes[childId]
+          if (child) {
+            updatedNodes[childId] = updateNodePosition(child, {
+              x: child.position.x + dx,
+              y: child.position.y + dy,
+            })
+          }
+        }
+      }
+
+      return { nodes: updatedNodes }
     })
   },
 
@@ -325,6 +357,41 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       nodes: { ...state.nodes, ...pasted.nodes },
       edges: { ...state.edges, ...pasted.edges },
       selectedNodeIds: new Set(Object.keys(pasted.nodes)),
+    }))
+  },
+
+  createGroup: (sceneType, position, label) => {
+    saveHistory()
+    const group = createGroupNodeOp(sceneType, position, label)
+    set((state) => ({ nodes: { ...state.nodes, [group.id]: group } }))
+    return group.id
+  },
+
+  addToGroup: (groupId, nodeIds) => {
+    saveHistory()
+    set((state) => ({ nodes: addNodesToGroupOp(state.nodes, groupId, nodeIds) }))
+  },
+
+  removeFromGroup: (nodeIds) => {
+    saveHistory()
+    set((state) => ({ nodes: removeNodesFromGroupOp(state.nodes, nodeIds) }))
+  },
+
+  deleteGroup: (groupId, cascade) => {
+    if (!get().nodes[groupId]) return
+    saveHistory()
+    if (cascade) {
+      set((state) => deleteGroupWithChildrenOp(state.nodes, state.edges, groupId))
+    } else {
+      set((state) => deleteGroupKeepChildrenOp(state.nodes, state.edges, groupId))
+    }
+  },
+
+  toggleGroupCollapsed: (groupId) => {
+    const node = get().nodes[groupId]
+    if (!node?.isGroup) return
+    set((state) => ({
+      nodes: { ...state.nodes, [groupId]: toggleGroupCollapsedOp(node) },
     }))
   },
 
