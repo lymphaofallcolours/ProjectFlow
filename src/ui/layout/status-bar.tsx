@@ -8,6 +8,7 @@ import { useUIStore } from '@/application/ui-store'
 export function StatusBar() {
   const nodeCount = useGraphStore((s) => Object.keys(s.nodes).length)
   const edgeCount = useGraphStore((s) => Object.keys(s.edges).length)
+  const groupCount = useGraphStore((s) => Object.values(s.nodes).filter((n) => n.isGroup).length)
   const selectionCount = useGraphStore((s) => s.selectedNodeIds.size)
   const entityCount = useEntityStore((s) => Object.keys(s.entities).length)
   const name = useCampaignStore((s) => s.name)
@@ -32,6 +33,12 @@ export function StatusBar() {
       <span>{edgeCount} edge{edgeCount !== 1 ? 's' : ''}</span>
       <span className="opacity-30">|</span>
       <span>{entityCount} entit{entityCount !== 1 ? 'ies' : 'y'}</span>
+      {groupCount > 0 && (
+        <>
+          <span className="opacity-30">|</span>
+          <span>{groupCount} group{groupCount !== 1 ? 's' : ''}</span>
+        </>
+      )}
       {selectionCount > 1 && (
         <>
           <span className="opacity-30">|</span>

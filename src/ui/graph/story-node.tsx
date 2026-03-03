@@ -10,6 +10,7 @@ import { useSessionStore } from '@/application/session-store'
 import { useLongPress } from '@/ui/hooks/use-long-press'
 import { buildDiffMap, PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
 import { HighlightContext } from './highlight-context'
+import { getGroupChildIds } from '@/domain/group-operations'
 
 export type StoryNodeData = {
   storyNode: StoryNode
@@ -27,7 +28,15 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
   const diffOverlayActive = useSessionStore((s) => s.diffOverlayActive)
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const playthroughLog = useSessionStore((s) => s.playthroughLog)
+  const toggleGroupCollapsed = useGraphStore((s) => s.toggleGroupCollapsed)
+  const allNodes = useGraphStore((s) => s.nodes)
   const { storyNode } = data
+
+  // Group child count (only computed for group nodes)
+  const childCount = useMemo(() => {
+    if (!storyNode.isGroup) return 0
+    return getGroupChildIds(allNodes, storyNode.id).length
+  }, [storyNode.isGroup, storyNode.id, allNodes])
 
   // Entity highlight: read from canvas-level context (O(1) per node)
   const highlightSet = useContext(HighlightContext)
@@ -49,6 +58,14 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
   const handleLongPress = useCallback(() => {
     showRadialSubnodes(storyNode.id)
   }, [showRadialSubnodes, storyNode.id])
+
+  const handleCollapseToggle = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      toggleGroupCollapsed(storyNode.id)
+    },
+    [toggleGroupCollapsed, storyNode.id],
+  )
 
   const longPressHandlers = useLongPress(handleLongPress)
 
@@ -89,6 +106,11 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
       }}
       {...longPressHandlers}
     >
+      {/* Stacked shadow layers — visible when group is collapsed */}
+      {storyNode.isGroup && storyNode.collapsed && (
+        <GroupStackedShadow dim={dim} shapePath={shapePath} />
+      )}
+
       {/* SVG shape with glass effect — uses shared defs */}
       <svg
         width={dim.width}
@@ -96,6 +118,18 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
         viewBox={`0 0 ${dim.width} ${dim.height}`}
         className="absolute inset-0"
       >
+        {/* Group dashed border ring */}
+        {storyNode.isGroup && (
+          <path
+            d={shapePath}
+            fill="none"
+            stroke={accentColor}
+            strokeWidth="1.5"
+            strokeDasharray="4 3"
+            opacity="0.5"
+          />
+        )}
+
         {/* Diff overlay ring — shown behind glass fill when diff is active */}
         {diffRingColor && (
           <path
@@ -156,9 +190,28 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
         <span
           className="text-[9px] mt-0.5 opacity-50 text-text-secondary"
         >
-          {config.label}
+          {storyNode.isGroup ? `${childCount} node${childCount !== 1 ? 's' : ''}` : config.label}
         </span>
       </div>
+
+      {/* Group collapse/expand chevron — top right */}
+      {storyNode.isGroup && (
+        <button
+          onClick={handleCollapseToggle}
+          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-surface-glass
+            border border-surface-glass-border flex items-center justify-center
+            text-text-muted hover:text-text-primary hover:bg-surface-glass-border
+            transition-colors duration-100 pointer-events-auto cursor-pointer z-10"
+          title={storyNode.collapsed ? 'Expand group' : 'Collapse group'}
+          data-testid="group-collapse-toggle"
+        >
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+            {storyNode.collapsed
+              ? <path d="M3 2 L7 5 L3 8Z" />
+              : <path d="M2 3 L5 7 L8 3Z" />}
+          </svg>
+        </button>
+      )}
 
       {/* Status dot — bottom right, always visible when status is set */}
       {statusDotColor && (
@@ -187,3 +240,29 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
     </div>
   )
 })
+
+/** Stacked shadow layers behind collapsed group nodes */
+function GroupStackedShadow({ dim, shapePath }: { dim: { width: number; height: number }; shapePath: string }) {
+  return (
+    <>
+      <svg
+        width={dim.width}
+        height={dim.height}
+        viewBox={`0 0 ${dim.width} ${dim.height}`}
+        className="absolute"
+        style={{ top: 6, left: 4, opacity: 0.15 }}
+      >
+        <path d={shapePath} fill="var(--color-surface-glass-border)" stroke="none" />
+      </svg>
+      <svg
+        width={dim.width}
+        height={dim.height}
+        viewBox={`0 0 ${dim.width} ${dim.height}`}
+        className="absolute"
+        style={{ top: 3, left: 2, opacity: 0.25 }}
+      >
+        <path d={shapePath} fill="var(--color-surface-glass-border)" stroke="none" />
+      </svg>
+    </>
+  )
+}

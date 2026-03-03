@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Trash2, Copy, Scissors, Clipboard, CheckCircle, Edit3, XCircle, Circle, Tag, Download } from 'lucide-react'
+import { Trash2, Copy, Scissors, Clipboard, CheckCircle, Edit3, XCircle, Circle, Tag, Download, FolderOpen, FolderClosed, Ungroup, FolderX, Minus } from 'lucide-react'
 import type { SceneType, PlaythroughStatus } from '@/domain/types'
 import { SCENE_TYPES, SCENE_TYPE_CONFIG } from '@/domain/types'
 import { PLAYTHROUGH_STATUSES, PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
@@ -49,6 +49,15 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
   const duplicateSelectedNodes = useGraphStore((s) => s.duplicateSelectedNodes)
   const copySelectedNodes = useGraphStore((s) => s.copySelectedNodes)
   const cutSelectedNodes = useGraphStore((s) => s.cutSelectedNodes)
+  const createGroup = useGraphStore((s) => s.createGroup)
+  const addToGroup = useGraphStore((s) => s.addToGroup)
+  const removeFromGroup = useGraphStore((s) => s.removeFromGroup)
+  const deleteGroup = useGraphStore((s) => s.deleteGroup)
+  const toggleGroupCollapsed = useGraphStore((s) => s.toggleGroupCollapsed)
+  const nodeIsGroup = useGraphStore((s) => s.nodes[nodeId]?.isGroup)
+  const nodeGroupId = useGraphStore((s) => s.nodes[nodeId]?.groupId)
+  const nodeCollapsed = useGraphStore((s) => s.nodes[nodeId]?.collapsed)
+  const nodePosition = useGraphStore((s) => s.nodes[nodeId]?.position)
   const ref = useRef<HTMLDivElement>(null)
 
   const [awaitingNotes, setAwaitingNotes] = useState(false)
@@ -92,6 +101,37 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
     await saveSubgraphToFile(json, 'subgraph.pfsg.json')
     onClose()
   }, [selectedNodeIds, onClose])
+
+  const handleGroupSelected = useCallback(() => {
+    const pos = nodePosition ?? { x: 0, y: 0 }
+    const groupId = createGroup(currentType ?? 'narration', { x: pos.x - 30, y: pos.y - 60 }, 'Group')
+    const ids = Array.from(selectedNodeIds).filter((id) => {
+      const n = useGraphStore.getState().nodes[id]
+      return n && !n.isGroup
+    })
+    if (ids.length > 0) addToGroup(groupId, ids)
+    onClose()
+  }, [nodePosition, createGroup, currentType, selectedNodeIds, addToGroup, onClose])
+
+  const handleUngroup = useCallback(() => {
+    deleteGroup(nodeId, false)
+    onClose()
+  }, [deleteGroup, nodeId, onClose])
+
+  const handleDeleteGroupWithChildren = useCallback(() => {
+    deleteGroup(nodeId, true)
+    onClose()
+  }, [deleteGroup, nodeId, onClose])
+
+  const handleToggleCollapse = useCallback(() => {
+    toggleGroupCollapsed(nodeId)
+    onClose()
+  }, [toggleGroupCollapsed, nodeId, onClose])
+
+  const handleRemoveFromGroup = useCallback(() => {
+    removeFromGroup([nodeId])
+    onClose()
+  }, [removeFromGroup, nodeId, onClose])
 
   const handleChangeType = useCallback(
     (sceneType: SceneType) => {
@@ -167,6 +207,14 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
             icon={<Download size={14} className="text-text-muted" />}
             label="Export Subgraph"
             onClick={handleExportSubgraph}
+          />
+
+          <div className="h-px bg-border my-1 mx-2" />
+
+          <MenuItem
+            icon={<FolderClosed size={14} className="text-text-muted" />}
+            label="Group Selected"
+            onClick={handleGroupSelected}
           />
 
           <div className="h-px bg-border my-1 mx-2" />
@@ -262,6 +310,46 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
               onConfirm={(notes) => handleSetStatus('modified', notes)}
               onCancel={onClose}
             />
+          )}
+
+          {/* Group operations — shown for group nodes */}
+          {nodeIsGroup && (
+            <>
+              <div className="h-px bg-border my-1 mx-2" />
+              <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-text-muted font-medium">
+                Group
+              </div>
+              <MenuItem
+                icon={nodeCollapsed
+                  ? <FolderOpen size={14} className="text-text-muted" />
+                  : <FolderClosed size={14} className="text-text-muted" />}
+                label={nodeCollapsed ? 'Expand' : 'Collapse'}
+                onClick={handleToggleCollapse}
+              />
+              <MenuItem
+                icon={<Ungroup size={14} className="text-text-muted" />}
+                label="Ungroup"
+                onClick={handleUngroup}
+              />
+              <MenuItem
+                icon={<FolderX size={14} className="text-status-skipped" />}
+                label="Delete Group + Children"
+                onClick={handleDeleteGroupWithChildren}
+                destructive
+              />
+            </>
+          )}
+
+          {/* Remove from group — shown for grouped child nodes */}
+          {nodeGroupId && !nodeIsGroup && (
+            <>
+              <div className="h-px bg-border my-1 mx-2" />
+              <MenuItem
+                icon={<Minus size={14} className="text-text-muted" />}
+                label="Remove from Group"
+                onClick={handleRemoveFromGroup}
+              />
+            </>
           )}
 
           <div className="h-px bg-border my-1 mx-2" />
