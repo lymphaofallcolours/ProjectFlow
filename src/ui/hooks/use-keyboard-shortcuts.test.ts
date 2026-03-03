@@ -182,4 +182,14 @@ describe('keyboard shortcut actions', () => {
       expect(useGraphStore.getState().selectedNodeIds.size).toBe(0)
     })
   })
+
+  describe('Ctrl+Shift+R → entity graph', () => {
+    it('toggles entity relationship graph', () => {
+      expect(useUIStore.getState().entityGraphOpen).toBe(false)
+      useUIStore.getState().toggleEntityGraph()
+      expect(useUIStore.getState().entityGraphOpen).toBe(true)
+      useUIStore.getState().toggleEntityGraph()
+      expect(useUIStore.getState().entityGraphOpen).toBe(false)
+    })
+  })
 })

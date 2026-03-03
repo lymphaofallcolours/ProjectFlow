@@ -33,6 +33,9 @@ type UIState = {
   // Template manager
   templateManagerOpen: boolean
 
+  // Entity relationship graph
+  entityGraphOpen: boolean
+
   // Auto-save
   autoSaveEnabled: boolean
   autoSaveIntervalMs: number
@@ -52,6 +55,7 @@ type UIState = {
   toggleSearchPanel: () => void
   setEntityHighlightFilter: (filter: { entityName: string; entityType?: string } | null) => void
   toggleTemplateManager: () => void
+  toggleEntityGraph: () => void
   toggleAutoSave: () => void
   setAutoSaveIntervalMs: (ms: number) => void
   setAutoSaveStatus: (status: 'saving' | 'saved' | null) => void
@@ -67,6 +71,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   searchPanelOpen: false,
   entityHighlightFilter: null,
   templateManagerOpen: false,
+  entityGraphOpen: false,
   autoSaveEnabled: false,
   autoSaveIntervalMs: 60_000,
   autoSaveStatus: null,
@@ -116,6 +121,9 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   toggleTemplateManager: () =>
     set((state) => ({ templateManagerOpen: !state.templateManagerOpen })),
+
+  toggleEntityGraph: () =>
+    set((state) => ({ entityGraphOpen: !state.entityGraphOpen })),
 
   toggleAutoSave: () =>
     set((state) => ({ autoSaveEnabled: !state.autoSaveEnabled })),

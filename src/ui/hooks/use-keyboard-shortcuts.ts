@@ -104,6 +104,13 @@ export function useKeyboardShortcuts() {
         return
       }
 
+      // Ctrl+Shift+R → toggle entity relationship graph
+      if (ctrl && e.shiftKey && e.key === 'R') {
+        e.preventDefault()
+        useUIStore.getState().toggleEntityGraph()
+        return
+      }
+
       // Escape → priority chain dismissal
       if (e.key === 'Escape') {
         e.preventDefault()
@@ -121,7 +128,12 @@ export function useKeyboardShortcuts() {
           ui.hideRadialSubnodes()
           return
         }
-        // 3. Close panels (search, entity sidebar, legend, timeline)
+        // 3. Close entity graph
+        if (ui.entityGraphOpen) {
+          ui.toggleEntityGraph()
+          return
+        }
+        // 4. Close panels (search, entity sidebar, legend, timeline)
         if (ui.searchPanelOpen) {
           ui.toggleSearchPanel()
           return

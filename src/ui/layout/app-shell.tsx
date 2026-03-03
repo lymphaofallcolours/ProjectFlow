@@ -7,6 +7,7 @@ import { LegendPanel } from '@/ui/components/legend-panel'
 import { SearchPanel } from '@/ui/components/search-panel'
 import { SessionTimeline } from '@/ui/components/session-timeline'
 import { TemplateManager } from '@/ui/components/template-manager'
+import { EntityRelationshipGraph } from '@/ui/entities/entity-relationship-graph'
 import { PWAInstallPrompt } from '@/ui/components/pwa-prompt'
 import { useKeyboardShortcuts } from '@/ui/hooks/use-keyboard-shortcuts'
 import { useAutoSave } from '@/ui/hooks/use-auto-save'
@@ -26,6 +27,7 @@ export function AppShell() {
         <TemplateManager />
         <SessionTimeline />
         <LegendPanel />
+        <EntityRelationshipGraph />
       </main>
       <StatusBar />
       <PWAInstallPrompt />

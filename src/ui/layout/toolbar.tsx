@@ -17,6 +17,7 @@ import {
   Timer,
   Upload,
   LayoutTemplate,
+  Network,
 } from 'lucide-react'
 import { useUIStore } from '@/application/ui-store'
 import { useGraphStore } from '@/application/graph-store'
@@ -37,6 +38,7 @@ export function Toolbar() {
   const setScrollDirection = useGraphStore((s) => s.setScrollDirection)
   const toggleEntitySidebar = useUIStore((s) => s.toggleEntitySidebar)
   const toggleTemplateManager = useUIStore((s) => s.toggleTemplateManager)
+  const toggleEntityGraph = useUIStore((s) => s.toggleEntityGraph)
   const toggleLegendPanel = useUIStore((s) => s.toggleLegendPanel)
   const toggleSearchPanel = useUIStore((s) => s.toggleSearchPanel)
   const diffOverlayActive = useSessionStore((s) => s.diffOverlayActive)
@@ -126,6 +128,7 @@ export function Toolbar() {
       <div className="flex items-center gap-1">
         <ToolbarButton icon={<Search size={16} />} label="Search" onClick={toggleSearchPanel} />
         <ToolbarButton icon={<Users size={16} />} label="Entities" onClick={toggleEntitySidebar} />
+        <ToolbarButton icon={<Network size={16} />} label="Relationships" onClick={toggleEntityGraph} />
         <ToolbarButton icon={<LayoutTemplate size={16} />} label="Templates" onClick={toggleTemplateManager} />
         <ToolbarButton icon={<HelpCircle size={16} />} label="Legend" onClick={toggleLegendPanel} />
 

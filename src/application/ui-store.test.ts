@@ -12,6 +12,7 @@ beforeEach(() => {
     searchPanelOpen: false,
     entityHighlightFilter: null,
     templateManagerOpen: false,
+    entityGraphOpen: false,
     autoSaveEnabled: false,
     autoSaveIntervalMs: 60_000,
     autoSaveStatus: null,
@@ -187,6 +188,19 @@ describe('useUIStore', () => {
       expect(useUIStore.getState().templateManagerOpen).toBe(true)
       useUIStore.getState().toggleTemplateManager()
       expect(useUIStore.getState().templateManagerOpen).toBe(false)
+    })
+  })
+
+  describe('entity graph', () => {
+    it('defaults to closed', () => {
+      expect(useUIStore.getState().entityGraphOpen).toBe(false)
+    })
+
+    it('toggles entity graph open/closed', () => {
+      useUIStore.getState().toggleEntityGraph()
+      expect(useUIStore.getState().entityGraphOpen).toBe(true)
+      useUIStore.getState().toggleEntityGraph()
+      expect(useUIStore.getState().entityGraphOpen).toBe(false)
     })
   })
 })
