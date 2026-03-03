@@ -1,8 +1,12 @@
 import { useState, useCallback } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Trash2, ChevronDown, ChevronRight } from 'lucide-react'
 import { ENTITY_TYPE_CONFIGS } from '@/domain/entity-types'
 import { useEntityStore } from '@/application/entity-store'
 import { useUIStore } from '@/application/ui-store'
+import { EntityPortrait } from './entity-portrait'
+import { EntityHistoryEditor } from './entity-history-editor'
+import { EntityRelationshipsEditor } from './entity-relationships-editor'
+import { EntityCustomFields } from './entity-custom-fields'
 
 type EntityProfileProps = {
   entityId: string
@@ -14,8 +18,17 @@ export function EntityProfile({ entityId }: EntityProfileProps) {
   const removeEntity = useEntityStore((s) => s.removeEntity)
   const selectEntity = useUIStore((s) => s.selectEntity)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [sections, setSections] = useState({
+    history: true,
+    relationships: true,
+    custom: false,
+  })
 
   const config = ENTITY_TYPE_CONFIGS.find((c) => c.type === entity?.type)
+
+  const toggleSection = useCallback((key: keyof typeof sections) => {
+    setSections((prev) => ({ ...prev, [key]: !prev[key] }))
+  }, [])
 
   const handleDelete = useCallback(() => {
     if (confirmDelete) {
@@ -36,8 +49,11 @@ export function EntityProfile({ entityId }: EntityProfileProps) {
 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto">
+      {/* Portrait */}
+      <EntityPortrait entityId={entityId} entity={entity} />
+
       {/* Type badge */}
-      <div className="px-4 pt-4 pb-2">
+      <div className="px-4 pb-2 flex justify-center">
         <span
           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
           style={{
@@ -56,7 +72,7 @@ export function EntityProfile({ entityId }: EntityProfileProps) {
           value={entity.name}
           onChange={(e) => updateEntity(entityId, { name: e.target.value })}
           className="w-full bg-transparent text-base font-semibold text-text-primary outline-none
-            border-b border-transparent focus:border-border transition-colors"
+            border-b border-transparent focus:border-border transition-colors text-center"
           style={{ fontFamily: 'var(--font-display)' }}
         />
       </div>
@@ -97,31 +113,37 @@ export function EntityProfile({ entityId }: EntityProfileProps) {
         />
       </div>
 
-      {/* Status history */}
-      {entity.statusHistory.length > 0 && (
-        <div className="px-4 pb-3">
-          <label className="block text-[10px] font-medium text-text-muted uppercase tracking-wider mb-1.5">
-            Status History
-          </label>
-          <div className="space-y-1">
-            {entity.statusHistory.map((entry, i) => (
-              <div key={i} className="flex items-center gap-2 text-[11px]">
-                <span
-                  className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                  style={{
-                    backgroundColor: `${config?.color}18`,
-                    color: config?.color,
-                  }}
-                >
-                  +{entry.status}
-                </span>
-                {entry.note && (
-                  <span className="text-text-muted truncate">{entry.note}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Collapsible: Status History */}
+      <SectionHeader
+        label="Status History"
+        open={sections.history}
+        onToggle={() => toggleSection('history')}
+        count={entity.statusHistory.length}
+      />
+      {sections.history && (
+        <EntityHistoryEditor entityId={entityId} entity={entity} />
+      )}
+
+      {/* Collapsible: Relationships */}
+      <SectionHeader
+        label="Relationships"
+        open={sections.relationships}
+        onToggle={() => toggleSection('relationships')}
+        count={entity.relationships?.length ?? 0}
+      />
+      {sections.relationships && (
+        <EntityRelationshipsEditor entityId={entityId} entity={entity} />
+      )}
+
+      {/* Collapsible: Custom Fields */}
+      <SectionHeader
+        label="Custom Fields"
+        open={sections.custom}
+        onToggle={() => toggleSection('custom')}
+        count={Object.keys(entity.custom).length}
+      />
+      {sections.custom && (
+        <EntityCustomFields entityId={entityId} entity={entity} />
       )}
 
       {/* Spacer */}
@@ -139,5 +161,32 @@ export function EntityProfile({ entityId }: EntityProfileProps) {
         </button>
       </div>
     </div>
+  )
+}
+
+function SectionHeader({
+  label,
+  open,
+  onToggle,
+  count,
+}: {
+  label: string
+  open: boolean
+  onToggle: () => void
+  count: number
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      className="flex items-center gap-1.5 px-4 py-1.5 text-[10px] font-medium text-text-muted
+        uppercase tracking-wider hover:text-text-secondary transition-colors cursor-pointer
+        border-t border-border w-full text-left"
+    >
+      {open ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+      {label}
+      {count > 0 && (
+        <span className="ml-auto text-[9px] tabular-nums">{count}</span>
+      )}
+    </button>
   )
 }
