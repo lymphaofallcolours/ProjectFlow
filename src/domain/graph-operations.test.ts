@@ -21,7 +21,7 @@ import {
   pasteSubgraph,
   rewireEdge,
 } from './graph-operations'
-import { createTestNode, createTestEdge, createPopulatedNodeFields } from '../../tests/fixtures/factories'
+import { createTestNode, createTestGroupNode, createTestEdge, createPopulatedNodeFields } from '../../tests/fixtures/factories'
 
 describe('createEmptyRichContent', () => {
   it('returns empty markdown', () => {
@@ -298,6 +298,19 @@ describe('removeNodes', () => {
     const result = removeNodes(nodes, {}, [])
     expect(Object.keys(result.nodes)).toHaveLength(1)
   })
+
+  it('ungroups children when removing a group node', () => {
+    const group = createTestGroupNode({ id: 'g1' })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g1' })
+    const c2 = createTestNode({ id: 'c2', groupId: 'g1' })
+    const nodes = { g1: group, c1, c2 }
+
+    const result = removeNodes(nodes, {}, ['g1'])
+    expect(result.nodes['g1']).toBeUndefined()
+    expect(result.nodes['c1']).toBeDefined()
+    expect(result.nodes['c1'].groupId).toBeUndefined()
+    expect(result.nodes['c2'].groupId).toBeUndefined()
+  })
 })
 
 describe('duplicateNodes', () => {
@@ -348,6 +361,27 @@ describe('duplicateNodes', () => {
     const result = duplicateNodes(nodes, {}, ['n1'], { x: 30, y: 40 })
     const copy = Object.values(result.nodes)[0]
     expect(copy.position).toEqual({ x: 130, y: 240 })
+  })
+
+  it('remaps groupId when duplicating group with children', () => {
+    const group = createTestGroupNode({ id: 'g1' })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g1' })
+    const nodes = { g1: group, c1 }
+
+    const result = duplicateNodes(nodes, {}, ['g1', 'c1'], { x: 50, y: 0 })
+    const newGroupId = result.idMap['g1']
+    const newChildId = result.idMap['c1']
+    expect(result.nodes[newChildId].groupId).toBe(newGroupId)
+  })
+
+  it('clears groupId when parent group is not in selection', () => {
+    const group = createTestGroupNode({ id: 'g1' })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g1' })
+    const nodes = { g1: group, c1 }
+
+    const result = duplicateNodes(nodes, {}, ['c1'], { x: 50, y: 0 })
+    const newChild = Object.values(result.nodes)[0]
+    expect(newChild.groupId).toBeUndefined()
   })
 })
 
@@ -425,6 +459,21 @@ describe('extractSubgraph', () => {
     const result = extractSubgraph(nodes, {}, ['n1', 'n99'])
     expect(result.nodes).toHaveLength(1)
   })
+
+  it('auto-includes children when extracting a group', () => {
+    const group = createTestGroupNode({ id: 'g1' })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g1' })
+    const c2 = createTestNode({ id: 'c2', groupId: 'g1' })
+    const other = createTestNode({ id: 'n1' })
+    const nodes = { g1: group, c1, c2, n1: other }
+    const edges = {
+      e1: createTestEdge({ id: 'e1', source: 'c1', target: 'c2' }),
+    }
+
+    const result = extractSubgraph(nodes, edges, ['g1'])
+    expect(result.nodes).toHaveLength(3) // group + 2 children
+    expect(result.edges).toHaveLength(1) // internal edge included
+  })
 })
 
 describe('pasteSubgraph', () => {
@@ -452,6 +501,23 @@ describe('pasteSubgraph', () => {
     const newNodeIds = new Set(Object.keys(result.nodes))
     expect(newNodeIds.has(newEdges[0].source)).toBe(true)
     expect(newNodeIds.has(newEdges[0].target)).toBe(true)
+  })
+
+  it('remaps groupId references in pasted group', () => {
+    const group = createTestGroupNode({ id: 'g1' })
+    const child = createTestNode({ id: 'c1', groupId: 'g1' })
+    const result = pasteSubgraph([group, child], [], { x: 50, y: 50 })
+    const newNodes = Object.values(result.nodes)
+    const newGroup = newNodes.find((n) => n.isGroup)!
+    const newChild = newNodes.find((n) => !n.isGroup)!
+    expect(newChild.groupId).toBe(newGroup.id)
+  })
+
+  it('clears groupId when parent group is not in pasted set', () => {
+    const child = createTestNode({ id: 'c1', groupId: 'g-missing' })
+    const result = pasteSubgraph([child], [], { x: 0, y: 0 })
+    const newChild = Object.values(result.nodes)[0]
+    expect(newChild.groupId).toBeUndefined()
   })
 })
 

@@ -166,9 +166,30 @@ export function removeNodes(
   nodeIds: string[],
 ): { nodes: Record<string, StoryNode>; edges: Record<string, StoryEdge> } {
   const removeSet = new Set(nodeIds)
-  const remainingNodes = Object.fromEntries(
-    Object.entries(nodes).filter(([id]) => !removeSet.has(id)),
-  )
+
+  // If removing a group, ungroup its children
+  for (const id of nodeIds) {
+    const node = nodes[id]
+    if (node?.isGroup) {
+      for (const [childId, child] of Object.entries(nodes)) {
+        if (child.groupId === id && !removeSet.has(childId)) {
+          // Will be cleared below via the filter
+        }
+      }
+    }
+  }
+
+  const remainingNodes: Record<string, StoryNode> = {}
+  for (const [id, node] of Object.entries(nodes)) {
+    if (removeSet.has(id)) continue
+    // Clear groupId if the parent group is being removed
+    if (node.groupId && removeSet.has(node.groupId)) {
+      remainingNodes[id] = { ...node, groupId: undefined }
+    } else {
+      remainingNodes[id] = node
+    }
+  }
+
   const remainingEdges = Object.fromEntries(
     Object.entries(edges).filter(
       ([, edge]) => !removeSet.has(edge.source) && !removeSet.has(edge.target),
@@ -200,6 +221,16 @@ export function duplicateNodes(
     })
     idMap[id] = copy.id
     newNodes[copy.id] = copy
+  }
+
+  // Remap groupId references within the duplicated set
+  for (const newNode of Object.values(newNodes)) {
+    if (newNode.groupId && idMap[newNode.groupId]) {
+      newNode.groupId = idMap[newNode.groupId]
+    } else if (newNode.groupId) {
+      // Parent group not in selection — clear groupId
+      delete newNode.groupId
+    }
   }
 
   const newEdges: Record<string, StoryEdge> = {}
@@ -249,7 +280,20 @@ export function extractSubgraph(
   nodeIds: string[],
 ): { nodes: StoryNode[]; edges: StoryEdge[] } {
   const idSet = new Set(nodeIds)
-  const subNodes = nodeIds
+
+  // Auto-include children of selected groups
+  for (const id of nodeIds) {
+    const node = nodes[id]
+    if (node?.isGroup) {
+      for (const [childId, child] of Object.entries(nodes)) {
+        if (child.groupId === id) {
+          idSet.add(childId)
+        }
+      }
+    }
+  }
+
+  const subNodes = [...idSet]
     .map((id) => nodes[id])
     .filter((n): n is StoryNode => n !== undefined)
   const subEdges = Object.values(edges).filter(
@@ -279,6 +323,15 @@ export function pasteSubgraph(
       position: { x: node.position.x + offset.x, y: node.position.y + offset.y },
       fields: structuredClone(node.fields),
       metadata: { createdAt: now, updatedAt: now, tags: [...node.metadata.tags] },
+    }
+  }
+
+  // Remap groupId references within the pasted set
+  for (const newNode of Object.values(newNodes)) {
+    if (newNode.groupId && idMap[newNode.groupId]) {
+      newNode.groupId = idMap[newNode.groupId]
+    } else if (newNode.groupId) {
+      delete newNode.groupId
     }
   }
 

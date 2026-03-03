@@ -30,6 +30,10 @@ export function createTestNode(overrides?: Partial<StoryNode>): StoryNode {
   }
 }
 
+export function createTestGroupNode(overrides?: Partial<StoryNode>): StoryNode {
+  return createTestNode({ label: 'Test Group', isGroup: true, ...overrides })
+}
+
 export function createTestEdge(overrides?: Partial<StoryEdge>): StoryEdge {
   return {
     id: crypto.randomUUID(),

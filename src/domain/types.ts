@@ -159,6 +159,10 @@ export type StoryNode = {
   playthroughStatus?: PlaythroughStatus
   playthroughNotes?: string
   metadata: NodeMetadata
+  // Grouping (Phase 7)
+  isGroup?: boolean
+  groupId?: string
+  collapsed?: boolean
 }
 
 // --- Story Edge ---
