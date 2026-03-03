@@ -16,7 +16,9 @@ src/
 │   ├── entity-tag-parser.ts    # Regex parser for entity tagging DSL ([!%$~&]?[@#]Name(+status)?)
 │   ├── entity-operations.ts    # Pure CRUD for Entity and EntityRegistry (create, update, status)
 │   ├── search.ts               # Full-text and entity-aware node search across all fields
-│   ├── graph-operations.ts     # Pure functions: createNode, removeNode, updateField, duplicate, clipboard, rewire, etc.
+│   ├── graph-operations.ts     # Pure functions: createNode, removeNode, updateField, duplicate, clipboard, rewire, etc. (group-aware)
+│   ├── group-operations.ts     # Pure group CRUD: create, add/remove children, collapse, delete (keep/cascade), boundary/internal edges
+│   ├── attachment-operations.ts # Pure attachment CRUD: create, validate size, add/remove from RichContent, campaign size estimation
 │   ├── subgraph-operations.ts  # Subgraph file format (.pfsg.json), serialize/deserialize/validate for cross-campaign export/import
 │   ├── history-operations.ts   # HistorySnapshot type, createSnapshot, MAX_HISTORY_SIZE
 │   ├── campaign-operations.ts  # createCampaign, createDefaultSettings, schema version
@@ -24,7 +26,7 @@ src/
 │   └── playthrough-operations.ts # Session CRUD, node visit tracking, diff maps, markdown export
 │
 ├── application/                # State management, orchestration
-│   ├── graph-store.ts          # useGraphStore — nodes, edges, viewport, selection, clipboard, undo/redo, importSubgraph
+│   ├── graph-store.ts          # useGraphStore — nodes, edges, viewport, selection, clipboard, undo/redo, importSubgraph, group actions
 │   ├── history-store.ts        # useHistoryStore — past/future snapshot stacks for undo/redo
 │   ├── campaign-store.ts       # useCampaignStore — campaign metadata + custom field template CRUD
 │   ├── entity-store.ts         # useEntityStore — entity CRUD, registry, status tracking
@@ -33,7 +35,7 @@ src/
 │   └── campaign-actions.ts     # assemble/hydrate/save/load/auto-save campaign orchestration (incl. entity + session + history)
 │
 ├── infrastructure/             # Browser APIs, serialization, file I/O
-│   ├── file-io.ts              # Save/load JSON via File System Access API + fallback, file handle caching for auto-save, subgraph file I/O
+│   ├── file-io.ts              # Save/load JSON via File System Access API + fallback, file handle caching for auto-save, subgraph file I/O, readFileAsDataUrl
 │   ├── serialization.ts        # Campaign ↔ JSON with schema versioning (validates entityRegistry + playthroughLog + customFieldTemplates)
 │   ├── markdown-export.ts      # Blob download helper for session markdown + entity codex export
 │   └── theme.ts                # Dark/light mode persistence (localStorage + .dark class)
@@ -47,12 +49,12 @@ src/
 │   │   └── pwa-prompt.tsx     # Dismissable PWA install banner (beforeinstallprompt)
 │   ├── graph/                  # React Flow canvas and custom nodes/edges
 │   │   ├── graph-canvas.tsx    # ReactFlow wrapper, interaction handlers, context menus, shared SVG defs, HighlightContext provider
-│   │   ├── story-node.tsx      # Memoized custom node with shared SVG glass shapes + long press + highlight context + diff overlay ring/dot
+│   │   ├── story-node.tsx      # Memoized custom node with shared SVG glass shapes + long press + highlight context + diff overlay ring/dot + group collapse/expand + stacked shadow
 │   │   ├── highlight-context.tsx # React context providing Set<string> of entity-highlighted node IDs
 │   │   ├── story-edge.tsx      # Custom edge with glass label pill + style-based rendering (default/conditional/secret)
 │   │   ├── node-shapes.ts      # SVG path data for 5 shapes (circle, square, triangle, diamond, hexagon)
-│   │   ├── use-flow-nodes.ts   # Domain → React Flow node/edge conversion
-│   │   ├── context-menu.tsx    # Right-click node: change type, arc label, duplicate, delete, playthrough, clipboard, export subgraph (multi-select variant)
+│   │   ├── use-flow-nodes.ts   # Domain → React Flow node/edge conversion, collapsed group filtering, edge remapping/dedup
+│   │   ├── context-menu.tsx    # Right-click node: change type, arc label, duplicate, delete, playthrough, clipboard, export subgraph, group/ungroup/collapse (multi-select variant)
 │   │   ├── edge-context-menu.tsx  # Right-click edge: change style, set label, delete edge
 │   │   ├── edge-label-input.tsx   # Inline text input for edge labels and arc labels in context menus
 │   │   ├── playthrough-notes-input.tsx # Inline notes input for "modified" playthrough status
@@ -68,11 +70,11 @@ src/
 │   │   ├── cockpit-field-panel.tsx # Individual collapsible field panel in cockpit
 │   │   └── field-editors/      # Per-type editors
 │   │       ├── field-editor.tsx         # Dispatcher: routes fieldKey to correct editor
-│   │       ├── rich-content-editor.tsx  # TipTap editor for RichContent fields with entity autocomplete
+│   │       ├── rich-content-editor.tsx  # TipTap editor for RichContent fields with entity autocomplete + attachment gallery
 │   │       ├── dialogue-list-editor.tsx # Entity ref + line list editor
 │   │       ├── soundtrack-list-editor.tsx # Track name + note list editor
 │   │       ├── dice-roll-list-editor.tsx  # Description + formula list editor
-│   │       └── custom-field-editor.tsx    # Label + content list editor with template picker (TipTap for content)
+│   │       └── custom-field-editor.tsx    # Label + content list editor with template picker (TipTap for content) + attachment gallery
 │   │
 │   ├── hooks/                  # Shared React hooks
 │   │   ├── use-long-press.ts   # 500ms hold detection, cancels on 5px drag
@@ -89,6 +91,7 @@ src/
 │   │
 │   ├── editor/                 # TipTap editor and entity autocomplete
 │   │   ├── tiptap-editor.tsx   # TipTap rich text editor wrapper component
+│   │   ├── attachment-gallery.tsx # Image attachment gallery below editor: thumbnail grid, drag-drop, file picker, size warnings
 │   │   ├── entity-mention-extension.ts  # Two Mention extension instances (@ present, # mentioned)
 │   │   ├── entity-chip.tsx     # Inline entity chip rendering (colored by type)
 │   │   ├── entity-chip-node-view.tsx    # TipTap NodeView bridge for chip rendering
@@ -99,7 +102,7 @@ src/
 │       ├── toolbar.tsx         # New Node, Save, Load, Import Subgraph, Auto-save, Undo/Redo, scroll direction, theme + Search, Entities, Templates, Legend, Session, Diff
 │       ├── session-selector.tsx # Session lifecycle dropdown: start/end session, session list, delete
 │       ├── scene-type-picker.tsx # Dropdown for selecting scene type on new node
-│       ├── status-bar.tsx      # Campaign name, node count, edge count, entity count, active session, auto-save status, online/offline indicator
+│       ├── status-bar.tsx      # Campaign name, node count, edge count, entity count, group count, active session, auto-save status, online/offline indicator
 │       └── theme-initializer.tsx # Reads stored theme preference on mount
 │
 ├── App.tsx                     # Root component — renders AppShell + ThemeInitializer
@@ -289,6 +292,45 @@ Import (toolbar "Import" button):
   → deserializeSubgraph(json) → validates format/version → { nodes[], edges[] }
   → graphStore.importSubgraph(nodes, edges) → pasteSubgraph(offset: 50,50)
     → new UUIDs, remapped edges → merge into graph, select imported nodes
+```
+
+### Collapsible Groups (Phase 7)
+
+```
+Multi-select + right-click → "Group Selected"
+  → graphStore.createGroup(sceneType, position) → group StoryNode with isGroup: true
+  → graphStore.addToGroup(groupId, nodeIds) → sets groupId on children
+  → use-flow-nodes.ts: group and children render normally
+
+Right-click group → "Collapse"
+  → graphStore.toggleGroupCollapsed(groupId) → collapsed: true
+  → use-flow-nodes.ts:
+    1. Filters out children of collapsed groups from flowNodes
+    2. Remaps boundary edges to point at group node (source/target replacement)
+    3. Hides internal edges (both endpoints in same group)
+    4. Deduplicates merged edges (e.g., two children→external → one group→external)
+  → story-node.tsx: renders stacked shadow layers behind collapsed group
+
+Moving a group → graphStore.moveNode(groupId, pos)
+  → computes delta, translates all children by same dx/dy
+
+Deletion:
+  → "Ungroup" → deleteGroup(id, cascade=false) → clears groupId on children, removes group node
+  → "Delete Group + Children" → deleteGroup(id, cascade=true) → removes group + all children + their edges
+```
+
+### Attachment Gallery (Phase 7)
+
+```
+User opens any RichContent field editor (script, gmNotes, vibe, etc.)
+  → RichContentEditor renders TipTapEditor + AttachmentGallery
+  → AttachmentGallery reads value.attachments (Attachment[])
+  → "Add Image" or drag-and-drop → file-io.readFileAsDataUrl(file)
+    → attachment-operations.createAttachment() → Attachment with UUID
+    → attachment-operations.validateAttachmentSize() → warning if > 2MB
+    → attachment-operations.addAttachment(richContent, att) → updated RichContent
+  → Remove button → attachment-operations.removeAttachment(richContent, id)
+  → Attachments persist in RichContent.attachments[] → serialized with campaign JSON
 ```
 
 ## Cross-Cutting Concerns

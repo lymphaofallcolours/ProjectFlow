@@ -70,6 +70,12 @@
 **Removal risk:** Low — only affects build output, no runtime code dependency.
 **Added:** Phase 6, Commit 4.
 
+### sharp (^0.34.5)
+**Purpose:** SVG → PNG icon generation for PWA icons. Used only by `scripts/generate-icons.mjs` to render the source SVG to 192x192, 512x512, and 180x180 (apple-touch-icon) PNGs.
+**Chosen over:** Canvas-based rendering (no native canvas in Node.js without additional deps), manual icon creation (not reproducible), resvg-js (less widely used).
+**Removal risk:** Very low — only used for icon generation script, never imported by application code.
+**Added:** Phase 7, Commit 5.
+
 ### @playwright/test (not yet installed)
 **Purpose:** E2E testing for critical user flows.
 **Added:** (planned for Phase 2+)

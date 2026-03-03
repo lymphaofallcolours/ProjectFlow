@@ -2,6 +2,43 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## Phase 7 — Subgraph Grouping, Image Attachments, PWA Icons (2026-03-03)
+
+### docs: add integration tests, PWA icons, update all docs for Phase 7 completion
+- 8 group integration tests: save/load roundtrip, subgraph export/import, clipboard, cascade delete, ungroup, move
+- 5 attachment integration tests: save/load roundtrip, multiple attachments, campaign size, backward compat, custom fields
+- 4 PWA icon tests: valid PNG files (not placeholders), source SVG exists
+- Generated branded PWA icons from SVG source via sharp (scripts/generate-icons.mjs)
+- All docs updated (architecture, decisions-log, changelog, wip, dependencies), plan archived
+
+### feat: add attachment gallery UI for image uploads in field editors
+- AttachmentGallery component below TipTap editors: thumbnail grid, drag-and-drop, file picker
+- Size warning for files exceeding 2MB, remove button on each thumbnail
+- Mounted in both RichContentEditor and CustomFieldEditor for all content fields
+- 4 component tests for gallery rendering and interaction
+
+### feat: add group-aware rendering, collapsed edge remapping, and group context menu
+- useFlowNodes rewritten: collapsed group filtering, boundary edge remapping, internal edge hiding, deduplication
+- StoryNode group rendering: dashed border ring, child count badge, collapse/expand chevron, stacked shadow layers
+- Context menu: Group Selected (multi-select), Ungroup, Delete Group + Children, Collapse/Expand, Remove from Group
+- Status bar shows group count
+- 8 tests for useFlowNodes group-aware behavior
+
+### feat: add group store actions and attachment domain operations
+- 5 graph store group actions: createGroup, addToGroup, removeFromGroup, deleteGroup (cascade/ungroup), toggleGroupCollapsed
+- Group-aware moveNode: translates all children by same delta
+- attachment-operations.ts: createAttachment, validateAttachmentSize, addAttachment, removeAttachment, estimateCampaignSize
+- readFileAsDataUrl utility in file-io.ts
+- 10 store tests + 13 attachment domain tests
+
+### feat: add group domain types and operations for subgraph grouping
+- StoryNode gains isGroup?, groupId?, collapsed? optional fields
+- group-operations.ts: 11 pure functions (create, add/remove children, collapse, delete keep/cascade, boundary/internal edges)
+- graph-operations.ts: group-aware removeNodes (ungroups children), duplicateNodes (remaps groupId), pasteSubgraph (remaps groupId), extractSubgraph (auto-includes children)
+- 29 group operation tests + 6 graph operation group tests
+
+---
+
 ## Phase 6 — Custom Field Templates, Performance, PWA (2026-03-03)
 
 ### docs: add integration tests, update all docs, polish for Phase 6 completion

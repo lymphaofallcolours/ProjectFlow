@@ -188,6 +188,62 @@
 **Alternatives rejected:** Including all features in Phase 6 (too large, delays production quality).
 **Consequences:** Phase 7 will add: Group type to domain, group-aware rendering, collapse/expand, and image/attachment support in TipTap.
 
+## 2026-03-03 — Groups as isGroup flag, not new SceneType
+
+**Status:** Accepted
+**Context:** Needed to represent collapsible groups on the narrative graph. SceneType drives shape rendering via 1:1 SCENE_TYPE_CONFIG mapping (5 glass gradients, SVG paths).
+**Decision:** Groups use an `isGroup?: boolean` flag on StoryNode. The sceneType is preserved for visual identity. Groups are a structural concept orthogonal to narrative classification.
+**Alternatives rejected:** New `SceneType = 'group'` (would require 6th gradient, 6th shape, breaks the semantic meaning of scene types), separate GroupNode type (parallel type hierarchy adds complexity).
+**Consequences:** Group nodes render using their sceneType shape but with dashed border, child count badge, and collapse/expand chevron. A group can be any scene type.
+
+## 2026-03-03 — No React Flow parentId for groups
+
+**Status:** Accepted
+**Context:** React Flow v12 supports `parentId` on nodes for parent-child relationships, making children position-relative and clipped to parent bounds.
+**Decision:** Manage groups manually. Moving a group translates all children by the same delta. Children have absolute positions.
+**Alternatives rejected:** React Flow `parentId` (constrains child positions to be relative, clips to parent bounds — too constraining for flexible narrative graph layouts).
+**Consequences:** `moveNode` in graph-store handles group→children translation. No RF parent bounds or clipping. Children can be positioned anywhere.
+
+## 2026-03-03 — Collapsed groups: view-level edge remapping
+
+**Status:** Accepted
+**Context:** When a group is collapsed, its children are hidden. Edges connected to children need to be visually represented.
+**Decision:** `useFlowNodes()` performs view-level transformation: hides children, remaps boundary edges to point at the group node, hides internal edges, deduplicates merged edges. Domain `StoryEdge` records are never modified.
+**Alternatives rejected:** Domain-level edge mutation (complicates undo/redo, save/load), removing edges entirely (loses relationship information visually).
+**Consequences:** Edge remapping is a computed view concern. The domain graph stays clean. Expanding the group instantly restores all original edges.
+
+## 2026-03-03 — Collapsed state persisted on StoryNode
+
+**Status:** Accepted
+**Context:** Whether a group is collapsed or expanded could be stored in UI-only state (Zustand UI store) or on the domain node.
+**Decision:** `collapsed?: boolean` on StoryNode, persisted in campaign JSON.
+**Alternatives rejected:** UI store only (collapse state lost on save/load — GM would need to re-collapse everything when reopening a campaign).
+**Consequences:** Collapse state survives save/load. The campaign file grows by ~15 bytes per group node.
+
+## 2026-03-03 — Attachments as gallery below editor, not inline TipTap
+
+**Status:** Accepted
+**Context:** TipTap currently uses `getText()` for plain text storage. Adding inline images would require switching to JSON serialization or complex content migration.
+**Decision:** Attachment gallery component renders below TipTap editor. Separate from text content. Images shown as thumbnails in a grid.
+**Alternatives rejected:** Inline TipTap image nodes (requires content format migration from plain text to JSON/ProseMirror schema — a larger change best deferred to a future phase).
+**Consequences:** Attachments stored in `RichContent.attachments[]` array alongside `markdown` string. No content format changes. Gallery supports drag-and-drop, file picker, and size warnings.
+
+## 2026-03-03 — Per-file 2MB and campaign 50MB attachment size warnings
+
+**Status:** Accepted
+**Context:** Base64 data URLs for images inflate file sizes (~33% overhead). Large attachments significantly increase campaign JSON size.
+**Decision:** Soft warning at 2MB per file and 50MB total campaign size. Warnings displayed inline, not hard blocks. User can still add large files.
+**Alternatives rejected:** Hard size limits (annoying for users with legitimate large maps), no warnings (users may unknowingly create multi-hundred-MB save files), external file references (requires file system access patterns not suitable for local-first single-file architecture).
+**Consequences:** `validateAttachmentSize()` and `estimateCampaignSize()` in domain. Warnings shown in attachment gallery UI and status bar.
+
+## 2026-03-03 — No nested groups in Phase 7
+
+**Status:** Accepted
+**Context:** Groups could potentially contain other groups (multi-level hierarchy).
+**Decision:** Phase 7 prohibits nesting. `addNodesToGroup()` throws if the target node is itself a group.
+**Alternatives rejected:** Allow nesting (significantly increases complexity: recursive collapse, multi-level edge remapping, deeper DOM structures).
+**Consequences:** Flat group structure. A group can only contain non-group nodes. Nesting may be added in a future phase if there's demand.
+
 ---
 
 <!-- Entries above — newest first -->
