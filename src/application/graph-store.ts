@@ -69,6 +69,7 @@ type GraphState = {
   setEdgeLabel: (edgeId: string, label: string | undefined) => void
   setArcLabel: (nodeId: string, arcLabel: string | undefined) => void
   rewireEdge: (edgeId: string, newSource?: string, newTarget?: string) => void
+  importSubgraph: (nodes: StoryNode[], edges: StoryEdge[]) => void
   undo: () => void
   redo: () => void
   pushHistory: () => void
@@ -314,6 +315,16 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     saveHistory()
     set((state) => ({
       edges: rewireEdgeOp(state.edges, edgeId, newSource, newTarget),
+    }))
+  },
+
+  importSubgraph: (importedNodes, importedEdges) => {
+    saveHistory()
+    const pasted = pasteSubgraph(importedNodes, importedEdges, { x: 50, y: 50 })
+    set((state) => ({
+      nodes: { ...state.nodes, ...pasted.nodes },
+      edges: { ...state.edges, ...pasted.edges },
+      selectedNodeIds: new Set(Object.keys(pasted.nodes)),
     }))
   },
 

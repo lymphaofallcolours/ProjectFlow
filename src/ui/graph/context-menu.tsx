@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Trash2, Copy, Scissors, Clipboard, CheckCircle, Edit3, XCircle, Circle, Tag } from 'lucide-react'
+import { Trash2, Copy, Scissors, Clipboard, CheckCircle, Edit3, XCircle, Circle, Tag, Download } from 'lucide-react'
 import type { SceneType, PlaythroughStatus } from '@/domain/types'
 import { SCENE_TYPES, SCENE_TYPE_CONFIG } from '@/domain/types'
 import { PLAYTHROUGH_STATUSES, PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
 import { useGraphStore } from '@/application/graph-store'
 import { useSessionStore } from '@/application/session-store'
+import { serializeSubgraph } from '@/domain/subgraph-operations'
+import { saveSubgraphToFile } from '@/infrastructure/file-io'
 import { PlaythroughNotesInput } from './playthrough-notes-input'
 import { EdgeLabelInput } from './edge-label-input'
 
@@ -83,6 +85,14 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
     onClose()
   }, [cutSelectedNodes, onClose])
 
+  const handleExportSubgraph = useCallback(async () => {
+    const { nodes, edges } = useGraphStore.getState()
+    const ids = Array.from(selectedNodeIds)
+    const json = serializeSubgraph(nodes, edges, ids)
+    await saveSubgraphToFile(json, 'subgraph.pfsg.json')
+    onClose()
+  }, [selectedNodeIds, onClose])
+
   const handleChangeType = useCallback(
     (sceneType: SceneType) => {
       changeSceneType(nodeId, sceneType)
@@ -152,6 +162,11 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
             icon={<Clipboard size={14} className="text-text-muted" />}
             label={`Duplicate ${selCount}`}
             onClick={handleDuplicate}
+          />
+          <MenuItem
+            icon={<Download size={14} className="text-text-muted" />}
+            label="Export Subgraph"
+            onClick={handleExportSubgraph}
           />
 
           <div className="h-px bg-border my-1 mx-2" />

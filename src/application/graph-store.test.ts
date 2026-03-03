@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useGraphStore } from './graph-store'
 import { useHistoryStore } from './history-store'
+import { createNode as domainCreateNode, createEdge as domainCreateEdge } from '@/domain/graph-operations'
 
 beforeEach(() => {
   useGraphStore.getState().reset()
@@ -413,6 +414,53 @@ describe('useGraphStore', () => {
       useGraphStore.getState().reset()
       expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(0)
       expect(useGraphStore.getState().selectedNodeIds.size).toBe(0)
+    })
+  })
+
+  describe('importSubgraph', () => {
+    it('imports nodes with new IDs at offset position', () => {
+      const node = domainCreateNode('event', { x: 0, y: 0 }, 'Imported')
+
+      useGraphStore.getState().importSubgraph([node], [])
+      const nodes = Object.values(useGraphStore.getState().nodes)
+      expect(nodes).toHaveLength(1)
+      // New IDs — not the original
+      expect(nodes[0].id).not.toBe(node.id)
+      expect(nodes[0].label).toBe('Imported')
+      // Offset by 50,50
+      expect(nodes[0].position.x).toBe(50)
+      expect(nodes[0].position.y).toBe(50)
+    })
+
+    it('imports edges with remapped IDs', () => {
+      const a = domainCreateNode('event', { x: 0, y: 0 }, 'A')
+      const b = domainCreateNode('narration', { x: 100, y: 0 }, 'B')
+      const edge = domainCreateEdge(a.id, b.id)
+
+      useGraphStore.getState().importSubgraph([a, b], [edge])
+      const edges = Object.values(useGraphStore.getState().edges)
+      expect(edges).toHaveLength(1)
+      // Edge should connect the new (remapped) node IDs
+      const newNodes = Object.values(useGraphStore.getState().nodes)
+      expect(edges[0].source).toBe(newNodes.find(n => n.label === 'A')!.id)
+      expect(edges[0].target).toBe(newNodes.find(n => n.label === 'B')!.id)
+    })
+
+    it('selects imported nodes', () => {
+      const a = domainCreateNode('event', { x: 0, y: 0 }, 'A')
+      const b = domainCreateNode('narration', { x: 100, y: 0 }, 'B')
+
+      useGraphStore.getState().importSubgraph([a, b], [])
+      expect(useGraphStore.getState().selectedNodeIds.size).toBe(2)
+    })
+
+    it('pushes history before import', () => {
+      useGraphStore.getState().addNode('combat', { x: 0, y: 0 })
+      const historyBefore = useHistoryStore.getState().past.length
+
+      const node = domainCreateNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().importSubgraph([node], [])
+      expect(useHistoryStore.getState().past.length).toBe(historyBefore + 1)
     })
   })
 

@@ -89,10 +89,14 @@ function saveWithDownload(content: string, filename: string): void {
 }
 
 function loadWithFileInput(): Promise<string | null> {
+  return loadWithFileInputAccept('.json')
+}
+
+function loadWithFileInputAccept(accept: string): Promise<string | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = '.json'
+    input.accept = accept
 
     input.onchange = async () => {
       const file = input.files?.[0]
@@ -107,4 +111,39 @@ function loadWithFileInput(): Promise<string | null> {
     input.oncancel = () => resolve(null)
     input.click()
   })
+}
+
+export async function saveSubgraphToFile(content: string, filename: string): Promise<void> {
+  if (supportsFileSystemAccess()) {
+    const handle = await getFSWindow().showSaveFilePicker({
+      suggestedName: filename,
+      types: [{
+        description: 'ProjectFlow Subgraph',
+        accept: { 'application/json': ['.pfsg.json', '.json'] },
+      }],
+    })
+    const writable = await handle.createWritable()
+    await writable.write(content)
+    await writable.close()
+  } else {
+    saveWithDownload(content, filename)
+  }
+}
+
+export async function loadSubgraphFromFile(): Promise<string | null> {
+  if (supportsFileSystemAccess()) {
+    try {
+      const [handle] = await getFSWindow().showOpenFilePicker({
+        types: [{
+          description: 'ProjectFlow Subgraph',
+          accept: { 'application/json': ['.pfsg.json', '.json'] },
+        }],
+      })
+      const file = await handle.getFile()
+      return file.text()
+    } catch {
+      return null
+    }
+  }
+  return loadWithFileInputAccept('.json,.pfsg.json')
 }

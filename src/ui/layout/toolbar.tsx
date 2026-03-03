@@ -15,6 +15,7 @@ import {
   Undo2,
   Redo2,
   Timer,
+  Upload,
 } from 'lucide-react'
 import { useUIStore } from '@/application/ui-store'
 import { useGraphStore } from '@/application/graph-store'
@@ -22,6 +23,8 @@ import { useSessionStore } from '@/application/session-store'
 import { useHistoryStore } from '@/application/history-store'
 import { applyTheme } from '@/infrastructure/theme'
 import { saveCampaignAction, loadCampaignAction } from '@/application/campaign-actions'
+import { loadSubgraphFromFile } from '@/infrastructure/file-io'
+import { deserializeSubgraph } from '@/domain/subgraph-operations'
 import { SceneTypePicker } from './scene-type-picker'
 import { SessionSelector } from './session-selector'
 
@@ -42,6 +45,7 @@ export function Toolbar() {
   const redo = useGraphStore((s) => s.redo)
   const autoSaveEnabled = useUIStore((s) => s.autoSaveEnabled)
   const toggleAutoSave = useUIStore((s) => s.toggleAutoSave)
+  const importSubgraph = useGraphStore((s) => s.importSubgraph)
 
   const handleThemeToggle = useCallback(() => {
     const next = theme === 'dark' ? 'light' : 'dark'
@@ -60,6 +64,17 @@ export function Toolbar() {
   const handleLoad = useCallback(async () => {
     await loadCampaignAction()
   }, [])
+
+  const handleImportSubgraph = useCallback(async () => {
+    const json = await loadSubgraphFromFile()
+    if (!json) return
+    try {
+      const { nodes, edges } = deserializeSubgraph(json)
+      importSubgraph(nodes, edges)
+    } catch {
+      // Invalid subgraph file — silently ignore
+    }
+  }, [importSubgraph])
 
   return (
     <div className="relative z-10 flex items-center gap-1 px-3 py-2 glass-panel border-b border-border">
@@ -115,6 +130,7 @@ export function Toolbar() {
 
         <ToolbarButton icon={<Save size={16} />} label="Save" onClick={handleSave} />
         <ToolbarButton icon={<FolderOpen size={16} />} label="Load" onClick={handleLoad} />
+        <ToolbarButton icon={<Upload size={16} />} label="Import" onClick={handleImportSubgraph} />
         <ToolbarButton
           icon={<Timer size={16} />}
           label={autoSaveEnabled ? 'Auto-save On' : 'Auto-save'}
