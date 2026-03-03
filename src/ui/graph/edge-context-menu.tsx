@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Trash2, Tag } from 'lucide-react'
+import { Trash2, Tag, ArrowLeftRight } from 'lucide-react'
 import type { StoryEdge } from '@/domain/types'
 import { useGraphStore } from '@/application/graph-store'
 import { MenuItem } from './context-menu'
 import { EdgeLabelInput } from './edge-label-input'
+import { NodeSelectorInput } from '@/ui/components/node-selector-input'
 
 type EdgeContextMenuProps = {
   edgeId: string
@@ -22,9 +23,11 @@ export function EdgeContextMenu({ edgeId, position, onClose }: EdgeContextMenuPr
   const setEdgeStyle = useGraphStore((s) => s.setEdgeStyle)
   const setEdgeLabel = useGraphStore((s) => s.setEdgeLabel)
   const disconnectEdge = useGraphStore((s) => s.disconnectEdge)
+  const rewireEdge = useGraphStore((s) => s.rewireEdge)
   const ref = useRef<HTMLDivElement>(null)
 
   const [editingLabel, setEditingLabel] = useState(false)
+  const [showRewire, setShowRewire] = useState(false)
 
   const handleStyleChange = useCallback(
     (style: StoryEdge['style']) => {
@@ -110,6 +113,39 @@ export function EdgeContextMenu({ edgeId, position, onClose }: EdgeContextMenuPr
           icon={<Tag size={14} className="text-text-muted" />}
           label={edge.label ?? 'Set label...'}
           onClick={() => setEditingLabel(true)}
+        />
+      )}
+
+      <div className="h-px bg-border my-1 mx-2" />
+
+      {/* Rewire section */}
+      {showRewire ? (
+        <div className="px-2 py-1.5 space-y-1.5">
+          <div className="text-[10px] uppercase tracking-wider text-text-muted font-medium">
+            Rewire
+          </div>
+          <NodeSelectorInput
+            value={edge.source}
+            onChange={(newSource) => {
+              rewireEdge(edgeId, newSource, undefined)
+            }}
+            excludeIds={[edge.target]}
+            label="Source"
+          />
+          <NodeSelectorInput
+            value={edge.target}
+            onChange={(newTarget) => {
+              rewireEdge(edgeId, undefined, newTarget)
+            }}
+            excludeIds={[edge.source]}
+            label="Target"
+          />
+        </div>
+      ) : (
+        <MenuItem
+          icon={<ArrowLeftRight size={14} className="text-text-muted" />}
+          label="Rewire"
+          onClick={() => setShowRewire(true)}
         />
       )}
 

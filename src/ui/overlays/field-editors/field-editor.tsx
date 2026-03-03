@@ -35,6 +35,7 @@ export function FieldEditor({ node, fieldKey }: FieldEditorProps) {
         <RichContentEditor
           value={node.fields[fieldKey]}
           onChange={handleChange}
+          nodeId={node.id}
         />
       )
     case 'dialogues':

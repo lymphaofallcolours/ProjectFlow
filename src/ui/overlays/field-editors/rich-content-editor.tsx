@@ -6,9 +6,10 @@ import { AttachmentGallery } from '@/ui/editor/attachment-gallery'
 type RichContentEditorProps = {
   value: RichContent
   onChange: (value: RichContent) => void
+  nodeId?: string
 }
 
-export function RichContentEditor({ value, onChange }: RichContentEditorProps) {
+export function RichContentEditor({ value, onChange, nodeId }: RichContentEditorProps) {
   const handleUpdate = useCallback(
     (text: string) => {
       onChange({ ...value, markdown: text })
@@ -22,6 +23,7 @@ export function RichContentEditor({ value, onChange }: RichContentEditorProps) {
         content={value.markdown}
         onUpdate={handleUpdate}
         placeholder="Write here..."
+        nodeId={nodeId}
       />
       <AttachmentGallery value={value} onChange={onChange} />
     </div>

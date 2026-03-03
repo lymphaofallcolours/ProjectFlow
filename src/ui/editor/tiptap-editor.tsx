@@ -1,6 +1,7 @@
 import { useEditor, EditorContent, ReactRenderer } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
+import Link from '@tiptap/extension-link'
 import type { AnyExtension } from '@tiptap/react'
 import { useEffect, useRef } from 'react'
 import { EntityPresentMention, EntityMentionedMention, detectPrefixType } from './entity-mention-extension'
@@ -8,6 +9,7 @@ import { EntitySuggestionList } from './entity-suggestion'
 import type { EntitySuggestionListRef } from './entity-suggestion'
 import { buildSuggestionItems } from './suggestion-items'
 import { useEntityStore } from '@/application/entity-store'
+import { extractStatusTagsFromText } from '@/domain/entity-tag-parser'
 
 type TipTapEditorProps = {
   content: string
@@ -15,6 +17,7 @@ type TipTapEditorProps = {
   placeholder?: string
   className?: string
   enableEntityMentions?: boolean
+  nodeId?: string
 }
 
 function createSuggestionConfig(mode: 'present' | 'mentioned') {
@@ -128,15 +131,28 @@ export function TipTapEditor({
   placeholder = 'Write here...',
   className = '',
   enableEntityMentions = true,
+  nodeId,
 }: TipTapEditorProps) {
   const onUpdateRef = useRef(onUpdate)
   useEffect(() => {
     onUpdateRef.current = onUpdate
   }, [onUpdate])
 
+  // Track previous text for status auto-logging
+  const prevTextRef = useRef(content)
+  const nodeIdRef = useRef(nodeId)
+  useEffect(() => {
+    nodeIdRef.current = nodeId
+  }, [nodeId])
+
   const extensions: AnyExtension[] = [
     StarterKit,
     Placeholder.configure({ placeholder }),
+    Link.configure({
+      autolink: true,
+      openOnClick: true,
+      HTMLAttributes: { class: 'entity-link' },
+    }),
   ]
 
   if (enableEntityMentions) {
@@ -154,7 +170,24 @@ export function TipTapEditor({
     extensions,
     content,
     onUpdate: ({ editor: ed }) => {
-      onUpdateRef.current(ed.getText())
+      const newText = ed.getText()
+      // Status auto-logging: diff old text vs new text for status markers
+      if (nodeIdRef.current) {
+        const oldTags = extractStatusTagsFromText(prevTextRef.current)
+        const newTags = extractStatusTagsFromText(newText)
+        const oldSet = new Set(oldTags.map((t) => `${t.name}:${t.status}`))
+        for (const tag of newTags) {
+          const key = `${tag.name}:${tag.status}`
+          if (!oldSet.has(key)) {
+            const entity = useEntityStore.getState().getByName(tag.name, tag.entityType)
+            if (entity) {
+              useEntityStore.getState().addStatus(entity.id, nodeIdRef.current, tag.status)
+            }
+          }
+        }
+      }
+      prevTextRef.current = newText
+      onUpdateRef.current(newText)
     },
     editorProps: {
       attributes: {
@@ -168,6 +201,7 @@ export function TipTapEditor({
   useEffect(() => {
     if (editor && content !== prevContent.current) {
       prevContent.current = content
+      prevTextRef.current = content
       const currentText = editor.getText()
       if (currentText !== content) {
         editor.commands.setContent(content)
