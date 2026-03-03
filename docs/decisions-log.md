@@ -108,13 +108,53 @@
 **Alternatives rejected:** zustand-temporal (adds dependency, tracks all state including non-graphical fields), immutable-state snapshots via Immer patches (more complex, harder to reason about).
 **Consequences:** Only nodes and edges are tracked (not viewport, selection, clipboard). MAX_HISTORY_SIZE=50 caps memory. moveNode is excluded from auto-push — canvas triggers pushHistory() on drag start. Campaign load/reset clears history.
 
-## 2026-03-02 — Subgraph grouping deferred to Phase 5
+## 2026-03-02 — Subgraph file format for cross-campaign export/import
 
 **Status:** Accepted
-**Context:** Phase 4 spec includes subgraph grouping (collapsible named groups). This requires new domain types (Group), parent-child graph relationships, special rendering (group bounding box, collapse/expand), and significant UI changes.
-**Decision:** Defer to Phase 5. Phase 4 exit criteria ("freely restructure the story graph with professional-grade editing tools") is met without grouping.
-**Alternatives rejected:** Implementing in Phase 4 (too large, would delay multi-select/clipboard/undo which are higher priority).
-**Consequences:** Phase 5 will need to add Group type to domain, group-aware rendering in story-node.tsx, group context menu items, and group-aware undo/redo.
+**Context:** Users need to share portions of a campaign graph across different campaigns. Needed a portable file format for subgraph serialization.
+**Decision:** Tagged JSON with `format: 'projectflow-subgraph'`, `version: 1`, `.pfsg.json` extension. Uses existing `extractSubgraph()` and `pasteSubgraph()` domain functions. Import creates new UUIDs and remaps edge references.
+**Alternatives rejected:** Embedding in campaign file (too coupled), custom binary format (over-engineered), clipboard-only (no persistence).
+**Consequences:** Subgraph files are standalone and forward-compatible via version field. Import always creates new IDs to avoid collisions. File format is simple enough to validate with a type guard.
+
+## 2026-03-02 — File handle caching for auto-save
+
+**Status:** Accepted
+**Context:** Auto-save needs to write to the same file without showing the file picker every time. The File System Access API returns a `FileSystemFileHandle` from `showSaveFilePicker`.
+**Decision:** Cache the handle at module level in `file-io.ts`. Manual save/load operations cache the handle. `saveToFileQuiet()` writes to the cached handle silently, returning boolean success. Handle cleared on `newCampaignAction()`.
+**Alternatives rejected:** IndexedDB for file data (adds storage complexity), always-show-picker (defeats auto-save purpose), service worker file sync (over-engineered).
+**Consequences:** Handle is lost on page refresh (acceptable for single-session tool). Auto-save only works after first manual save or load. Falls back gracefully when no handle is cached.
+
+## 2026-03-02 — Auto-save state in UI store, not campaign store
+
+**Status:** Accepted
+**Context:** Auto-save toggle and interval are user preferences that shouldn't be persisted in the campaign JSON file.
+**Decision:** `autoSaveEnabled`, `autoSaveIntervalMs`, and `autoSaveStatus` live in `useUIStore`. The `useAutoSave` hook reads these values and manages a `setInterval`.
+**Alternatives rejected:** Campaign settings (persists auto-save config in the campaign file, but auto-save is a UI concern, not campaign data), localStorage (adds another persistence layer).
+**Consequences:** Auto-save preferences reset on page refresh. This is intentional — auto-save should be an explicit opt-in each session.
+
+## 2026-03-02 — Edge context menu as separate component
+
+**Status:** Accepted
+**Context:** Phase 4 stubbed `onEdgeContextMenu` as a node context menu (routing edge.id to nodeId). Phase 5 needed a proper edge-specific context menu for edge styling, labels, and deletion.
+**Decision:** Separate `EdgeContextMenu` component with its own `'edge'` variant in `ContextMenuState`. Reuses `MenuItem` pattern from `context-menu.tsx`.
+**Alternatives rejected:** Extending `NodeContextMenu` with edge handling (too complex, conflates node/edge concerns), inline popover on edge click (conflicts with edge selection).
+**Consequences:** `ContextMenuState` is now a discriminated union: `{ type: 'node' | 'edge'; ... }`. Graph canvas dispatches to the correct component based on type.
+
+## 2026-03-02 — Escape priority chain for keyboard shortcuts
+
+**Status:** Accepted
+**Context:** The Escape key needs to dismiss multiple overlapping UI elements in a sensible order.
+**Decision:** Priority chain: overlay (cockpit/field panel) → radial subnodes → panels (search/entity/legend) → selection. First truthy dismissal consumes the event.
+**Alternatives rejected:** Single Escape clears everything (too destructive), separate key per element (too many keys to remember).
+**Consequences:** Users can press Escape repeatedly to progressively dismiss all UI layers. Each press handles one element.
+
+## 2026-03-02 — Subgraph grouping deferred to Phase 6
+
+**Status:** Accepted
+**Context:** Originally deferred from Phase 4, subgraph grouping (collapsible named groups) was again deferred from Phase 5 due to scope. Phase 5 focused on production polish features (edge context menu, auto-save, codex export, subgraph import/export).
+**Decision:** Defer to Phase 6. Phase 5 exit criteria (full feature set, production-quality UX) is met without grouping.
+**Alternatives rejected:** Implementing in Phase 5 (too large, would delay higher-priority polish features).
+**Consequences:** Phase 6 will need to add Group type to domain, group-aware rendering in story-node.tsx, group context menu items, and group-aware undo/redo. Also deferred: image/attachment support, PWA offline mode, custom field templates.
 
 ---
 

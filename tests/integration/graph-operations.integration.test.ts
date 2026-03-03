@@ -11,6 +11,9 @@ import {
 } from '@/application/campaign-actions'
 import { serializeCampaign, deserializeCampaign } from '@/infrastructure/serialization'
 import { MAX_HISTORY_SIZE } from '@/domain/history-operations'
+import { serializeSubgraph, deserializeSubgraph, validateSubgraphFile } from '@/domain/subgraph-operations'
+import { exportEntityRegistryAsMarkdown } from '@/domain/entity-operations'
+import { useUIStore } from '@/application/ui-store'
 
 describe('Graph operations integration', () => {
   beforeEach(() => {
@@ -227,6 +230,92 @@ describe('Graph operations integration', () => {
 
       useGraphStore.getState().undo()
       expect(useGraphStore.getState().nodes[id].arcLabel).toBeUndefined()
+    })
+  })
+
+  describe('subgraph export/import', () => {
+    it('subgraph export + import preserves nodes and edges with new IDs', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 }, 'A')
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 }, 'B')
+      const edgeId = useGraphStore.getState().connectNodes(a, b)
+
+      // Select both and extract subgraph
+      const { nodes, edges } = useGraphStore.getState()
+      const json = serializeSubgraph(nodes, edges, [a, b])
+
+      // Load into a fresh campaign
+      newCampaignAction('Import Target')
+      const { nodes: importedNodes, edges: importedEdges } = deserializeSubgraph(json)
+      useGraphStore.getState().importSubgraph(importedNodes, importedEdges)
+
+      const newNodes = Object.values(useGraphStore.getState().nodes)
+      const newEdges = Object.values(useGraphStore.getState().edges)
+      expect(newNodes).toHaveLength(2)
+      expect(newEdges).toHaveLength(1)
+      // IDs are different from originals
+      expect(newNodes.some((n) => n.id === a)).toBe(false)
+      expect(newNodes.some((n) => n.id === b)).toBe(false)
+      expect(newEdges[0].id).not.toBe(edgeId)
+    })
+
+    it('subgraph file format validates correctly', () => {
+      expect(validateSubgraphFile({ format: 'projectflow-subgraph', version: 1, nodes: [], edges: [] })).toBe(true)
+      expect(validateSubgraphFile({ format: 'wrong', version: 1, nodes: [], edges: [] })).toBe(false)
+      expect(validateSubgraphFile(null)).toBe(false)
+    })
+
+    it('imported nodes survive save/load roundtrip', () => {
+      // Create and import a subgraph
+      const a = useGraphStore.getState().addNode('combat', { x: 0, y: 0 }, 'Original')
+      const state = useGraphStore.getState()
+      const json = serializeSubgraph(state.nodes, state.edges, [a])
+      const { nodes, edges } = deserializeSubgraph(json)
+
+      // Import adds a copy alongside the original
+      useGraphStore.getState().importSubgraph(nodes, edges)
+      expect(Object.values(useGraphStore.getState().nodes)).toHaveLength(2)
+
+      // Save and reload
+      useCampaignStore.getState().setName('Import Persist')
+      const campaignJson = serializeCampaign(assembleCampaign())
+      hydrateCampaign(deserializeCampaign(campaignJson))
+
+      const reloadedNodes = Object.values(useGraphStore.getState().nodes)
+      expect(reloadedNodes).toHaveLength(2)
+      expect(reloadedNodes.every((n) => n.sceneType === 'combat')).toBe(true)
+    })
+  })
+
+  describe('auto-save state', () => {
+    it('auto-save toggle persists in UI state', () => {
+      expect(useUIStore.getState().autoSaveEnabled).toBe(false)
+      useUIStore.getState().toggleAutoSave()
+      expect(useUIStore.getState().autoSaveEnabled).toBe(true)
+      useUIStore.getState().toggleAutoSave()
+      expect(useUIStore.getState().autoSaveEnabled).toBe(false)
+    })
+  })
+
+  describe('entity codex export', () => {
+    it('codex export contains all entities grouped by type', () => {
+      const entityStore = useEntityStore.getState()
+      entityStore.addEntity('pc', 'Alfa', 'The leader')
+      entityStore.addEntity('npc', 'Voss', 'A merchant')
+      entityStore.addEntity('enemy', 'Carnifex', 'The beast')
+      entityStore.addEntity('location', 'Hive Primus', 'Main hive city')
+
+      const registry = { entities: useEntityStore.getState().entities }
+      const markdown = exportEntityRegistryAsMarkdown(registry)
+
+      expect(markdown).toContain('# Campaign Entity Codex')
+      expect(markdown).toContain('Alfa')
+      expect(markdown).toContain('Voss')
+      expect(markdown).toContain('Carnifex')
+      expect(markdown).toContain('Hive Primus')
+      // PCs should appear before NPCs
+      expect(markdown.indexOf('Alfa')).toBeLessThan(markdown.indexOf('Voss'))
+      // NPCs before Enemies
+      expect(markdown.indexOf('Voss')).toBeLessThan(markdown.indexOf('Carnifex'))
     })
   })
 

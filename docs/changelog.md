@@ -2,6 +2,41 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## Phase 5 — Polish & Power Features (2026-03-02)
+
+### docs: add integration tests, update all docs, polish for Phase 5 completion
+- 5 integration tests: subgraph export/import roundtrip, file format validation, import persistence, auto-save state, entity codex export
+- All docs updated (architecture, decisions-log, changelog, wip), plan archived to completed/
+
+### feat: add subgraph export/import between campaigns
+- Subgraph file format (.pfsg.json) with format tag, version, serialize/deserialize/validate
+- Multi-select context menu gains "Export Subgraph" item via serializeSubgraph + saveSubgraphToFile
+- Toolbar gains "Import Subgraph" button via loadSubgraphFromFile + importSubgraph store action
+- Import creates new IDs via pasteSubgraph, selects imported nodes
+
+### feat: add entity registry markdown codex export
+- exportEntityRegistryAsMarkdown() groups entities by type (PC→NPC→Enemy→Object→Location→Secret)
+- Alphabetical sort within groups, includes description, affiliations, status history
+- Entity sidebar gains "Export Codex" button (FileText icon) that downloads .md file
+
+### feat: implement auto-save with file handle caching and toolbar toggle
+- File handle caching: saveToFile/loadFromFile cache FileSystemFileHandle, saveToFileQuiet writes silently
+- useAutoSave hook with configurable interval (default 60s), status flash ("Saving..."/"Saved ✓")
+- Auto-save state in useUIStore (enabled, intervalMs, status)
+- Toolbar Timer icon toggle, status bar auto-save indicator
+
+### feat: expand keyboard shortcuts with Ctrl+S, Ctrl+A, and Escape priority chain
+- Ctrl+S → save campaign, Ctrl+A → select all nodes
+- Escape priority chain: overlay → radial subnodes → panels → selection
+
+### feat: add edge context menu, arc label UI, and edge label input
+- EdgeContextMenu: glass-panel context menu for edges (style, label, delete)
+- Fixed Phase 4 stub: onEdgeContextMenu now correctly routes to edge context menu
+- Arc label section in node context menu with inline EdgeLabelInput
+- EdgeLabelInput: reusable inline text input with confirm/cancel/clear
+
+---
+
 ## Phase 4 — Advanced Graph Operations (2026-03-02)
 
 ### docs: add integration tests, update all docs, polish for Phase 4 completion

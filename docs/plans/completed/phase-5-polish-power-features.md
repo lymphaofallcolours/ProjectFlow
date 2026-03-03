@@ -11,4 +11,4 @@ Add production-quality polish: edge context menu, expanded keyboard shortcuts, a
 5. Subgraph export/import between campaigns
 6. Integration tests, docs, polish
 
-## Status: In Progress
+## Status: Complete
