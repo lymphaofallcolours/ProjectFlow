@@ -7,6 +7,7 @@ import {
   getEntityByName,
   getEntitiesByType,
   addStatusEntry,
+  exportEntityRegistryAsMarkdown,
 } from './entity-operations'
 import { createTestEntity, createTestEntityRegistry } from '../../tests/fixtures/factories'
 
@@ -185,5 +186,87 @@ describe('addStatusEntry', () => {
     const original = createTestEntity()
     addStatusEntry(original, 'node-1', 'wounded')
     expect(original.statusHistory).toHaveLength(0)
+  })
+})
+
+describe('exportEntityRegistryAsMarkdown', () => {
+  it('returns placeholder for empty registry', () => {
+    const registry = createTestEntityRegistry([])
+    const md = exportEntityRegistryAsMarkdown(registry)
+    expect(md).toContain('# Campaign Entity Codex')
+    expect(md).toContain('No entities registered')
+  })
+
+  it('groups entities by type', () => {
+    const pc = createTestEntity({ type: 'pc', name: 'Alfa' })
+    const npc = createTestEntity({ type: 'npc', name: 'Voss' })
+    const enemy = createTestEntity({ type: 'enemy', name: 'Carnifex' })
+    const registry = createTestEntityRegistry([pc, npc, enemy])
+    const md = exportEntityRegistryAsMarkdown(registry)
+
+    expect(md).toContain('## PCs')
+    expect(md).toContain('### Alfa')
+    expect(md).toContain('## NPCs')
+    expect(md).toContain('### Voss')
+    expect(md).toContain('## Enemys')
+    expect(md).toContain('### Carnifex')
+  })
+
+  it('includes entity description', () => {
+    const pc = createTestEntity({ type: 'pc', name: 'Alfa', description: 'Battle-brother of the Kill-Team' })
+    const registry = createTestEntityRegistry([pc])
+    const md = exportEntityRegistryAsMarkdown(registry)
+
+    expect(md).toContain('Battle-brother of the Kill-Team')
+  })
+
+  it('includes affiliations', () => {
+    const npc = createTestEntity({ type: 'npc', name: 'Voss' })
+    npc.affiliations = ['Deathwatch', 'Inquisition']
+    const registry = createTestEntityRegistry([npc])
+    const md = exportEntityRegistryAsMarkdown(registry)
+
+    expect(md).toContain('**Affiliations:** Deathwatch, Inquisition')
+  })
+
+  it('includes status history', () => {
+    let entity = createTestEntity({ type: 'pc', name: 'Alfa' })
+    entity = addStatusEntry(entity, 'node-1', 'wounded', 'Hit by bolter')
+    entity = addStatusEntry(entity, 'node-2', 'healed')
+    const registry = createTestEntityRegistry([entity])
+    const md = exportEntityRegistryAsMarkdown(registry)
+
+    expect(md).toContain('**Status History:**')
+    expect(md).toContain('- wounded — Hit by bolter')
+    expect(md).toContain('- healed')
+  })
+
+  it('sorts entities alphabetically within type', () => {
+    const b = createTestEntity({ type: 'pc', name: 'Bravo' })
+    const a = createTestEntity({ type: 'pc', name: 'Alfa' })
+    const registry = createTestEntityRegistry([b, a])
+    const md = exportEntityRegistryAsMarkdown(registry)
+
+    const alfaIdx = md.indexOf('### Alfa')
+    const bravoIdx = md.indexOf('### Bravo')
+    expect(alfaIdx).toBeLessThan(bravoIdx)
+  })
+
+  it('skips types with no entities', () => {
+    const pc = createTestEntity({ type: 'pc', name: 'Alfa' })
+    const registry = createTestEntityRegistry([pc])
+    const md = exportEntityRegistryAsMarkdown(registry)
+
+    expect(md).toContain('## PCs')
+    expect(md).not.toContain('## NPCs')
+    expect(md).not.toContain('## Enemys')
+  })
+
+  it('renders header for codex', () => {
+    const pc = createTestEntity({ type: 'pc', name: 'Alfa' })
+    const registry = createTestEntityRegistry([pc])
+    const md = exportEntityRegistryAsMarkdown(registry)
+
+    expect(md.startsWith('# Campaign Entity Codex')).toBe(true)
   })
 })

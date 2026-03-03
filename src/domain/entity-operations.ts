@@ -1,5 +1,6 @@
 // Entity CRUD operations — ZERO framework imports
 import type { Entity, EntityType, EntityRegistry } from './entity-types'
+import { ENTITY_TYPE_CONFIGS } from './entity-types'
 
 export function createEntity(
   type: EntityType,
@@ -76,4 +77,45 @@ export function addStatusEntry(
       { nodeId, status, note },
     ],
   }
+}
+
+const TYPE_ORDER: EntityType[] = ['pc', 'npc', 'enemy', 'object', 'location', 'secret']
+
+export function exportEntityRegistryAsMarkdown(registry: EntityRegistry): string {
+  const entities = Object.values(registry.entities)
+  if (entities.length === 0) {
+    return '# Campaign Entity Codex\n\n*No entities registered.*\n'
+  }
+
+  const lines: string[] = ['# Campaign Entity Codex', '']
+
+  for (const type of TYPE_ORDER) {
+    const group = entities.filter((e) => e.type === type)
+    if (group.length === 0) continue
+
+    const config = ENTITY_TYPE_CONFIGS.find((c) => c.type === type)
+    const label = config?.label ?? type
+    lines.push(`## ${label}s`, '')
+
+    const sorted = [...group].sort((a, b) => a.name.localeCompare(b.name))
+    for (const entity of sorted) {
+      lines.push(`### ${entity.name}`)
+      if (entity.description) {
+        lines.push('', entity.description)
+      }
+      if (entity.affiliations && entity.affiliations.length > 0) {
+        lines.push('', `**Affiliations:** ${entity.affiliations.join(', ')}`)
+      }
+      if (entity.statusHistory.length > 0) {
+        lines.push('', '**Status History:**')
+        for (const entry of entity.statusHistory) {
+          const note = entry.note ? ` — ${entry.note}` : ''
+          lines.push(`- ${entry.status}${note}`)
+        }
+      }
+      lines.push('')
+    }
+  }
+
+  return lines.join('\n')
 }

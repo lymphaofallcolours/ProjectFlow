@@ -1,9 +1,11 @@
 import { useState, useCallback, useMemo } from 'react'
-import { X, Plus, Search } from 'lucide-react'
+import { X, Plus, Search, FileText } from 'lucide-react'
 import type { EntityType } from '@/domain/entity-types'
 import { ENTITY_TYPE_CONFIGS } from '@/domain/entity-types'
 import { useUIStore } from '@/application/ui-store'
 import { useEntityStore } from '@/application/entity-store'
+import { exportEntityRegistryAsMarkdown } from '@/domain/entity-operations'
+import { downloadMarkdown } from '@/infrastructure/markdown-export'
 import { EntityList } from './entity-list'
 import { EntityProfile } from './entity-profile'
 import { EntityCreateDialog } from './entity-create-dialog'
@@ -131,11 +133,11 @@ export function EntitySidebar() {
             />
           </div>
 
-          {/* Add button */}
-          <div className="px-3 py-2 border-t border-border">
+          {/* Actions */}
+          <div className="px-3 py-2 border-t border-border flex gap-2">
             <button
               onClick={() => setShowCreate(true)}
-              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
                 text-xs font-medium text-text-secondary hover:text-text-primary
                 bg-surface-glass hover:bg-surface-overlay border border-border
                 transition-all cursor-pointer"
@@ -143,6 +145,21 @@ export function EntitySidebar() {
             >
               <Plus size={13} />
               Add Entity
+            </button>
+            <button
+              onClick={() => {
+                const registry = { entities: entitiesMap }
+                const md = exportEntityRegistryAsMarkdown(registry)
+                downloadMarkdown(md, 'entity-codex.md')
+              }}
+              title="Export Entity Codex"
+              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
+                text-xs font-medium text-text-secondary hover:text-text-primary
+                bg-surface-glass hover:bg-surface-overlay border border-border
+                transition-all cursor-pointer"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              <FileText size={13} />
             </button>
           </div>
         </>
