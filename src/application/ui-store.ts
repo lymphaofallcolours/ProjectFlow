@@ -30,6 +30,9 @@ type UIState = {
   searchPanelOpen: boolean
   entityHighlightFilter: { entityName: string; entityType?: string } | null
 
+  // Template manager
+  templateManagerOpen: boolean
+
   // Auto-save
   autoSaveEnabled: boolean
   autoSaveIntervalMs: number
@@ -47,6 +50,7 @@ type UIState = {
   toggleLegendPanel: () => void
   toggleSearchPanel: () => void
   setEntityHighlightFilter: (filter: { entityName: string; entityType?: string } | null) => void
+  toggleTemplateManager: () => void
   toggleAutoSave: () => void
   setAutoSaveIntervalMs: (ms: number) => void
   setAutoSaveStatus: (status: 'saving' | 'saved' | null) => void
@@ -61,6 +65,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   legendPanelOpen: false,
   searchPanelOpen: false,
   entityHighlightFilter: null,
+  templateManagerOpen: false,
   autoSaveEnabled: false,
   autoSaveIntervalMs: 60_000,
   autoSaveStatus: null,
@@ -105,6 +110,9 @@ export const useUIStore = create<UIState>((set, get) => ({
     set((state) => ({ searchPanelOpen: !state.searchPanelOpen })),
 
   setEntityHighlightFilter: (filter) => set({ entityHighlightFilter: filter }),
+
+  toggleTemplateManager: () =>
+    set((state) => ({ templateManagerOpen: !state.templateManagerOpen })),
 
   toggleAutoSave: () =>
     set((state) => ({ autoSaveEnabled: !state.autoSaveEnabled })),

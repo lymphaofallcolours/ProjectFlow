@@ -6,6 +6,7 @@ import { EntitySidebar } from '@/ui/entities/entity-sidebar'
 import { LegendPanel } from '@/ui/components/legend-panel'
 import { SearchPanel } from '@/ui/components/search-panel'
 import { SessionTimeline } from '@/ui/components/session-timeline'
+import { TemplateManager } from '@/ui/components/template-manager'
 import { useKeyboardShortcuts } from '@/ui/hooks/use-keyboard-shortcuts'
 import { useAutoSave } from '@/ui/hooks/use-auto-save'
 
@@ -21,6 +22,7 @@ export function AppShell() {
         <OverlayRoot />
         <SearchPanel />
         <EntitySidebar />
+        <TemplateManager />
         <SessionTimeline />
         <LegendPanel />
       </main>

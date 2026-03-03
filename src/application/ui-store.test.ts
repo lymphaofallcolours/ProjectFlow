@@ -11,6 +11,7 @@ beforeEach(() => {
     legendPanelOpen: false,
     searchPanelOpen: false,
     entityHighlightFilter: null,
+    templateManagerOpen: false,
     autoSaveEnabled: false,
     autoSaveIntervalMs: 60_000,
     autoSaveStatus: null,
@@ -173,6 +174,19 @@ describe('useUIStore', () => {
 
     it('defaults to 60s interval', () => {
       expect(useUIStore.getState().autoSaveIntervalMs).toBe(60_000)
+    })
+  })
+
+  describe('template manager', () => {
+    it('defaults to closed', () => {
+      expect(useUIStore.getState().templateManagerOpen).toBe(false)
+    })
+
+    it('toggles template manager open/closed', () => {
+      useUIStore.getState().toggleTemplateManager()
+      expect(useUIStore.getState().templateManagerOpen).toBe(true)
+      useUIStore.getState().toggleTemplateManager()
+      expect(useUIStore.getState().templateManagerOpen).toBe(false)
     })
   })
 })
