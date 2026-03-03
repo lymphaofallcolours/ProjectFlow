@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useGraphStore } from '@/application/graph-store'
 import { useCampaignStore } from '@/application/campaign-store'
 import { useEntityStore } from '@/application/entity-store'
@@ -15,6 +16,7 @@ export function StatusBar() {
   const diffOverlayActive = useSessionStore((s) => s.diffOverlayActive)
   const autoSaveStatus = useUIStore((s) => s.autoSaveStatus)
 
+  const isOnline = useOnlineStatus()
   const activeSession = playthroughLog.find((e) => e.id === activeSessionId)
 
   return (
@@ -58,6 +60,33 @@ export function StatusBar() {
           </span>
         </>
       )}
+
+      {/* Right-aligned online/offline indicator */}
+      <span className="ml-auto flex items-center gap-1.5">
+        <span
+          className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-status-played' : 'bg-status-skipped'}`}
+        />
+        {isOnline ? 'Online' : 'Offline'}
+      </span>
     </div>
   )
+}
+
+function useOnlineStatus(): boolean {
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== 'undefined' ? navigator.onLine : true,
+  )
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  return isOnline
 }
