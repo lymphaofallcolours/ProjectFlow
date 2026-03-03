@@ -50,5 +50,10 @@ export function validateCampaignSchema(data: unknown): data is Campaign {
     if (!Array.isArray(obj.playthroughLog)) return false
   }
 
+  // customFieldTemplates is optional for backward compat, but must be an array if present
+  if (obj.customFieldTemplates !== undefined) {
+    if (!Array.isArray(obj.customFieldTemplates)) return false
+  }
+
   return true
 }

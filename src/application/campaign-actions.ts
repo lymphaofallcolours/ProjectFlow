@@ -28,6 +28,7 @@ export function assembleCampaign(): Campaign {
       scrollDirection: graph.scrollDirection,
     },
     entityRegistry: { entities: entityStore.entities },
+    customFieldTemplates: campaign.customFieldTemplates,
     playthroughLog: sessionStore.playthroughLog,
     schemaVersion: campaign.schemaVersion,
   }
@@ -41,6 +42,7 @@ export function hydrateCampaign(campaign: Campaign): void {
     campaign.graph.scrollDirection,
   )
   useCampaignStore.getState().loadCampaign(campaign)
+  useCampaignStore.getState().loadTemplates(campaign.customFieldTemplates ?? [])
   useEntityStore.getState().loadRegistry(campaign.entityRegistry)
   useSessionStore.getState().loadPlaythroughLog(campaign.playthroughLog ?? [])
   useHistoryStore.getState().clear()
