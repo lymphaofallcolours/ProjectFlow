@@ -27,6 +27,7 @@ import {
   updateEdgeStyle as updateEdgeStyleOp,
   updateEdgeLabel as updateEdgeLabelOp,
   updateNodeArcLabel as updateArcLabelOp,
+  updateNodeTags as updateNodeTagsOp,
   rewireEdge as rewireEdgeOp,
 } from '@/domain/graph-operations'
 import {
@@ -77,6 +78,7 @@ type GraphState = {
   setEdgeStyle: (edgeId: string, style: StoryEdge['style']) => void
   setEdgeLabel: (edgeId: string, label: string | undefined) => void
   setArcLabel: (nodeId: string, arcLabel: string | undefined) => void
+  setNodeTags: (nodeId: string, tags: string[]) => void
   rewireEdge: (edgeId: string, newSource?: string, newTarget?: string) => void
   importSubgraph: (nodes: StoryNode[], edges: StoryEdge[]) => void
   createGroup: (sceneType: SceneType, position: Position2D, label?: string) => string
@@ -339,6 +341,16 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       const node = state.nodes[nodeId]
       if (!node) return state
       return { nodes: { ...state.nodes, [nodeId]: updateArcLabelOp(node, arcLabel) } }
+    })
+  },
+
+  setNodeTags: (nodeId, tags) => {
+    if (!get().nodes[nodeId]) return
+    saveHistory()
+    set((state) => {
+      const node = state.nodes[nodeId]
+      if (!node) return state
+      return { nodes: { ...state.nodes, [nodeId]: updateNodeTagsOp(node, tags) } }
     })
   },
 

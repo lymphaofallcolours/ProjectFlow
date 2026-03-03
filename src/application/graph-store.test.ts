@@ -666,4 +666,34 @@ describe('useGraphStore', () => {
       expect(useGraphStore.getState().nodes[nid].position).toEqual({ x: 150, y: 300 })
     })
   })
+
+  describe('setNodeTags', () => {
+    it('sets tags on a node', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().setNodeTags(id, ['quest', 'main'])
+      expect(useGraphStore.getState().nodes[id].metadata.tags).toEqual(['quest', 'main'])
+    })
+
+    it('saves history before updating', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useHistoryStore.getState().reset()
+      useGraphStore.getState().setNodeTags(id, ['tag1'])
+      expect(useHistoryStore.getState().past.length).toBe(1)
+    })
+
+    it('ignores non-existent node', () => {
+      useGraphStore.getState().setNodeTags('nope', ['tag'])
+      expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(0)
+    })
+
+    it('replaces existing tags immutably', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().setNodeTags(id, ['a'])
+      const before = useGraphStore.getState().nodes[id]
+      useGraphStore.getState().setNodeTags(id, ['b'])
+      const after = useGraphStore.getState().nodes[id]
+      expect(before.metadata.tags).toEqual(['a'])
+      expect(after.metadata.tags).toEqual(['b'])
+    })
+  })
 })

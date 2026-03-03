@@ -263,6 +263,13 @@ export function updateEdgeLabel(
   return { ...edge, label }
 }
 
+export function updateNodeTags(node: StoryNode, tags: string[]): StoryNode {
+  return {
+    ...node,
+    metadata: { ...node.metadata, tags, updatedAt: new Date().toISOString() },
+  }
+}
+
 export function updateNodeArcLabel(
   node: StoryNode,
   arcLabel: string | undefined,

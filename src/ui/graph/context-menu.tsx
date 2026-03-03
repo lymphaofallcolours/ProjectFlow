@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Trash2, Copy, Scissors, Clipboard, CheckCircle, Edit3, XCircle, Circle, Tag, Download, FolderOpen, FolderClosed, Ungroup, FolderX, Minus } from 'lucide-react'
+import { Trash2, Copy, Scissors, Clipboard, CheckCircle, Edit3, XCircle, Circle, Tag, Download, FolderOpen, FolderClosed, Ungroup, FolderX, Minus, X } from 'lucide-react'
 import type { SceneType, PlaythroughStatus } from '@/domain/types'
 import { SCENE_TYPES, SCENE_TYPE_CONFIG } from '@/domain/types'
 import { PLAYTHROUGH_STATUSES, PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
@@ -42,6 +42,8 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
   const currentPlaythroughStatus = useGraphStore((s) => s.nodes[nodeId]?.playthroughStatus)
   const currentArcLabel = useGraphStore((s) => s.nodes[nodeId]?.arcLabel)
   const setArcLabel = useGraphStore((s) => s.setArcLabel)
+  const currentTags = useGraphStore((s) => s.nodes[nodeId]?.metadata.tags ?? [])
+  const setNodeTags = useGraphStore((s) => s.setNodeTags)
   const recordNodeVisit = useSessionStore((s) => s.recordNodeVisit)
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const selectedNodeIds = useGraphStore((s) => s.selectedNodeIds)
@@ -283,6 +285,17 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
 
           <div className="h-px bg-border my-1 mx-2" />
 
+          {/* Tags section */}
+          <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-text-muted font-medium">
+            Tags
+          </div>
+          <TagChipEditor
+            tags={currentTags}
+            onChange={(tags) => setNodeTags(nodeId, tags)}
+          />
+
+          <div className="h-px bg-border my-1 mx-2" />
+
           {/* Playthrough status submenu */}
           <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-text-muted font-medium">
             Playthrough
@@ -367,6 +380,73 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
           />
         </>
       )}
+    </div>
+  )
+}
+
+const TAG_COLORS = [
+  'var(--color-node-event)',
+  'var(--color-node-narration)',
+  'var(--color-node-combat)',
+  'var(--color-node-social)',
+  'var(--color-node-investigation)',
+]
+
+function tagColor(tag: string): string {
+  let hash = 0
+  for (let i = 0; i < tag.length; i++) hash = (hash * 31 + tag.charCodeAt(i)) | 0
+  return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length]
+}
+
+function TagChipEditor({
+  tags,
+  onChange,
+}: {
+  tags: string[]
+  onChange: (tags: string[]) => void
+}) {
+  const [input, setInput] = useState('')
+
+  const handleAdd = useCallback(() => {
+    const trimmed = input.trim()
+    if (!trimmed || tags.includes(trimmed)) return
+    onChange([...tags, trimmed])
+    setInput('')
+  }, [input, tags, onChange])
+
+  return (
+    <div className="px-3 pb-1">
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-1.5">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px]
+                font-medium text-white/90"
+              style={{ backgroundColor: tagColor(tag), opacity: 0.85 }}
+            >
+              {tag}
+              <button
+                onClick={() => onChange(tags.filter((t) => t !== tag))}
+                className="ml-0.5 hover:text-white cursor-pointer"
+              >
+                <X size={8} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); handleAdd() }
+          if (e.key === 'Escape') setInput('')
+        }}
+        placeholder="Add tag..."
+        className="w-full bg-transparent text-xs text-text-primary placeholder:text-text-muted
+          outline-none border-b border-border focus:border-node-event transition-colors pb-0.5"
+      />
     </div>
   )
 }

@@ -88,7 +88,7 @@ export function useFlowNodes() {
           data: { storyEdge: { ...edge, source: remappedSource, target: remappedTarget } },
         }
       })
-      .filter((e): e is Edge<StoryEdgeData> => e !== null)
+      .filter((e): e is NonNullable<typeof e> => e !== null) as Edge<StoryEdgeData>[]
   }, [edges, collapsedInfo])
 
   return { flowNodes, flowEdges }

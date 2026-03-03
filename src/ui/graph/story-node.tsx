@@ -1,7 +1,7 @@
 import { memo, useCallback, useContext, useMemo } from 'react'
 import { Handle, Position } from '@xyflow/react'
 import type { NodeProps, Node } from '@xyflow/react'
-import { Shield, User, Skull, Package, MapPin, EyeOff } from 'lucide-react'
+import { Shield, User, Skull, Package, MapPin, EyeOff, Tag } from 'lucide-react'
 import type { StoryNode } from '@/domain/types'
 import { SCENE_TYPE_CONFIG } from '@/domain/types'
 import type { EntityType } from '@/domain/entity-types'
@@ -220,6 +220,16 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
       {/* Entity type summary icons — bottom center */}
       {!storyNode.isGroup && (
         <EntityTypeSummary storyNode={storyNode} />
+      )}
+
+      {/* Tag indicator — bottom left, visible when node has tags */}
+      {storyNode.metadata.tags.length > 0 && (
+        <div
+          className="absolute -bottom-0.5 -left-0.5 pointer-events-none"
+          title={storyNode.metadata.tags.join(', ')}
+        >
+          <Tag size={7} className="text-text-muted" style={{ opacity: 0.7 }} />
+        </div>
       )}
 
       {/* Status dot — bottom right, always visible when status is set */}

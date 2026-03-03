@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { X, Search, Users } from 'lucide-react'
+import { X, Search, Users, Tag } from 'lucide-react'
 import { useUIStore } from '@/application/ui-store'
 import { useGraphStore } from '@/application/graph-store'
 import { useEntityStore } from '@/application/entity-store'
@@ -17,7 +17,7 @@ export function SearchPanel() {
   const entitiesMap = useEntityStore((s) => s.entities)
 
   const [query, setQuery] = useState('')
-  const [mode, setMode] = useState<'text' | 'entity'>('text')
+  const [mode, setMode] = useState<'text' | 'entity' | 'tags'>('text')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -54,6 +54,36 @@ export function SearchPanel() {
   const allEntities = useMemo(
     () => Object.values(entitiesMap).sort((a, b) => a.name.localeCompare(b.name)),
     [entitiesMap],
+  )
+
+  // All unique tags with frequency, sorted by count descending
+  const tagStats = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const node of Object.values(nodes)) {
+      for (const tag of node.metadata.tags) {
+        counts.set(tag, (counts.get(tag) ?? 0) + 1)
+      }
+    }
+    return [...counts.entries()]
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count)
+  }, [nodes])
+
+  // Filtered tag stats based on search query
+  const filteredTags = useMemo(() => {
+    if (!debouncedQuery) return tagStats
+    const q = debouncedQuery.toLowerCase()
+    return tagStats.filter((t) => t.tag.toLowerCase().includes(q))
+  }, [tagStats, debouncedQuery])
+
+  const handleTagClick = useCallback(
+    (tag: string) => {
+      const matchingIds = Object.values(nodes)
+        .filter((n) => n.metadata.tags.includes(tag))
+        .map((n) => n.id)
+      selectNodes(matchingIds)
+    },
+    [nodes, selectNodes],
   )
 
   const handleTextResultClick = useCallback(
@@ -112,6 +142,9 @@ export function SearchPanel() {
         <ModeButton active={mode === 'entity'} onClick={() => setMode('entity')}>
           <Users size={11} /> Entity
         </ModeButton>
+        <ModeButton active={mode === 'tags'} onClick={() => { setMode('tags'); setEntityHighlightFilter(null) }}>
+          <Tag size={11} /> Tags
+        </ModeButton>
       </div>
 
       {/* Search input */}
@@ -122,7 +155,7 @@ export function SearchPanel() {
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={mode === 'text' ? 'Search all fields...' : 'Search by entity name...'}
+            placeholder={mode === 'text' ? 'Search all fields...' : mode === 'entity' ? 'Search by entity name...' : 'Filter tags...'}
             className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-surface-glass border border-border
               text-xs text-text-primary placeholder:text-text-muted outline-none
               focus:border-node-event transition-colors"
@@ -188,6 +221,31 @@ export function SearchPanel() {
                   </button>
                 )
               })
+            )}
+          </div>
+        )}
+
+        {mode === 'tags' && (
+          <div className="py-1">
+            {filteredTags.length === 0 ? (
+              <div className="px-4 py-8 text-center text-xs text-text-muted">
+                {tagStats.length === 0 ? 'No tags in campaign' : 'No matching tags'}
+              </div>
+            ) : (
+              filteredTags.map(({ tag, count }) => (
+                <button
+                  key={tag}
+                  onClick={() => handleTagClick(tag)}
+                  className="w-full flex items-center gap-2 px-4 py-1.5 text-left
+                    hover:bg-surface-glass transition-colors cursor-pointer"
+                >
+                  <Tag size={10} className="text-text-muted shrink-0" />
+                  <span className="text-xs text-text-secondary">{tag}</span>
+                  <span className="text-[10px] text-text-muted ml-auto">
+                    {count} node{count !== 1 ? 's' : ''}
+                  </span>
+                </button>
+              ))
             )}
           </div>
         )}

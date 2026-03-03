@@ -17,6 +17,7 @@ import {
   updateEdgeStyle,
   updateEdgeLabel,
   updateNodeArcLabel,
+  updateNodeTags,
   extractSubgraph,
   pasteSubgraph,
   rewireEdge,
@@ -544,5 +545,32 @@ describe('rewireEdge', () => {
     const edges = { e1: createTestEdge({ id: 'e1' }) }
     const result = rewireEdge(edges, 'missing', 'x')
     expect(result).toBe(edges)
+  })
+})
+
+describe('updateNodeTags', () => {
+  it('sets tags on a node', () => {
+    const node = createTestNode({ metadata: { createdAt: 'c', updatedAt: 'u', tags: [] } })
+    const result = updateNodeTags(node, ['quest', 'main'])
+    expect(result.metadata.tags).toEqual(['quest', 'main'])
+  })
+
+  it('replaces existing tags', () => {
+    const node = createTestNode({ metadata: { createdAt: 'c', updatedAt: 'u', tags: ['old'] } })
+    const result = updateNodeTags(node, ['new1', 'new2'])
+    expect(result.metadata.tags).toEqual(['new1', 'new2'])
+    expect(node.metadata.tags).toEqual(['old'])
+  })
+
+  it('updates the updatedAt timestamp', () => {
+    const node = createTestNode({ metadata: { createdAt: 'c', updatedAt: '2020-01-01', tags: [] } })
+    const result = updateNodeTags(node, ['tag'])
+    expect(result.metadata.updatedAt).not.toBe('2020-01-01')
+  })
+
+  it('clears tags with empty array', () => {
+    const node = createTestNode({ metadata: { createdAt: 'c', updatedAt: 'u', tags: ['a', 'b'] } })
+    const result = updateNodeTags(node, [])
+    expect(result.metadata.tags).toEqual([])
   })
 })
