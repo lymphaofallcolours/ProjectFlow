@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 import type { RichContent } from '@/domain/types'
 import { TipTapEditor } from '@/ui/editor/tiptap-editor'
+import { AttachmentGallery } from '@/ui/editor/attachment-gallery'
 
 type RichContentEditorProps = {
   value: RichContent
@@ -16,10 +17,13 @@ export function RichContentEditor({ value, onChange }: RichContentEditorProps) {
   )
 
   return (
-    <TipTapEditor
-      content={value.markdown}
-      onUpdate={handleUpdate}
-      placeholder="Write here..."
-    />
+    <div>
+      <TipTapEditor
+        content={value.markdown}
+        onUpdate={handleUpdate}
+        placeholder="Write here..."
+      />
+      <AttachmentGallery value={value} onChange={onChange} />
+    </div>
   )
 }

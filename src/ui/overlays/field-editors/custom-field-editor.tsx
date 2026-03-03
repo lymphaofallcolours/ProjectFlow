@@ -1,10 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Plus, X, LayoutTemplate } from 'lucide-react'
-import type { CustomField } from '@/domain/types'
+import type { CustomField, RichContent } from '@/domain/types'
 import { createEmptyRichContent } from '@/domain/graph-operations'
 import { instantiateTemplate } from '@/domain/template-operations'
 import { useCampaignStore } from '@/application/campaign-store'
 import { TipTapEditor } from '@/ui/editor/tiptap-editor'
+import { AttachmentGallery } from '@/ui/editor/attachment-gallery'
 
 type CustomFieldEditorProps = {
   value: CustomField[]
@@ -57,6 +58,16 @@ export function CustomFieldEditor({ value, onChange }: CustomFieldEditorProps) {
     [value, onChange],
   )
 
+  const handleUpdateRichContent = useCallback(
+    (index: number, content: RichContent) => {
+      const updated = value.map((field, i) =>
+        i === index ? { ...field, content } : field,
+      )
+      onChange(updated)
+    },
+    [value, onChange],
+  )
+
   return (
     <div className="space-y-3">
       {value.map((field, i) => (
@@ -87,6 +98,10 @@ export function CustomFieldEditor({ value, onChange }: CustomFieldEditorProps) {
             onUpdate={(text) => handleUpdateContent(i, text)}
             placeholder="Content..."
             className="min-h-[60px]"
+          />
+          <AttachmentGallery
+            value={field.content}
+            onChange={(content) => handleUpdateRichContent(i, content)}
           />
         </div>
       ))}
