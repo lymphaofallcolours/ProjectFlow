@@ -8,13 +8,13 @@
   --color-surface: #ffffff;
   --color-surface-alt: #f0f4f8;
   --color-surface-overlay: rgba(255, 255, 255, 0.72);
-  --color-surface-glass: rgba(255, 255, 255, 0.55);
-  --color-surface-glass-border: rgba(255, 255, 255, 0.8);
-  --color-canvas: #dce2ec;
+  --color-surface-glass: rgba(255, 255, 255, 0.72);
+  --color-surface-glass-border: rgba(180, 192, 210, 0.45);
+  --color-canvas: #d0d8e4;
   --color-text-primary: #1a2332;
   --color-text-secondary: #4a5568;
-  --color-text-muted: #94a3b8;
-  --color-border: rgba(200, 210, 225, 0.6);
+  --color-text-muted: #7a8a9e;
+  --color-border: rgba(170, 185, 205, 0.7);
 
   /* Node scene type accent colors — luminous through glass */
   --color-node-event: #4f8ff7;
@@ -41,7 +41,7 @@
   --color-edge: rgba(140, 155, 175, 0.85);
 
   /* Node fill base (flat tint blended with accent) */
-  --color-node-fill-base: rgba(230, 235, 242, 0.82);
+  --color-node-fill-base: rgba(218, 225, 236, 0.88);
 
   /* Accent mix percentage for node fills (higher = more saturated) */
   --accent-mix: 40%;

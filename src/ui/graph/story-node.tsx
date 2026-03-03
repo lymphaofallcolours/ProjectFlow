@@ -199,7 +199,7 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
           {storyNode.label}
         </span>
         <span
-          className="text-[9px] mt-0.5 opacity-50 text-text-secondary"
+          className="text-[9px] mt-0.5 font-medium text-text-secondary"
         >
           {storyNode.isGroup ? `${childCount} node${childCount !== 1 ? 's' : ''}` : config.label}
         </span>
@@ -245,7 +245,7 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
           className="absolute -bottom-0.5 -right-0.5 w-[7px] h-[7px] rounded-full border border-surface-glass"
           style={{ backgroundColor: statusDotColor }}
           title={storyNode.playthroughStatus
-            ? PLAYTHROUGH_STATUS_CONFIG[storyNode.playthroughStatus].label
+            ? `${PLAYTHROUGH_STATUS_CONFIG[storyNode.playthroughStatus].label}${storyNode.playthroughNotes ? `\n${storyNode.playthroughNotes}` : ''}`
             : undefined}
         />
       )}

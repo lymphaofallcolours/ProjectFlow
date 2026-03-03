@@ -3,6 +3,8 @@ import { X, Check, ChevronsUpDown, Maximize2, ScrollText } from 'lucide-react'
 import { useGraphStore } from '@/application/graph-store'
 import { useUIStore } from '@/application/ui-store'
 import { FIELD_DEFINITIONS, SCENE_TYPE_CONFIG } from '@/domain/types'
+import type { StoryNode } from '@/domain/types'
+import { PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
 import { OverlayBackdrop } from './overlay-backdrop'
 import { CockpitFieldPanel } from './cockpit-field-panel'
 
@@ -71,6 +73,9 @@ export function CockpitOverlay({ nodeId }: CockpitOverlayProps) {
             />
           ))}
         </div>
+
+        {/* Playthrough status + notes — only shown when status is set */}
+        <CockpitPlaythroughPanel node={node} />
       </div>
     </OverlayBackdrop>
   )
@@ -152,7 +157,7 @@ function CockpitHeader({
           />
           <button
             onClick={confirmEdit}
-            className="p-1 rounded hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-1 rounded hover:bg-surface-glass transition-colors cursor-pointer"
           >
             <Check size={16} className="text-text-secondary" />
           </button>
@@ -176,7 +181,7 @@ function CockpitHeader({
         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg
           text-[10px] font-medium uppercase tracking-wider
           text-text-secondary hover:text-text-primary
-          hover:bg-white/8 transition-colors cursor-pointer"
+          hover:bg-surface-glass transition-colors cursor-pointer"
         title={scrollableMode ? 'Click to switch to auto-expand' : 'Click to switch to scrollable'}
       >
         {scrollableMode ? <ScrollText size={13} /> : <Maximize2 size={13} />}
@@ -189,7 +194,7 @@ function CockpitHeader({
         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg
           text-[10px] font-medium uppercase tracking-wider
           text-text-secondary hover:text-text-primary
-          hover:bg-white/8 transition-colors cursor-pointer"
+          hover:bg-surface-glass transition-colors cursor-pointer"
         title={allExpanded ? 'Collapse all panels' : 'Expand all panels'}
       >
         <ChevronsUpDown size={13} />
@@ -199,10 +204,40 @@ function CockpitHeader({
       {/* Close button */}
       <button
         onClick={onClose}
-        className="p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+        className="p-1.5 rounded-lg hover:bg-surface-glass transition-colors cursor-pointer"
       >
         <X size={18} className="text-text-muted" />
       </button>
+    </div>
+  )
+}
+
+/** Playthrough status + notes panel — shown only when a playthrough status is set */
+function CockpitPlaythroughPanel({ node }: { node: StoryNode }) {
+  if (!node.playthroughStatus || node.playthroughStatus === 'unvisited') return null
+
+  const statusConfig = PLAYTHROUGH_STATUS_CONFIG[node.playthroughStatus]
+  const statusColor = `var(--color-${statusConfig.color})`
+
+  return (
+    <div className="mt-3 glass-panel rounded-xl px-4 py-3">
+      <div className="flex items-center gap-2 mb-1">
+        <span
+          className="w-2 h-2 rounded-full"
+          style={{ backgroundColor: statusColor }}
+        />
+        <span
+          className="text-xs font-semibold text-text-primary tracking-wide"
+          style={{ fontFamily: 'var(--font-display)' }}
+        >
+          Playthrough: {statusConfig.label}
+        </span>
+      </div>
+      {node.playthroughNotes && (
+        <p className="text-xs text-text-secondary mt-1.5 pl-4">
+          {node.playthroughNotes}
+        </p>
+      )}
     </div>
   )
 }

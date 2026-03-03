@@ -7,8 +7,8 @@ import { NODE_DIMENSIONS } from '@/ui/graph/node-shapes'
 import { isFieldPopulated } from '@/domain/graph-operations'
 import { FieldIcon } from './field-icon'
 
-const ORBIT_RADIUS = 72
-const SUBNODE_SIZE = 40
+const ORBIT_RADIUS = 110
+const SUBNODE_SIZE = 36
 
 export function RadialSubnodes({ nodeId }: { nodeId: string }) {
   const node = useGraphStore((s) => s.nodes[nodeId])
@@ -61,12 +61,12 @@ export function RadialSubnodes({ nodeId }: { nodeId: string }) {
               opacity: populated ? 1 : 0.75,
               background: 'var(--color-surface-alt)',
               border: populated
-                ? `1.5px solid ${fieldDef.color}`
-                : '1.5px solid var(--color-surface-glass-border)',
+                ? `2px solid ${fieldDef.color}`
+                : '2px solid var(--color-border)',
               backdropFilter: 'blur(8px) saturate(160%)',
               boxShadow: populated
-                ? `0 0 14px ${fieldDef.color}66, 0 2px 8px rgba(0,0,0,0.1)`
-                : '0 2px 8px rgba(0,0,0,0.12)',
+                ? `0 0 16px ${fieldDef.color}55, 0 3px 10px rgba(0,0,0,0.18)`
+                : '0 3px 10px rgba(0,0,0,0.15)',
             }}
             title={fieldDef.label}
           >

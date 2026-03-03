@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import type { Node, Edge } from '@xyflow/react'
 import { useGraphStore } from '@/application/graph-store'
+import { SCENE_TYPE_CONFIG } from '@/domain/types'
+import { NODE_DIMENSIONS } from './node-shapes'
 import type { StoryNodeData } from './story-node'
 import type { StoryEdgeData } from './story-edge'
 
@@ -35,12 +37,17 @@ export function useFlowNodes() {
     () =>
       Object.values(nodes)
         .filter((node) => !collapsedInfo.childToGroup.has(node.id))
-        .map((node) => ({
-          id: node.id,
-          type: 'story' as const,
-          position: node.position,
-          data: { storyNode: node },
-        })),
+        .map((node) => {
+          const dim = NODE_DIMENSIONS[SCENE_TYPE_CONFIG[node.sceneType].shape]
+          return {
+            id: node.id,
+            type: 'story' as const,
+            position: node.position,
+            data: { storyNode: node },
+            width: dim.width,
+            height: dim.height,
+          }
+        }),
     [nodes, collapsedInfo],
   )
 

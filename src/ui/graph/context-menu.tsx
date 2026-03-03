@@ -301,33 +301,41 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
 
           <div className="h-px bg-border my-1 mx-2" />
 
-          {/* Playthrough status submenu */}
+          {/* Playthrough status submenu — requires active session */}
           <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-text-muted font-medium">
             Playthrough
           </div>
-          {PLAYTHROUGH_STATUSES.map((status) => {
-            const config = PLAYTHROUGH_STATUS_CONFIG[status]
-            const isActive = status === currentPlaythroughStatus
-            return (
-              <MenuItem
-                key={status}
-                icon={
-                  <span style={{ color: `var(--color-${config.color})` }}>
-                    {STATUS_ICONS[status]}
-                  </span>
-                }
-                label={config.label}
-                active={isActive}
-                onClick={() => handleStatusClick(status)}
-              />
-            )
-          })}
+          {activeSessionId ? (
+            <>
+              {PLAYTHROUGH_STATUSES.map((status) => {
+                const config = PLAYTHROUGH_STATUS_CONFIG[status]
+                const isActive = status === currentPlaythroughStatus
+                return (
+                  <MenuItem
+                    key={status}
+                    icon={
+                      <span style={{ color: `var(--color-${config.color})` }}>
+                        {STATUS_ICONS[status]}
+                      </span>
+                    }
+                    label={config.label}
+                    active={isActive}
+                    onClick={() => handleStatusClick(status)}
+                  />
+                )
+              })}
 
-          {awaitingNotes && (
-            <PlaythroughNotesInput
-              onConfirm={(notes) => handleSetStatus('modified', notes)}
-              onCancel={onClose}
-            />
+              {awaitingNotes && (
+                <PlaythroughNotesInput
+                  onConfirm={(notes) => handleSetStatus('modified', notes)}
+                  onCancel={onClose}
+                />
+              )}
+            </>
+          ) : (
+            <div className="px-3 py-1.5 text-[10px] text-text-muted italic">
+              Start a session to track playthrough
+            </div>
           )}
 
           {/* Group operations — shown for group nodes */}

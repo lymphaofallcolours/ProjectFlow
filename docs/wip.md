@@ -15,6 +15,12 @@
 - **Fix 7: Context menu Escape dismiss** — added `useEscapeKey(onClose)` to `NodeContextMenu` and `EdgeContextMenu` (canvas already had it, refactored to use shared hook)
 - **Fix 8: Context menu viewport overflow** — new `useMenuPosition` hook uses `useLayoutEffect` to measure menu dimensions and reposition upward/leftward when overflowing viewport bounds; applied to all 3 context menus
 - **Fix 9: Right-pointing combat triangle** — rotated triangle from upward to right-pointing (`M 4,4 L 140,62 L 4,120 Z`), wide left edge gives more text room; handle insets for all 4 directions; label padding shifted left toward centroid
+- **Fix 10: Playthrough notes visibility** — status dot tooltip now includes `playthroughNotes`; added `CockpitPlaythroughPanel` to cockpit overlay showing status + notes when set
+- **Fix 11: Light mode contrast** — adjusted 6 CSS variables (glass opacity, border tint, canvas, text-muted, node fill); replaced 5 hardcoded `hover:bg-white/*` classes in cockpit with `hover:bg-surface-glass`
+- **Fix 12: Subnode drag dismiss** — subnodes now dismiss when the user starts dragging their target node (checked in `onNodesChange` drag-start transition)
+- **Fix 13: Subnode spacing & contrast** — orbit radius 72→110, subnode size 40→36, border 1.5→2px, empty border uses `--color-border` instead of glass-border, stronger drop shadows
+- **Fix 14: Subnode scroll/zoom dismiss** — added `onMoveStart` handler to ReactFlow that dismisses subnodes on any pan/zoom (scroll, pinch, drag-pan)
+- **Fix 15: Playthrough requires active session** — disabled playthrough status options in context menu when no session is active; shows "Start a session to track playthrough" hint instead. Prevents desync between node status and session log.
 
 ### Test Coverage
 

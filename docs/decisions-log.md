@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-03-03 — Playthrough status requires active session
+
+**Status:** Accepted
+**Context:** The playthrough status system has two data layers — `node.playthroughStatus` (persistent per-node) and `session.nodesVisited[]` (per-session). Marking a node outside a session only updates the node-level field, not the session log. Starting a session later shows these nodes as "unvisited" in the diff overlay despite having a status dot.
+**Decision:** Disable playthrough status options in the context menu when no session is active. Show hint text instead. Ensures node status and session log stay in sync.
+**Alternatives rejected:** Auto-sync on session start (complex, unclear multi-session semantics); remove session log entirely (loses per-session history); warn but allow (still confusing).
+**Consequences:** Users must start a session before marking playthrough status. Matches the intended workflow (session = active play tracking).
+
 ## 2026-03-02 — Web app with JSON file export over Electron
 
 **Status:** Accepted

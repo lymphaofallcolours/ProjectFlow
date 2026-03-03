@@ -29,7 +29,7 @@ export function CockpitFieldPanel({ node, fieldDef, forceExpanded, scrollableMod
       <button
         onClick={toggle}
         className="w-full flex items-center gap-2 px-3.5 py-2.5 cursor-pointer
-          hover:bg-white/5 transition-colors"
+          hover:bg-surface-glass transition-colors"
       >
         <FieldIcon
           name={fieldDef.icon}

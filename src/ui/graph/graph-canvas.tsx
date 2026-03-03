@@ -18,6 +18,8 @@ import type {
   OnSelectionChangeFunc,
   EdgeMouseHandler,
 } from '@xyflow/react'
+import { SCENE_TYPE_CONFIG } from '@/domain/types'
+import { getShapePath, NODE_DIMENSIONS } from './node-shapes'
 import { useGraphStore } from '@/application/graph-store'
 import { useUIStore } from '@/application/ui-store'
 import { StoryNodeComponent } from './story-node'
@@ -33,6 +35,26 @@ import { useEntityHighlight } from '@/ui/hooks/use-entity-highlight'
 // MUST be defined at module level — prevents re-registration on re-render
 const nodeTypes = { story: StoryNodeComponent }
 const edgeTypes = { story: StoryEdgeComponent }
+
+/** Custom MiniMap node — renders actual shape silhouettes colored by scene type */
+function MiniMapNode({ id, x, y, width, height }: {
+  id: string; x: number; y: number; width: number; height: number
+}) {
+  const sceneType = useGraphStore((s) => s.nodes[id]?.sceneType)
+  const config = SCENE_TYPE_CONFIG[sceneType ?? 'event']
+  const shape = config.shape
+  const dim = NODE_DIMENSIONS[shape]
+  const path = getShapePath(shape)
+  const color = `var(--color-${config.color})`
+
+  return (
+    <g transform={`translate(${x}, ${y})`}>
+      <g transform={`scale(${width / dim.width}, ${height / dim.height})`}>
+        <path d={path} fill={color} opacity={0.8} />
+      </g>
+    </g>
+  )
+}
 
 type ContextMenuState =
   | { type: 'node'; nodeId: string; position: { x: number; y: number } }
@@ -115,6 +137,11 @@ function GraphCanvasInner() {
             if (!isDraggingRef.current) {
               isDraggingRef.current = true
               pushHistory()
+              // Dismiss radial subnodes if dragging their target node
+              const currentRadialId = useUIStore.getState().radialNodeId
+              if (currentRadialId && changes.some((c) => c.type === 'position' && c.id === currentRadialId)) {
+                useUIStore.getState().hideRadialSubnodes()
+              }
             }
           } else if (isDraggingRef.current) {
             // Drag ended: persist to Zustand first, defer clearing overrides
@@ -220,6 +247,13 @@ function GraphCanvasInner() {
     [hideRadialSubnodes, openCockpit],
   )
 
+  // Dismiss radial subnodes on any pan/zoom (scroll, pinch, drag-pan)
+  const onMoveStart = useCallback(() => {
+    if (useUIStore.getState().radialNodeId) {
+      hideRadialSubnodes()
+    }
+  }, [hideRadialSubnodes])
+
   return (
     <HighlightContext.Provider value={highlightSet}>
       <ReactFlow
@@ -237,6 +271,7 @@ function GraphCanvasInner() {
         onEdgeContextMenu={onEdgeContextMenu}
         onPaneContextMenu={onPaneContextMenu}
         onNodeDoubleClick={onNodeDoubleClick}
+        onMoveStart={onMoveStart}
         onMoveEnd={(_event, viewport) => setViewport(viewport)}
         selectionKeyCode={null}
         multiSelectionKeyCode="Control"
@@ -262,7 +297,7 @@ function GraphCanvasInner() {
         )}
         <Controls showInteractive={false} />
         <MiniMap
-          nodeColor={() => 'var(--color-surface-glass-border)'}
+          nodeComponent={MiniMapNode}
           maskColor="var(--color-surface-overlay)"
           pannable
           zoomable

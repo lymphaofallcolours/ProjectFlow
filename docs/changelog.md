@@ -2,6 +2,16 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## Playthrough Notes, Light Mode, Subnode Polish (2026-03-03)
+
+### fix: surface playthrough notes, improve light mode contrast, fix subnode behavior
+- **Playthrough notes visibility**: status dot tooltip now includes `playthroughNotes`; new `CockpitPlaythroughPanel` in cockpit overlay shows status + notes when set
+- **Light mode contrast**: adjusted 6 CSS variables (glass opacity, border tint, canvas, text-muted, node fill); replaced 5 hardcoded `hover:bg-white/*` classes with `hover:bg-surface-glass`
+- **Subnode drag dismiss**: subnodes dismiss when user starts dragging their target node
+- **Subnode scroll/zoom dismiss**: `onMoveStart` handler dismisses subnodes on any pan/zoom
+- **Subnode spacing**: orbit radius 72→110, size 40→36, border 2px with `--color-border`, stronger shadows
+- **Playthrough requires session**: playthrough status options disabled in context menu when no session is active; shows hint text instead
+
 ## Subnode Crash, Long-Press, Context Menu Fixes (2026-03-03)
 
 ### fix: resolve subnode crash, improve long-press and context menus
