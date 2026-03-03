@@ -20,20 +20,21 @@ src/
 │   ├── subgraph-operations.ts  # Subgraph file format (.pfsg.json), serialize/deserialize/validate for cross-campaign export/import
 │   ├── history-operations.ts   # HistorySnapshot type, createSnapshot, MAX_HISTORY_SIZE
 │   ├── campaign-operations.ts  # createCampaign, createDefaultSettings, schema version
+│   ├── template-operations.ts # Pure template CRUD: create, update, delete, instantiateTemplate
 │   └── playthrough-operations.ts # Session CRUD, node visit tracking, diff maps, markdown export
 │
 ├── application/                # State management, orchestration
 │   ├── graph-store.ts          # useGraphStore — nodes, edges, viewport, selection, clipboard, undo/redo, importSubgraph
 │   ├── history-store.ts        # useHistoryStore — past/future snapshot stacks for undo/redo
-│   ├── campaign-store.ts       # useCampaignStore — campaign metadata
+│   ├── campaign-store.ts       # useCampaignStore — campaign metadata + custom field template CRUD
 │   ├── entity-store.ts         # useEntityStore — entity CRUD, registry, status tracking
 │   ├── session-store.ts        # useSessionStore — playthrough sessions, diff overlay, timeline toggle
-│   ├── ui-store.ts             # useUIStore — theme, overlay state, radial node, sidebar/panel toggles, auto-save state
+│   ├── ui-store.ts             # useUIStore — theme, overlay state, radial node, sidebar/panel toggles, template manager, auto-save state
 │   └── campaign-actions.ts     # assemble/hydrate/save/load/auto-save campaign orchestration (incl. entity + session + history)
 │
 ├── infrastructure/             # Browser APIs, serialization, file I/O
 │   ├── file-io.ts              # Save/load JSON via File System Access API + fallback, file handle caching for auto-save, subgraph file I/O
-│   ├── serialization.ts        # Campaign ↔ JSON with schema versioning (validates entityRegistry + playthroughLog)
+│   ├── serialization.ts        # Campaign ↔ JSON with schema versioning (validates entityRegistry + playthroughLog + customFieldTemplates)
 │   ├── markdown-export.ts      # Blob download helper for session markdown + entity codex export
 │   └── theme.ts                # Dark/light mode persistence (localStorage + .dark class)
 │
@@ -41,10 +42,13 @@ src/
 │   ├── components/             # Reusable UI components
 │   │   ├── legend-panel.tsx    # Floating tag syntax cheatsheet (entity DSL reference)
 │   │   ├── search-panel.tsx    # Search panel with text and entity filter modes
-│   │   └── session-timeline.tsx # Right slide-out panel: session visits, export, end session
+│   │   ├── session-timeline.tsx # Right slide-out panel: session visits, export, end session
+│   │   ├── template-manager.tsx # Left slide-in panel: campaign field template CRUD
+│   │   └── pwa-prompt.tsx     # Dismissable PWA install banner (beforeinstallprompt)
 │   ├── graph/                  # React Flow canvas and custom nodes/edges
-│   │   ├── graph-canvas.tsx    # ReactFlow wrapper, interaction handlers, context menus
-│   │   ├── story-node.tsx      # Memoized custom node with SVG glass shapes + long press + entity highlight + diff overlay ring/dot
+│   │   ├── graph-canvas.tsx    # ReactFlow wrapper, interaction handlers, context menus, shared SVG defs, HighlightContext provider
+│   │   ├── story-node.tsx      # Memoized custom node with shared SVG glass shapes + long press + highlight context + diff overlay ring/dot
+│   │   ├── highlight-context.tsx # React context providing Set<string> of entity-highlighted node IDs
 │   │   ├── story-edge.tsx      # Custom edge with glass label pill + style-based rendering (default/conditional/secret)
 │   │   ├── node-shapes.ts      # SVG path data for 5 shapes (circle, square, triangle, diamond, hexagon)
 │   │   ├── use-flow-nodes.ts   # Domain → React Flow node/edge conversion
@@ -68,13 +72,14 @@ src/
 │   │       ├── dialogue-list-editor.tsx # Entity ref + line list editor
 │   │       ├── soundtrack-list-editor.tsx # Track name + note list editor
 │   │       ├── dice-roll-list-editor.tsx  # Description + formula list editor
-│   │       └── custom-field-editor.tsx    # Label + content list editor (TipTap for content)
+│   │       └── custom-field-editor.tsx    # Label + content list editor with template picker (TipTap for content)
 │   │
 │   ├── hooks/                  # Shared React hooks
 │   │   ├── use-long-press.ts   # 500ms hold detection, cancels on 5px drag
 │   │   ├── use-escape-key.ts   # Global Escape keydown listener
 │   │   ├── use-keyboard-shortcuts.ts  # Global shortcuts (Ctrl+/ legend, Ctrl+F search, Ctrl+E entities, Ctrl+T timeline, Ctrl+D diff, Ctrl+Z undo, Ctrl+Shift+Z redo, Ctrl+S save, Ctrl+A select all, Escape chain, Ctrl+C/X/V clipboard, Delete)
-│   │   └── use-auto-save.ts   # Interval-based auto-save hook with status flash
+│   │   ├── use-auto-save.ts   # Interval-based auto-save hook with status flash
+│   │   └── use-entity-highlight.ts # Computes entity highlight set once for all nodes (canvas-level)
 │   │
 │   ├── entities/               # Entity registry UI
 │   │   ├── entity-sidebar.tsx  # Slide-in entity registry sidebar panel with codex export
@@ -90,11 +95,11 @@ src/
 │   │   └── entity-suggestion.tsx        # Autocomplete dropdown for entity tag insertion
 │   │
 │   └── layout/                 # App shell and chrome
-│       ├── app-shell.tsx       # Main layout: Toolbar / Canvas+Overlays / StatusBar + panels + shortcuts
-│       ├── toolbar.tsx         # New Node, Save, Load, Import Subgraph, Auto-save, Undo/Redo, scroll direction, theme + Search, Entities, Legend, Session, Diff
+│       ├── app-shell.tsx       # Main layout: Toolbar / Canvas+Overlays / StatusBar + panels + shortcuts + PWA prompt
+│       ├── toolbar.tsx         # New Node, Save, Load, Import Subgraph, Auto-save, Undo/Redo, scroll direction, theme + Search, Entities, Templates, Legend, Session, Diff
 │       ├── session-selector.tsx # Session lifecycle dropdown: start/end session, session list, delete
 │       ├── scene-type-picker.tsx # Dropdown for selecting scene type on new node
-│       ├── status-bar.tsx      # Campaign name, node count, edge count, entity count, active session, auto-save status
+│       ├── status-bar.tsx      # Campaign name, node count, edge count, entity count, active session, auto-save status, online/offline indicator
 │       └── theme-initializer.tsx # Reads stored theme preference on mount
 │
 ├── App.tsx                     # Root component — renders AppShell + ThemeInitializer
@@ -290,4 +295,5 @@ Import (toolbar "Import" button):
 
 - **Theming:** CSS custom properties (`--color-surface-glass`, `--color-text-primary`, etc.) toggled via `.dark` class on `<html>`. Persisted in localStorage. Aeroglass aesthetic with frosted translucent surfaces and backdrop-blur.
 - **Error handling:** Domain functions throw for truly unexpected errors. Infrastructure validates campaign schema on load. UI catches at component boundaries.
-- **Performance:** React Flow nodes MUST be memoized (`React.memo`). `nodeTypes` object MUST be at module level (not in render). Blurred overlays use CSS `backdrop-filter: blur()` which is GPU-intensive — test on lower-end hardware.
+- **Performance:** React Flow nodes MUST be memoized (`React.memo`). `nodeTypes` object MUST be at module level (not in render). Blurred overlays use CSS `backdrop-filter: blur()` which is GPU-intensive — test on lower-end hardware. SVG gradients/filters are shared at canvas level (not per-node). Entity highlight uses React context for O(1) per-node lookup. `useFlowNodes` splits base node data from selection state for better memo stability.
+- **PWA:** Service worker precaches all static assets via vite-plugin-pwa + Workbox. No runtime caching (no API calls). Manifest enables standalone install. Online/offline status tracked in status bar.

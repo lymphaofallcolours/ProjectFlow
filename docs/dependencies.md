@@ -64,6 +64,12 @@
 **Purpose:** Browser environment for Vitest. Simulates DOM APIs for component and store testing.
 **Added:** Phase 1, Commit 1.
 
+### vite-plugin-pwa (^1.2.0)
+**Purpose:** PWA support — generates web manifest, registers service worker via Workbox, precaches static assets for offline use. Integrates with Vite build pipeline.
+**Chosen over:** Manual Workbox setup (more config), workbox-webpack-plugin (wrong build tool), custom service worker (reinvents precaching).
+**Removal risk:** Low — only affects build output, no runtime code dependency.
+**Added:** Phase 6, Commit 4.
+
 ### @playwright/test (not yet installed)
 **Purpose:** E2E testing for critical user flows.
 **Added:** (planned for Phase 2+)

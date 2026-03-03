@@ -2,6 +2,39 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## Phase 6 — Custom Field Templates, Performance, PWA (2026-03-03)
+
+### docs: add integration tests, update all docs, polish for Phase 6 completion
+- 8 integration tests: template roundtrip (3), performance/highlight (5)
+- All docs updated (architecture, decisions-log, changelog, wip, dependencies), plan archived
+
+### feat: add PWA offline mode with service worker and install prompt
+- vite-plugin-pwa with autoUpdate registration and Workbox precaching
+- Web manifest (ProjectFlow branding, standalone display), PWA meta tags
+- Dismissable install banner (beforeinstallprompt), localStorage dismissal
+- Online/offline indicator in status bar via navigator.onLine events
+
+### perf: shared SVG defs, entity highlight context, split node mapping
+- Removed per-node `<defs>` blocks (N duplicate gradients/filters)
+- 5 glass gradients + 1 highlight-sheen + 1 node-glow filter defined once at canvas level
+- Entity highlight computed once via useEntityHighlight() hook, provided via React context
+- useFlowNodes memo split: base node data stable when only selection changes
+
+### feat: add template manager UI and template picker in custom field editor
+- Template Manager: left slide-in panel with CRUD for campaign field templates
+- Custom field editor gains picker dropdown: "Blank field" or pick from templates
+- Template-derived fields show "template" badge, templateId set on instantiation
+- Toolbar Templates button (LayoutTemplate icon), templateManagerOpen in UI store
+
+### feat: fix template persistence bug, add template operations and store CRUD
+- BUG FIX: assembleCampaign() now includes customFieldTemplates from campaign store
+- BUG FIX: hydrateCampaign() now loads templates on deserialization
+- New domain/template-operations.ts: create, update, delete, instantiateTemplate
+- useCampaignStore extended with template CRUD (add, update, remove, loadTemplates)
+- Serialization validates customFieldTemplates array (backward-compatible)
+
+---
+
 ## Phase 5 — Polish & Power Features (2026-03-02)
 
 ### docs: add integration tests, update all docs, polish for Phase 5 completion

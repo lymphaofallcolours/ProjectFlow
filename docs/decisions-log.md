@@ -156,6 +156,38 @@
 **Alternatives rejected:** Implementing in Phase 5 (too large, would delay higher-priority polish features).
 **Consequences:** Phase 6 will need to add Group type to domain, group-aware rendering in story-node.tsx, group context menu items, and group-aware undo/redo. Also deferred: image/attachment support, PWA offline mode, custom field templates.
 
+## 2026-03-03 — Templates in campaign store, not a new store
+
+**Status:** Accepted
+**Context:** Custom field templates need a home. Could create a new `useTemplateStore` or add to the existing `useCampaignStore`.
+**Decision:** Add `customFieldTemplates` state and CRUD actions to `useCampaignStore`. Templates are campaign-scoped metadata. Keeps store count at 6.
+**Alternatives rejected:** Separate `useTemplateStore` (adds store count, templates are inherently campaign-scoped), storing in UI store (templates are data, not UI state).
+**Consequences:** Campaign store gains template CRUD. `assembleCampaign()` reads templates from campaign store. `hydrateCampaign()` calls `loadTemplates()`. Template state resets with campaign.
+
+## 2026-03-03 — Entity highlight via React context instead of per-node search
+
+**Status:** Accepted
+**Context:** Each `StoryNodeComponent` ran `searchNodesByEntity()` independently — O(n × fields × regex) per node, O(n²) total when filter is active.
+**Decision:** Single `useEntityHighlight()` hook at `GraphCanvasInner` computes matching node IDs once into a `Set<string>`. Nodes read via `useContext(HighlightContext)` + `set.has(id)` — O(1) per node.
+**Alternatives rejected:** Storing highlight set in Zustand (extra store update cycle on every filter change), memoized selector per node (still O(n) per node).
+**Consequences:** Removed `nodes` subscription from `StoryNodeComponent` (was only used for entity search). Highlight set recomputes when filter or nodes change. Context provider wraps ReactFlow in `GraphCanvasInner`.
+
+## 2026-03-03 — vite-plugin-pwa over manual Workbox for service worker
+
+**Status:** Accepted
+**Context:** ProjectFlow needs offline support. Could use manual Workbox setup, a custom service worker, or vite-plugin-pwa.
+**Decision:** `vite-plugin-pwa` with `registerType: 'autoUpdate'` and Workbox precaching. Since ProjectFlow has zero API calls, the service worker only precaches static assets.
+**Alternatives rejected:** Manual Workbox config (more boilerplate, same result), custom service worker (reinvents precaching logic), no SW (loses offline support).
+**Consequences:** Build output includes `sw.js`, `workbox-*.js`, and `manifest.webmanifest`. Auto-update refreshes SW on new deployments. No runtime caching strategy needed.
+
+## 2026-03-03 — Subgraph grouping and image attachments deferred to Phase 7
+
+**Status:** Accepted
+**Context:** Phase 6 originally included subgraph grouping and image/attachment support, but these are large features.
+**Decision:** Defer both to Phase 7. Phase 6 focuses on templates (with bug fix), performance, and PWA.
+**Alternatives rejected:** Including all features in Phase 6 (too large, delays production quality).
+**Consequences:** Phase 7 will add: Group type to domain, group-aware rendering, collapse/expand, and image/attachment support in TipTap.
+
 ---
 
 <!-- Entries above — newest first -->

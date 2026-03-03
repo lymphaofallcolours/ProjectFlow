@@ -165,4 +165,59 @@ describe('Campaign roundtrip (integration)', () => {
 
     expect(useEntityStore.getState().getAllEntities()).toHaveLength(0)
   })
+
+  it('templates survive save/load roundtrip (bug fix verification)', () => {
+    useCampaignStore.getState().setName('Template Campaign')
+    const tplId = useCampaignStore.getState().addTemplate('Combat Notes', 'Swords', 'For combat encounters')
+
+    // Roundtrip
+    const json = serializeCampaign(assembleCampaign())
+    useGraphStore.getState().reset()
+    useCampaignStore.getState().reset()
+    hydrateCampaign(deserializeCampaign(json))
+
+    const templates = useCampaignStore.getState().customFieldTemplates
+    expect(templates).toHaveLength(1)
+    expect(templates[0].id).toBe(tplId)
+    expect(templates[0].label).toBe('Combat Notes')
+    expect(templates[0].icon).toBe('Swords')
+    expect(templates[0].description).toBe('For combat encounters')
+  })
+
+  it('template with all fields preserved through roundtrip', () => {
+    useCampaignStore.getState().addTemplate('Lore', 'BookOpen', 'World-building notes')
+    useCampaignStore.getState().addTemplate('Tactics', 'Shield')
+
+    const json = serializeCampaign(assembleCampaign())
+    useCampaignStore.getState().reset()
+    hydrateCampaign(deserializeCampaign(json))
+
+    const templates = useCampaignStore.getState().customFieldTemplates
+    expect(templates).toHaveLength(2)
+    expect(templates[0].label).toBe('Lore')
+    expect(templates[0].description).toBe('World-building notes')
+    expect(templates[1].label).toBe('Tactics')
+    expect(templates[1].description).toBeUndefined()
+  })
+
+  it('backwards compat: campaign without customFieldTemplates loads with empty array', () => {
+    // Simulate a legacy campaign JSON without the customFieldTemplates field
+    const store = useGraphStore.getState()
+    store.addNode('event', { x: 0, y: 0 }, 'Node')
+    useCampaignStore.getState().setName('Legacy')
+
+    const campaign = assembleCampaign()
+    const json = serializeCampaign(campaign)
+
+    // Remove the customFieldTemplates field from JSON
+    const parsed = JSON.parse(json)
+    delete parsed.customFieldTemplates
+    const legacyJson = JSON.stringify(parsed)
+
+    useCampaignStore.getState().reset()
+    useGraphStore.getState().reset()
+    hydrateCampaign(deserializeCampaign(legacyJson))
+
+    expect(useCampaignStore.getState().customFieldTemplates).toEqual([])
+  })
 })
