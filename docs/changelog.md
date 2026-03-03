@@ -2,6 +2,35 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## Phase 9 — Campaign Intelligence & Navigation (2026-03-03)
+
+### docs: add integration tests, update all docs, polish for Phase 9 completion
+- 4 tag system integration tests: save/load roundtrip, undo, tag collection, tag filtering
+- 3 entity graph integration tests: layout positions, edges, type filter
+- 4 dashboard integration tests: entity counts, node counts, top connected, top tagged
+- All docs updated (architecture, decisions-log, changelog, wip), plan archived
+
+### feat: add incoming relationships and campaign dashboard
+- computeIncomingRelationships domain function: scans all entities for reverse references
+- "Referenced By" section in entity relationships editor with click-to-navigate
+- Campaign dashboard panel: entity/node counts by type, graph/session stats, top 5 most connected entities, top 5 most tagged nodes
+- Dashboard toolbar button (BarChart3), Escape chain integration
+
+### feat: add entity relationship graph visualization with type-clustered layout
+- entity-graph-layout.ts: pure domain layout computation, type-clustered circular positioning
+- EntityGraphNodeComponent: memoized circular badge with type color, 2-letter abbreviation
+- EntityRelationshipGraph: full-panel overlay, type filter pills, React Flow (separate provider)
+- Click entity → opens sidebar + selects entity
+- Toolbar button (Network), Ctrl+Shift+R shortcut, Escape chain integration
+- 6 layout tests, 2 UI store tests, 1 keyboard shortcut test
+
+### feat: add node tag system with context menu editor, search panel mode, and tag indicator
+- updateNodeTags domain function, setNodeTags store action with history
+- TagChipEditor in context menu: colored chips, add/remove tags
+- Tags mode in search panel: unique tags with frequency counts, click to select matching nodes
+- Tag icon indicator at bottom-left of nodes with tags
+- 4 domain tests, 4 store tests
+
 ## Phase 8 — Entity System Completion & Spec Parity (2026-03-03)
 
 ### docs: add integration tests, update all docs, polish for Phase 8 completion

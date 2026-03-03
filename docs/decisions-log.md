@@ -284,6 +284,46 @@
 **Alternatives rejected:** Drag-to-rewire on edge handles (conflicts with React Flow's built-in handle behavior), modal dialog (too heavy for a quick operation), inline text input for node ID (poor UX).
 **Consequences:** New `NodeSelectorInput` component is reusable for any node selection need. Edge context menu grows but rewire section is toggleable (hidden by default, expanded on click).
 
+## 2026-03-03 — Type-clustered layout over dagre for entity graph
+
+**Status:** Accepted
+**Context:** Entity relationship graph needs a layout algorithm. Options included dagre (existing in many graph projects), d3-force, or a custom layout.
+**Decision:** Custom type-clustered circular layout in pure domain code. 6 cluster centers (one per EntityType), entities arranged in circles around their type's center. Zero new dependencies.
+**Alternatives rejected:** dagre (adds a dependency for <50 entities), d3-force (overkill, adds weight), random layout (poor visual grouping).
+**Consequences:** Simple, deterministic layout. Positions are computed from entity type membership. Performance is O(n) for n entities. The layout doesn't handle overlapping entities at high densities, but campaigns rarely exceed 50 entities.
+
+## 2026-03-03 — Tag highlighting via selectNodes() instead of custom highlight
+
+**Status:** Accepted
+**Context:** When a user clicks a tag in the search panel, the matching nodes need visual emphasis. Could create a new highlight mechanism (like entityHighlightFilter) or reuse the existing multi-select.
+**Decision:** Reuse `graphStore.selectNodes(matchingIds)`. Tag clicks select all nodes with that tag, which triggers the existing selection glow rendering. Tags and entity highlight are orthogonal.
+**Alternatives rejected:** New `tagHighlightFilter` in UI store (duplicates entity highlight concept), CSS class on matching nodes (fragile, not in domain model).
+**Consequences:** Tag selection and manual selection share the same visual state. Clicking a tag replaces the current selection. This is intentional — the user is explicitly choosing to focus on tagged nodes.
+
+## 2026-03-03 — Dashboard reads all stores with useMemo, no derived state
+
+**Status:** Accepted
+**Context:** Campaign dashboard shows entity counts, node counts, top connected entities, top tagged nodes. Could pre-compute and store these, or compute on render.
+**Decision:** Compute everything on render, wrapped in `useMemo`. Entity count is O(entities), node count is O(nodes), top connected is O(entities²) for incoming relationship scan.
+**Alternatives rejected:** Zustand derived state (adds complexity, sync bugs), separate dashboard store (unnecessary layer).
+**Consequences:** Dashboard recomputes on store changes. For campaign-scale data (50 entities, 100 nodes), this is instant. If campaigns grow 10x, `computeIncomingRelationships` could become a bottleneck — add memoization then.
+
+## 2026-03-03 — Second ReactFlowProvider for entity graph
+
+**Status:** Accepted
+**Context:** Entity relationship graph is a separate graph visualization alongside the main narrative graph. React Flow requires a ReactFlowProvider for each instance.
+**Decision:** Entity graph wraps its own `<ReactFlowProvider>` inside the panel component. Completely independent from the main graph's provider in GraphCanvas.
+**Alternatives rejected:** Sharing a single provider (would conflict with main graph state), using a non-React-Flow library like vis.js (adds a dependency for a simple graph).
+**Consequences:** Two React Flow instances can coexist. Entity graph has its own zoom, pan, and node types. Module-level `nodeTypes` constant defined in the panel file (not in the node component, per lint rules).
+
+## 2026-03-03 — Incoming relationships computed on demand, not stored
+
+**Status:** Accepted
+**Context:** Entity profile needs to show "Referenced By" — entities that have relationships pointing TO the current entity. Could store bidirectional references or compute on demand.
+**Decision:** `computeIncomingRelationships(entities, targetId)` scans all entities for relationships with `targetEntityId === targetId`. Pure function, O(n) per entity.
+**Alternatives rejected:** Storing inverse relationships (doubles the data, sync bugs on add/remove), computed property on Entity (domain type would need framework awareness).
+**Consequences:** Incoming relationships are always fresh. No sync issues. For 50 entities with ~5 relationships each, scan is ~250 comparisons — negligible.
+
 ---
 
 <!-- Entries above — newest first -->

@@ -5,36 +5,35 @@
 ## Current Session
 
 **Date:** 2026-03-03
-**Goal:** Phase 8 — Entity System Completion & Spec Parity (complete)
+**Goal:** Phase 9 — Campaign Intelligence & Navigation (complete)
 
 ### Completed This Session
 
-- **Commit 1:** Entity domain ops + store enrichment — 6 new pure functions in entity-operations.ts (portrait, relationships, custom fields), expanded updateEntity whitelist, extractEntityTypesFromNodeFields + extractStatusTagsFromText in parser, setPortrait/addRelationship/removeRelationship store actions. 38 new tests.
-- **Commit 2:** Entity profile sub-components — EntityPortrait (circular upload/display), EntityHistoryEditor (chronological list + add/remove), EntityRelationshipsEditor (CRUD + navigation), EntityCustomFieldsEditor (key-value editor). entity-profile.tsx restructured with collapsible SectionHeader. 8 new tests.
-- **Commit 3:** Clickable chips + tooltips + entity type summary — entity-chip-node-view.tsx gets onClick (opens sidebar + selects entity) and hover tooltip trigger, portal-based EntityTooltip, EntityTypeSummary on StoryNode (scans fields, renders type icons), openEntitySidebar (non-toggling) in UI store. 6 new tests.
-- **Commit 4:** Status auto-logging + TipTap Link + edge rewire UI — tiptap-editor.tsx gains Link extension + status auto-logging diff logic + nodeId prop threading, NodeSelectorInput searchable dropdown, edge-context-menu.tsx gains rewire section with source/target dropdowns. 6 new tests.
-- **Commit 5:** Integration tests + docs — 5 entity profile roundtrip tests, 6 entity interaction tests, all docs updated (architecture, decisions-log, changelog, wip, dependencies), plan archived.
+- **Commit 1:** Node tag system — updateNodeTags domain op, setNodeTags store action with undo, TagChipEditor in context menu (colored chips, add/remove), Tags mode in search panel (frequency counts, click-to-select), Tag icon indicator on story nodes. Fix pre-existing TS error in use-flow-nodes.ts. 8 new tests.
+- **Commit 2:** Entity relationship graph — entity-graph-layout.ts pure domain layout (type-clustered circles, zero deps), EntityGraphNodeComponent (circular badge), EntityRelationshipGraph panel (ReactFlowProvider, type filter pills, click-to-navigate), toolbar button, Ctrl+Shift+R shortcut, Escape chain. 9 new tests.
+- **Commit 3:** Incoming relationships + campaign dashboard — computeIncomingRelationships domain function, "Referenced By" in entity relationships editor, CampaignDashboard panel (entity/node counts, graph stats, session stats, top 5 connected, top 5 tagged), toolbar button, Escape chain. 10 new tests.
+- **Commit 4:** Integration tests + docs — 11 integration tests (tag system, entity graph, dashboard), all docs updated (architecture, decisions-log, changelog, wip), plan archived.
 
 ### Test Coverage
 
-- ~656 tests total across 41 test files
-- Domain: ~217 (65 parser + 30 entity ops + 21 search + 57 graph ops + 33 playthrough ops + 3 history ops + 13 subgraph ops + 12 template ops + 29 group ops + 13 attachment ops + 17 entity profile ops + 10 parser extraction)
-- Application: ~180 (73 graph store + 34 entity store + 22 session store + 16 history store + 25 UI store + 8 campaign store)
+- ~690 tests total across 45 test files
+- Domain: ~227 (65 parser + 34 entity ops + 21 search + 61 graph ops + 33 playthrough ops + 3 history ops + 13 subgraph ops + 12 template ops + 29 group ops + 13 attachment ops + 6 entity graph layout)
+- Application: ~190 (77 graph store + 34 entity store + 22 session store + 16 history store + 29 UI store + 8 campaign store)
 - Infrastructure: 13 (serialization)
-- UI: 65 (12 entity chip + 17 keyboard shortcuts + 5 entity highlight + 8 useFlowNodes + 4 attachment gallery + 8 entity profile + 6 entity chip interaction + 4 status auto-logging + 2 node selector + 1 app)
-- Integration: ~93 (10 campaign roundtrip + 3 entity roundtrip + 6 entity search + 8 overlay state + 8 playthrough roundtrip + 4 session timeline + 20 graph operations + 3 PWA build + 5 performance + 8 group operations + 5 attachment roundtrip + 4 PWA icons + 5 entity profile roundtrip + 6 entity interaction)
+- UI: 66 (12 entity chip + 18 keyboard shortcuts + 5 entity highlight + 8 useFlowNodes + 4 attachment gallery + 8 entity profile + 6 entity chip interaction + 4 status auto-logging + 2 node selector + 1 app)
+- Integration: ~104 (10 campaign roundtrip + 3 entity roundtrip + 6 entity search + 8 overlay state + 8 playthrough roundtrip + 4 session timeline + 20 graph operations + 3 PWA build + 5 performance + 8 group operations + 5 attachment roundtrip + 4 PWA icons + 5 entity profile roundtrip + 6 entity interaction + 4 tag system + 3 entity graph + 4 dashboard)
 
 ### Blocked / Needs Attention
 
 - (none)
 
-### Next Steps (Phase 9)
+### Next Steps (Phase 10)
 
-1. **Inline TipTap image nodes** — content format migration from plain text to JSON/ProseMirror schema for inline image support
+1. **Inline TipTap image nodes** — content format migration from plain text to JSON/ProseMirror schema
 2. **Nested groups** — groups containing groups (multi-level hierarchy, recursive collapse)
 3. **External file references** — avoid base64 bloat for very large assets
 4. **Bulk entity import/export** — CSV or markdown
-5. **Entity graph visualization** — relationship web view
+5. **Advanced tag features** — tag auto-suggest, tag hierarchies, tag-based graph coloring
 
 ### TODOs in Code
 
@@ -43,6 +42,10 @@
 ---
 
 ## Previous Sessions
+
+### Phase 8 — Entity System Completion & Spec Parity (2026-03-03)
+- 5 commits, 656 tests
+- Entity domain ops + store, entity profile sub-components, clickable chips + tooltips, status auto-logging, edge rewire UI
 
 ### Phase 7 — Subgraph Grouping, Image Attachments, PWA Icons (2026-03-03)
 - 5 commits, 587 tests
