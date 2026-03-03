@@ -14,6 +14,7 @@ import {
   addEntityCustomField,
   removeEntityCustomField,
   updateEntityCustomField,
+  computeIncomingRelationships,
 } from './entity-operations'
 import { createTestEntity, createTestEntityRegistry, createTestAttachment } from '../../tests/fixtures/factories'
 
@@ -420,5 +421,41 @@ describe('updateEntityCustomField', () => {
     const entity = createTestEntity()
     const updated = updateEntityCustomField(entity, 'Nonexistent', 'Value')
     expect(updated).toBe(entity)
+  })
+})
+
+describe('computeIncomingRelationships', () => {
+  it('finds entities that reference the target', () => {
+    const a = createTestEntity({ id: 'a', name: 'Alfa', relationships: [{ targetEntityId: 'b', type: 'ally' }] })
+    const b = createTestEntity({ id: 'b', name: 'Bravo' })
+    const entities = { a, b }
+    const incoming = computeIncomingRelationships(entities, 'b')
+    expect(incoming).toHaveLength(1)
+    expect(incoming[0].sourceEntity.id).toBe('a')
+    expect(incoming[0].relationship.type).toBe('ally')
+  })
+
+  it('returns empty array when no references exist', () => {
+    const a = createTestEntity({ id: 'a', name: 'Alfa' })
+    const b = createTestEntity({ id: 'b', name: 'Bravo' })
+    const entities = { a, b }
+    const incoming = computeIncomingRelationships(entities, 'b')
+    expect(incoming).toHaveLength(0)
+  })
+
+  it('excludes self-references', () => {
+    const a = createTestEntity({ id: 'a', name: 'Alfa', relationships: [{ targetEntityId: 'a', type: 'self' }] })
+    const entities = { a }
+    const incoming = computeIncomingRelationships(entities, 'a')
+    expect(incoming).toHaveLength(0)
+  })
+
+  it('returns multiple incoming from different entities', () => {
+    const a = createTestEntity({ id: 'a', name: 'Alfa', relationships: [{ targetEntityId: 'c', type: 'ally' }] })
+    const b = createTestEntity({ id: 'b', name: 'Bravo', relationships: [{ targetEntityId: 'c', type: 'rival' }] })
+    const c = createTestEntity({ id: 'c', name: 'Charlie' })
+    const entities = { a, b, c }
+    const incoming = computeIncomingRelationships(entities, 'c')
+    expect(incoming).toHaveLength(2)
   })
 })

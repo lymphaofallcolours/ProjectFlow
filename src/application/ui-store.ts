@@ -36,6 +36,9 @@ type UIState = {
   // Entity relationship graph
   entityGraphOpen: boolean
 
+  // Campaign dashboard
+  dashboardOpen: boolean
+
   // Auto-save
   autoSaveEnabled: boolean
   autoSaveIntervalMs: number
@@ -56,6 +59,7 @@ type UIState = {
   setEntityHighlightFilter: (filter: { entityName: string; entityType?: string } | null) => void
   toggleTemplateManager: () => void
   toggleEntityGraph: () => void
+  toggleDashboard: () => void
   toggleAutoSave: () => void
   setAutoSaveIntervalMs: (ms: number) => void
   setAutoSaveStatus: (status: 'saving' | 'saved' | null) => void
@@ -72,6 +76,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   entityHighlightFilter: null,
   templateManagerOpen: false,
   entityGraphOpen: false,
+  dashboardOpen: false,
   autoSaveEnabled: false,
   autoSaveIntervalMs: 60_000,
   autoSaveStatus: null,
@@ -124,6 +129,9 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   toggleEntityGraph: () =>
     set((state) => ({ entityGraphOpen: !state.entityGraphOpen })),
+
+  toggleDashboard: () =>
+    set((state) => ({ dashboardOpen: !state.dashboardOpen })),
 
   toggleAutoSave: () =>
     set((state) => ({ autoSaveEnabled: !state.autoSaveEnabled })),

@@ -128,9 +128,13 @@ export function useKeyboardShortcuts() {
           ui.hideRadialSubnodes()
           return
         }
-        // 3. Close entity graph
+        // 3. Close entity graph or dashboard
         if (ui.entityGraphOpen) {
           ui.toggleEntityGraph()
+          return
+        }
+        if (ui.dashboardOpen) {
+          ui.toggleDashboard()
           return
         }
         // 4. Close panels (search, entity sidebar, legend, timeline)

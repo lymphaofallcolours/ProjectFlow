@@ -2,6 +2,11 @@
 import type { Entity, EntityType, EntityRegistry, EntityRelationship } from './entity-types'
 import { ENTITY_TYPE_CONFIGS } from './entity-types'
 
+export type IncomingRelationship = {
+  sourceEntity: Entity
+  relationship: EntityRelationship
+}
+
 export function createEntity(
   type: EntityType,
   name: string,
@@ -129,6 +134,23 @@ export function addStatusEntry(
       { nodeId, status, note },
     ],
   }
+}
+
+export function computeIncomingRelationships(
+  entities: Record<string, Entity>,
+  targetId: string,
+): IncomingRelationship[] {
+  const result: IncomingRelationship[] = []
+  for (const entity of Object.values(entities)) {
+    if (entity.id === targetId) continue
+    const rels = entity.relationships ?? []
+    for (const rel of rels) {
+      if (rel.targetEntityId === targetId) {
+        result.push({ sourceEntity: entity, relationship: rel })
+      }
+    }
+  }
+  return result
 }
 
 const TYPE_ORDER: EntityType[] = ['pc', 'npc', 'enemy', 'object', 'location', 'secret']

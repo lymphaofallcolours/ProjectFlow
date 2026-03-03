@@ -8,6 +8,7 @@ import { SearchPanel } from '@/ui/components/search-panel'
 import { SessionTimeline } from '@/ui/components/session-timeline'
 import { TemplateManager } from '@/ui/components/template-manager'
 import { EntityRelationshipGraph } from '@/ui/entities/entity-relationship-graph'
+import { CampaignDashboard } from '@/ui/components/campaign-dashboard'
 import { PWAInstallPrompt } from '@/ui/components/pwa-prompt'
 import { useKeyboardShortcuts } from '@/ui/hooks/use-keyboard-shortcuts'
 import { useAutoSave } from '@/ui/hooks/use-auto-save'
@@ -28,6 +29,7 @@ export function AppShell() {
         <SessionTimeline />
         <LegendPanel />
         <EntityRelationshipGraph />
+        <CampaignDashboard />
       </main>
       <StatusBar />
       <PWAInstallPrompt />

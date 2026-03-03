@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react'
-import { Plus, X, ArrowRight } from 'lucide-react'
+import { useState, useCallback, useMemo } from 'react'
+import { Plus, X, ArrowRight, ArrowLeft } from 'lucide-react'
 import type { Entity } from '@/domain/entity-types'
 import { ENTITY_TYPE_CONFIGS } from '@/domain/entity-types'
+import { computeIncomingRelationships } from '@/domain/entity-operations'
 import { useEntityStore } from '@/application/entity-store'
 import { useUIStore } from '@/application/ui-store'
 
@@ -21,8 +22,15 @@ export function EntityRelationshipsEditor({ entityId, entity }: EntityRelationsh
   const [targetId, setTargetId] = useState('')
   const [relType, setRelType] = useState('')
 
+  const entitiesMap = useEntityStore((s) => s.entities)
+
   const otherEntities = allEntities().filter((e) => e.id !== entityId)
   const relationships = entity.relationships ?? []
+
+  const incomingRelationships = useMemo(
+    () => computeIncomingRelationships(entitiesMap, entityId),
+    [entitiesMap, entityId],
+  )
 
   const handleAdd = useCallback(() => {
     if (!targetId || !relType.trim()) return
@@ -151,6 +159,42 @@ export function EntityRelationshipsEditor({ entityId, entity }: EntityRelationsh
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Referenced By — incoming relationships */}
+      {incomingRelationships.length > 0 && (
+        <div className="mt-3">
+          <label className="text-[10px] font-medium text-text-muted uppercase tracking-wider mb-1.5 block">
+            Referenced By
+          </label>
+          <div className="space-y-1">
+            {incomingRelationships.map(({ sourceEntity, relationship }) => {
+              const cfg = ENTITY_TYPE_CONFIGS.find((c) => c.type === sourceEntity.type)
+              return (
+                <div
+                  key={`${sourceEntity.id}-${relationship.type}`}
+                  className="flex items-center gap-1.5 text-[11px]"
+                >
+                  <button
+                    onClick={() => handleNavigate(sourceEntity.id)}
+                    className="flex items-center gap-1 text-text-primary hover:underline
+                      cursor-pointer truncate"
+                  >
+                    {cfg && (
+                      <span
+                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{ backgroundColor: cfg.color }}
+                      />
+                    )}
+                    {sourceEntity.name}
+                  </button>
+                  <ArrowLeft size={10} className="text-text-muted shrink-0" />
+                  <span className="text-text-muted shrink-0">{relationship.type}</span>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>

@@ -13,6 +13,7 @@ beforeEach(() => {
     entityHighlightFilter: null,
     templateManagerOpen: false,
     entityGraphOpen: false,
+    dashboardOpen: false,
     autoSaveEnabled: false,
     autoSaveIntervalMs: 60_000,
     autoSaveStatus: null,
@@ -201,6 +202,19 @@ describe('useUIStore', () => {
       expect(useUIStore.getState().entityGraphOpen).toBe(true)
       useUIStore.getState().toggleEntityGraph()
       expect(useUIStore.getState().entityGraphOpen).toBe(false)
+    })
+  })
+
+  describe('dashboard', () => {
+    it('defaults to closed', () => {
+      expect(useUIStore.getState().dashboardOpen).toBe(false)
+    })
+
+    it('toggles dashboard open/closed', () => {
+      useUIStore.getState().toggleDashboard()
+      expect(useUIStore.getState().dashboardOpen).toBe(true)
+      useUIStore.getState().toggleDashboard()
+      expect(useUIStore.getState().dashboardOpen).toBe(false)
     })
   })
 })
