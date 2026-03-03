@@ -9,16 +9,26 @@ export function useFlowNodes() {
   const edges = useGraphStore((s) => s.edges)
   const selectedNodeIds = useGraphStore((s) => s.selectedNodeIds)
 
-  const flowNodes: Node<StoryNodeData>[] = useMemo(
+  // Base node data — stable when only selection changes
+  const baseFlowNodes = useMemo(
     () =>
       Object.values(nodes).map((node) => ({
         id: node.id,
-        type: 'story',
+        type: 'story' as const,
         position: node.position,
         data: { storyNode: node },
+      })),
+    [nodes],
+  )
+
+  // Add selection flag — re-computes on selection change but base data is stable
+  const flowNodes: Node<StoryNodeData>[] = useMemo(
+    () =>
+      baseFlowNodes.map((node) => ({
+        ...node,
         selected: selectedNodeIds.has(node.id),
       })),
-    [nodes, selectedNodeIds],
+    [baseFlowNodes, selectedNodeIds],
   )
 
   const flowEdges: Edge<StoryEdgeData>[] = useMemo(

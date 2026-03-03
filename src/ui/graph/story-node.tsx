@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useContext, useMemo } from 'react'
 import { Handle, Position } from '@xyflow/react'
 import type { NodeProps, Node } from '@xyflow/react'
 import type { StoryNode } from '@/domain/types'
@@ -8,8 +8,8 @@ import { useGraphStore } from '@/application/graph-store'
 import { useUIStore } from '@/application/ui-store'
 import { useSessionStore } from '@/application/session-store'
 import { useLongPress } from '@/ui/hooks/use-long-press'
-import { searchNodesByEntity } from '@/domain/search'
 import { buildDiffMap, PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
+import { HighlightContext } from './highlight-context'
 
 export type StoryNodeData = {
   storyNode: StoryNode
@@ -22,7 +22,6 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
   selected,
 }: NodeProps<StoryFlowNode>) {
   const scrollDirection = useGraphStore((s) => s.scrollDirection)
-  const nodes = useGraphStore((s) => s.nodes)
   const showRadialSubnodes = useUIStore((s) => s.showRadialSubnodes)
   const entityHighlightFilter = useUIStore((s) => s.entityHighlightFilter)
   const diffOverlayActive = useSessionStore((s) => s.diffOverlayActive)
@@ -30,15 +29,13 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
   const playthroughLog = useSessionStore((s) => s.playthroughLog)
   const { storyNode } = data
 
-  // Entity highlight: check if this node matches the filter
+  // Entity highlight: read from canvas-level context (O(1) per node)
+  const highlightSet = useContext(HighlightContext)
   const isHighlighted = useMemo(() => {
     if (!entityHighlightFilter) return null // null = no filter active
-    const results = searchNodesByEntity(
-      { [storyNode.id]: nodes[storyNode.id] ?? storyNode },
-      entityHighlightFilter.entityName,
-    )
-    return results.length > 0
-  }, [entityHighlightFilter, storyNode, nodes])
+    if (!highlightSet) return null
+    return highlightSet.has(storyNode.id)
+  }, [entityHighlightFilter, highlightSet, storyNode.id])
 
   // Diff overlay: compute status for this node from selected session
   const diffStatus = useMemo(() => {
@@ -79,6 +76,9 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
     ? `var(--color-${PLAYTHROUGH_STATUS_CONFIG[storyNode.playthroughStatus].color})`
     : null
 
+  // Shared gradient/filter IDs (defined once at canvas level)
+  const glassGradientId = `glass-${storyNode.sceneType}`
+
   return (
     <div
       className="relative group transition-opacity duration-200"
@@ -89,24 +89,13 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
       }}
       {...longPressHandlers}
     >
-      {/* SVG shape with glass effect */}
+      {/* SVG shape with glass effect — uses shared defs */}
       <svg
         width={dim.width}
         height={dim.height}
         viewBox={`0 0 ${dim.width} ${dim.height}`}
         className="absolute inset-0"
       >
-        <defs>
-          <GlassGradient id={`glass-${storyNode.id}`} accentColor={accentColor} />
-          <filter id={`glow-${storyNode.id}`}>
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
         {/* Diff overlay ring — shown behind glass fill when diff is active */}
         {diffRingColor && (
           <path
@@ -115,7 +104,7 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
             stroke={diffRingColor}
             strokeWidth="3.5"
             opacity="0.7"
-            filter={`url(#glow-${storyNode.id})`}
+            filter="url(#node-glow)"
           />
         )}
 
@@ -127,14 +116,14 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
             stroke={accentColor}
             strokeWidth="3"
             opacity="0.4"
-            filter={`url(#glow-${storyNode.id})`}
+            filter="url(#node-glow)"
           />
         )}
 
         {/* Glass fill */}
         <path
           d={shapePath}
-          fill={`url(#glass-${storyNode.id})`}
+          fill={`url(#${glassGradientId})`}
           stroke={diffRingColor ?? (selected ? accentColor : 'var(--color-surface-glass-border)')}
           strokeWidth={diffRingColor ? 2 : selected ? 2 : 1}
           className="transition-all duration-150"
@@ -146,13 +135,6 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
           fill="url(#highlight-sheen)"
           opacity="0.12"
         />
-
-        <defs>
-          <linearGradient id="highlight-sheen" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="white" stopOpacity="1" />
-            <stop offset="50%" stopColor="white" stopOpacity="0" />
-          </linearGradient>
-        </defs>
       </svg>
 
       {/* Label + arc label */}
@@ -205,13 +187,3 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
     </div>
   )
 })
-
-/** Generates a subtle glass gradient tinted by the scene type accent color */
-function GlassGradient({ id, accentColor }: { id: string; accentColor: string }) {
-  return (
-    <linearGradient id={id} x1="0" y1="0" x2="0.3" y2="1">
-      <stop offset="0%" stopColor="var(--color-surface-glass)" />
-      <stop offset="100%" stopColor={accentColor} stopOpacity="0.08" />
-    </linearGradient>
-  )
-}

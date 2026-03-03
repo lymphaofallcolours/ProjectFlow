@@ -28,6 +28,8 @@ import { NodeContextMenu } from './context-menu'
 import { EdgeContextMenu } from './edge-context-menu'
 import { CanvasContextMenu } from './canvas-context-menu'
 import { RadialSubnodes } from '@/ui/overlays/radial-subnodes'
+import { HighlightContext } from './highlight-context'
+import { useEntityHighlight } from '@/ui/hooks/use-entity-highlight'
 
 // MUST be defined at module level — prevents re-registration on re-render
 const nodeTypes = { story: StoryNodeComponent }
@@ -64,6 +66,9 @@ function GraphCanvasInner() {
   const showRadialSubnodes = useUIStore((s) => s.showRadialSubnodes)
   const radialNodeId = useUIStore((s) => s.radialNodeId)
   const openCockpit = useUIStore((s) => s.openCockpit)
+
+  // Compute entity highlight set once for all nodes
+  const highlightSet = useEntityHighlight()
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null)
 
@@ -171,7 +176,7 @@ function GraphCanvasInner() {
   )
 
   return (
-    <>
+    <HighlightContext.Provider value={highlightSet}>
       <ReactFlow
         nodes={flowNodes}
         edges={flowEdges}
@@ -209,6 +214,7 @@ function GraphCanvasInner() {
           pannable
           zoomable
         />
+        {/* Shared SVG defs — gradients and filters used by all nodes */}
         <svg>
           <defs>
             <marker
@@ -222,6 +228,43 @@ function GraphCanvasInner() {
             >
               <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-text-muted)" />
             </marker>
+
+            {/* Glass gradients — one per scene type */}
+            <linearGradient id="glass-event" x1="0" y1="0" x2="0.3" y2="1">
+              <stop offset="0%" stopColor="var(--color-surface-glass)" />
+              <stop offset="100%" stopColor="var(--color-node-event)" stopOpacity="0.08" />
+            </linearGradient>
+            <linearGradient id="glass-narration" x1="0" y1="0" x2="0.3" y2="1">
+              <stop offset="0%" stopColor="var(--color-surface-glass)" />
+              <stop offset="100%" stopColor="var(--color-node-narration)" stopOpacity="0.08" />
+            </linearGradient>
+            <linearGradient id="glass-combat" x1="0" y1="0" x2="0.3" y2="1">
+              <stop offset="0%" stopColor="var(--color-surface-glass)" />
+              <stop offset="100%" stopColor="var(--color-node-combat)" stopOpacity="0.08" />
+            </linearGradient>
+            <linearGradient id="glass-social" x1="0" y1="0" x2="0.3" y2="1">
+              <stop offset="0%" stopColor="var(--color-surface-glass)" />
+              <stop offset="100%" stopColor="var(--color-node-social)" stopOpacity="0.08" />
+            </linearGradient>
+            <linearGradient id="glass-investigation" x1="0" y1="0" x2="0.3" y2="1">
+              <stop offset="0%" stopColor="var(--color-surface-glass)" />
+              <stop offset="100%" stopColor="var(--color-node-investigation)" stopOpacity="0.08" />
+            </linearGradient>
+
+            {/* Glass reflection highlight */}
+            <linearGradient id="highlight-sheen" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="white" stopOpacity="1" />
+              <stop offset="50%" stopColor="white" stopOpacity="0" />
+            </linearGradient>
+
+            {/* Glow filter for selection/diff rings */}
+            <filter id="node-glow">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
         </svg>
       </ReactFlow>
@@ -251,6 +294,6 @@ function GraphCanvasInner() {
 
       {/* Radial subnodes — rendered here for React Flow context access */}
       {radialNodeId && <RadialSubnodes nodeId={radialNodeId} />}
-    </>
+    </HighlightContext.Provider>
   )
 }
