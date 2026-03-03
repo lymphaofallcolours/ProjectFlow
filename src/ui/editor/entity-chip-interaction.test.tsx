@@ -47,8 +47,8 @@ describe('EntityTypeSummary via extractEntityTypesFromNodeFields', () => {
   it('returns correct types for node with mixed entity tags', () => {
     const node = createTestNode({
       fields: createPopulatedNodeFields({
-        script: { markdown: '@Alfa enters ~@Hive Primus' },
-        gmNotes: { markdown: '%@Carnifex lurks' },
+        script: { markdown: '@Alfa enters ~@North District' },
+        gmNotes: { markdown: '%@Target lurks' },
       }),
     })
     const types = extractEntityTypesFromNodeFields(node)

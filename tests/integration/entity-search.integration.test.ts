@@ -15,7 +15,7 @@ describe('Entity search (integration)', () => {
     const n2 = useGraphStore.getState().addNode('combat', { x: 200, y: 0 }, 'Ambush')
 
     useGraphStore.getState().updateField(n1, 'script', { markdown: '@Alfa briefs the team about !@Voss' })
-    useGraphStore.getState().updateField(n2, 'characters', { markdown: '@Alfa, @Bravo, %@Carnifex' })
+    useGraphStore.getState().updateField(n2, 'characters', { markdown: '@Alfa, @Bravo, %@Target' })
     useGraphStore.getState().updateField(n2, 'gmNotes', { markdown: 'If players mention #Alfa to !@Voss, reveal secret' })
 
     const nodes = useGraphStore.getState().nodes
@@ -25,8 +25,8 @@ describe('Entity search (integration)', () => {
     const vossResults = searchNodesByEntity(nodes, 'Voss')
     expect(vossResults).toHaveLength(2) // n1 script, n2 gmNotes
 
-    const carnifexResults = searchNodesByEntity(nodes, 'Carnifex')
-    expect(carnifexResults).toHaveLength(1) // n2 characters
+    const targetResults = searchNodesByEntity(nodes, 'Target')
+    expect(targetResults).toHaveLength(1) // n2 characters
   })
 
   it('distinguishes present and mentioned modes in search results', () => {
@@ -56,13 +56,13 @@ describe('Entity search (integration)', () => {
   it('entity tag parser and builder work together with entity store', () => {
     const entityStore = useEntityStore.getState()
     entityStore.addEntity('npc', 'Voss')
-    entityStore.addEntity('enemy', 'Carnifex')
+    entityStore.addEntity('enemy', 'Target')
 
     // Build tags
     const vossTag = buildEntityTag('npc', 'Voss', 'present', 'dead')
-    const carnifexTag = buildEntityTag('enemy', 'Carnifex', 'mentioned')
+    const targetTag = buildEntityTag('enemy', 'Target', 'mentioned')
 
-    const text = `${vossTag} falls. The team recalls ${carnifexTag}.`
+    const text = `${vossTag} falls. The team recalls ${targetTag}.`
 
     // Parse and verify
     const tags = parseEntityTags(text)
@@ -73,7 +73,7 @@ describe('Entity search (integration)', () => {
     expect(tags[0].mode).toBe('present')
     expect(tags[0].status).toBe('dead')
 
-    expect(tags[1].name).toBe('Carnifex')
+    expect(tags[1].name).toBe('Target')
     expect(tags[1].entityType).toBe('enemy')
     expect(tags[1].mode).toBe('mentioned')
 
@@ -81,16 +81,16 @@ describe('Entity search (integration)', () => {
     const restoredStore = useEntityStore.getState()
     const voss = restoredStore.getByName('Voss', 'npc')
     expect(voss).toBeDefined()
-    const carnifex = restoredStore.getByName('Carnifex', 'enemy')
-    expect(carnifex).toBeDefined()
+    const targetEnemy = restoredStore.getByName('Target', 'enemy')
+    expect(targetEnemy).toBeDefined()
   })
 
   it('search works with multi-word entity names', () => {
     const n1 = useGraphStore.getState().addNode('investigation', { x: 0, y: 0 }, 'Explore')
-    useGraphStore.getState().updateField(n1, 'script', { markdown: 'The team arrives at ~@Hive Primus' })
+    useGraphStore.getState().updateField(n1, 'script', { markdown: 'The team arrives at ~@North District' })
 
     const nodes = useGraphStore.getState().nodes
-    const results = searchNodesByEntity(nodes, 'Hive Primus')
+    const results = searchNodesByEntity(nodes, 'North District')
     expect(results).toHaveLength(1)
     expect(results[0].mode).toBe('present')
   })

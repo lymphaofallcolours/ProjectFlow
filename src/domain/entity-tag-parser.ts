@@ -21,7 +21,7 @@ export type ParsedEntityTag = {
 // ([@#])     — present (@) or mentioned (#)
 // ([A-Za-z][a-zA-Z0-9']*(?:[ -][A-Z][a-zA-Z0-9']*)*) — entity name:
 //   first word (any case), then optional space/hyphen + uppercase-start words
-//   this lets multi-word names like "Hive Primus" match while stopping at lowercase text
+//   this lets multi-word names like "North District" match while stopping at lowercase text
 // (?:\+([a-zA-Z0-9_-]+))? — optional status marker
 const TAG_PATTERN = /([!%$~&]?)([@#])([A-Za-z][a-zA-Z0-9']*(?:[ -][A-Z][a-zA-Z0-9']*)*)(?:\+([a-zA-Z0-9_-]+))?/g
 

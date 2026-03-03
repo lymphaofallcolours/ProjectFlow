@@ -1,4 +1,4 @@
-# Project Specification: Deathwatch Narrative Graph
+# Project Specification: ProjectFlow
 
 **Codename:** ProjectFlow (working title)
 **Version:** 0.2 — Final Pre-development Spec
@@ -10,7 +10,7 @@
 
 A narrative graph editor and session runner purpose-built for tabletop RPG game mastering. The tool replaces spreadsheet-based campaign scripting with a node-and-edge graph where each node represents a story stage, and edges represent transitions between stages. The GM builds branching story structures during prep, then navigates them during live play, while the graph silently tracks what actually happened versus what was planned.
 
-**Primary user:** A single GM running Deathwatch (Warhammer 40k) campaigns, both in-person and online. Only the GM sees the tool.
+**Primary user:** A single GM running tabletop RPG campaigns, both in-person and online. Only the GM sees the tool.
 
 **Core interaction philosophy:** The graph is a memory system for events and actions, not a railroad. The GM is free to roam the tree in any direction at any time. Branching represents planned possibilities; playthrough tracking records what actually happened.
 
@@ -146,7 +146,7 @@ interface SoundtrackCue {
 }
 
 interface DiceRollEntry {
-  description: string;               // "Perception test for hidden Genestealer"
+  description: string;               // "Perception test for hidden threat"
   formula?: string;                  // "1d100 vs 45"
   result?: string;                   // filled in during play
 }
@@ -178,7 +178,7 @@ type PlaythroughStatus = 'unvisited' | 'played_as_planned' | 'modified' | 'skipp
 interface PlaythroughEntry {
   id: string;
   sessionDate: string;
-  sessionLabel?: string;             // "Session 12 — The Hive Breach"
+  sessionLabel?: string;             // "Session 12 — The Breach"
   nodesVisited: {
     nodeId: string;
     status: PlaythroughStatus;
@@ -403,18 +403,18 @@ The GM is never railroaded through the graph. They can jump to any node at any t
 |------|--------|--------------------|------------------------|---------|
 | PC | *(none)* | `@Name` | `#Name` | `@Alfa`, `#Bravo` |
 | NPC | `!` | `!@Name` | `!#Name` | `!@Voss`, `!#Voss` |
-| Enemy | `%` | `%@Name` | `%#Name` | `%@Carnifex`, `%#Hive Tyrant` |
-| Object | `$` | `$@Name` | `$#Name` | `$@Rosarius`, `$#Beacon` |
-| Location | `~` | `~@Name` | `~#Name` | `~@Hive Primus`, `~#Jericho Reach` |
-| Secret | `&` | `&@Name` | `&#Name` | `&@Hidden Genestealer`, `&#Artifact` |
+| Enemy | `%` | `%@Name` | `%#Name` | `%@Target`, `%#Leader` |
+| Object | `$` | `$@Name` | `$#Name` | `$@Item`, `$#Beacon` |
+| Location | `~` | `~@Name` | `~#Name` | `~@North District`, `~#Sector 7` |
+| Secret | `&` | `&@Name` | `&#Name` | `&@Hidden Threat`, `&#Artifact` |
 
 **Status change markers** (attachable to any entity tag):
 
 ```
 @Alfa+wounded        — PC status change
 !@Voss+dead          — NPC killed at this node
-%@Carnifex+fleeing   — enemy status change
-$@Rosarius+destroyed — object status change
+%@Target+fleeing     — enemy status change
+$@Item+destroyed     — object status change
 ```
 
 Status changes are logged in the entity's `statusHistory` and associated with the node where they occur.
@@ -494,7 +494,7 @@ Status changes are logged in the entity's `statusHistory` and associated with th
 │  playthrough status color, entity type icon summary        │
 │                                                            │
 ├──────────────────────────────────────────────────────────┤
-│ Status: 12 nodes | 4 entities | Session: "The Hive"       │
+│ Status: 12 nodes | 4 entities | Session: "Session 3"       │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -529,11 +529,11 @@ Status changes are logged in the entity's `statusHistory` and associated with th
 │  ┌──────────────────────┐                                 │
 │  │ 🎤 Script            │    ░░░░░░░░░░░░░░░░░░░░░░░░░  │
 │  │                      │    ░░░░░ (blurred graph) ░░░░  │
-│  │  The Kill-Team       │    ░░░░░░░░░░░░░░░░░░░░░░░░░  │
-│  │  descends into the   │    ░░░░░░░░░░░░░░░░░░░░░░░░░  │
-│  │  underhive. The      │    ░░░░░░░░░░░░░░░░░░░░░░░░░  │
-│  │  air grows thick     │    ░░░░░░░░░░░░░░░░░░░░░░░░░  │
-│  │  with spores...      │    ░░░░░░░░░░░░░░░░░░░░░░░░░  │
+│  │  The team enters     │    ░░░░░░░░░░░░░░░░░░░░░░░░░  │
+│  │  the lower district. │    ░░░░░░░░░░░░░░░░░░░░░░░░░  │
+│  │  The air grows       │    ░░░░░░░░░░░░░░░░░░░░░░░░░  │
+│  │  thick with dust     │    ░░░░░░░░░░░░░░░░░░░░░░░░░  │
+│  │  and traces...       │    ░░░░░░░░░░░░░░░░░░░░░░░░░  │
 │  │                      │    ░░░░░░░░░░░░░░░░░░░░░░░░░  │
 │  │  @Alfa notices the   │    ░░░░░░░░░░░░░░░░░░░░░░░░░  │
 │  │  markings on the     │    ░░░░░░░░░░░░░░░░░░░░░░░░░  │
@@ -553,19 +553,19 @@ Status changes are logged in the entity's `statusHistory` and associated with th
 │  ┌───────────────┬───────────────┬───────────────────┐   │
 │  │ 🎤 Script     │ 💬 Dialogue   │ ⚔️ Combat         │   │
 │  │               │               │                   │   │
-│  │ The Kill-Team │ !@Voss:       │ Encounter:        │   │
-│  │ descends into │ "Report,      │ 2x Genestealers   │   │
-│  │ the under-    │  Brother."    │ Surprise round if  │   │
-│  │ hive...       │               │ Perception fails   │   │
+│  │ The team      │ !@Voss:       │ Encounter:        │   │
+│  │ descends into │ "Report,      │ 2x hostiles       │   │
+│  │ the lower     │  squad."      │ Surprise round if  │   │
+│  │ district...   │               │ Perception fails   │   │
 │  │               │ @Alfa:        │                   │   │
 │  │               │ "Contact.     │                   │   │
-│  │               │  Xenos sign." │                   │   │
+│  │               │  Hostile."    │                   │   │
 │  ├───────────────┼───────────────┼───────────────────┤   │
 │  │ 🌫️ Vibe       │ 🎵 Soundtrack │ 📝 GM Notes       │   │
 │  │               │               │                   │   │
-│  │ Oppressive.   │ "Hive Depths" │ If players took   │   │
+│  │ Oppressive.   │ "Dark Descent" │ If players took   │   │
 │  │ Claustro-     │ — start on    │ the south tunnel,  │   │
-│  │ phobic. Drip- │ entry.        │ &@Genestealer is  │   │
+│  │ phobic. Drip- │ entry.        │ &@Hidden Threat   │   │
 │  │ ping sounds.  │               │ already behind     │   │
 │  │               │ Switch to     │ them.              │   │
 │  │               │ "Combat II"   │                   │   │
@@ -574,12 +574,12 @@ Status changes are logged in the entity's `statusHistory` and associated with th
 │  │ 👥 Characters │ 🎲 Dice Rolls │ 🔒 Secrets        │   │
 │  │               │               │                   │   │
 │  │ @Alfa (lead)  │ Perception vs │ Hidden alcove:     │   │
-│  │ @Bravo        │ 45 — detect   │ $@DataSlate with  │   │
+│  │ @Bravo        │ 45 — detect   │ $@Document with  │   │
 │  │ @Charlie      │ ambush        │ coordinates to     │   │
-│  │ !@Voss        │               │ ~#Forge Epsilon   │   │
+│  │ !@Voss        │               │ ~#Sector 7   │   │
 │  │               │ Awareness vs  │                   │   │
-│  │ %@Genestealer │ 30 — notice   │                   │   │
-│  │ (x2, hidden)  │ spore trail   │                   │   │
+│  │ %@Target      │ 30 — notice   │                   │   │
+│  │ (x2, hidden)  │ trail         │                   │   │
 │  └───────────────┴───────────────┴───────────────────┘   │
 │                                                            │
 │  [Esc] or click background to dismiss                      │

@@ -19,7 +19,7 @@ describe('Dashboard integration', () => {
     useEntityStore.getState().addEntity('pc', 'Alfa')
     useEntityStore.getState().addEntity('pc', 'Bravo')
     useEntityStore.getState().addEntity('npc', 'Voss')
-    useEntityStore.getState().addEntity('enemy', 'Carnifex')
+    useEntityStore.getState().addEntity('enemy', 'Target')
 
     const entities = useEntityStore.getState().entities
     const counts = new Map<string, number>()
@@ -54,12 +54,12 @@ describe('Dashboard integration', () => {
   it('top connected entities (outgoing + incoming)', () => {
     const aId = useEntityStore.getState().addEntity('pc', 'Alfa')
     const bId = useEntityStore.getState().addEntity('npc', 'Voss')
-    const cId = useEntityStore.getState().addEntity('enemy', 'Carnifex')
+    const cId = useEntityStore.getState().addEntity('enemy', 'Target')
 
-    // Alfa → Voss (ally), Alfa → Carnifex (enemy-of)
+    // Alfa → Voss (ally), Alfa → Target (enemy-of)
     useEntityStore.getState().addRelationship(aId, { targetEntityId: bId, type: 'ally' })
     useEntityStore.getState().addRelationship(aId, { targetEntityId: cId, type: 'enemy-of' })
-    // Voss → Carnifex (hunts)
+    // Voss → Target (hunts)
     useEntityStore.getState().addRelationship(bId, { targetEntityId: cId, type: 'hunts' })
 
     const entities = useEntityStore.getState().entities
@@ -71,7 +71,7 @@ describe('Dashboard integration', () => {
     scored.sort((a, b) => b.total - a.total)
 
     // Alfa: 2 outgoing + 0 incoming = 2
-    // Carnifex: 0 outgoing + 2 incoming = 2
+    // Target: 0 outgoing + 2 incoming = 2
     // Voss: 1 outgoing + 1 incoming = 2
     expect(scored[0].total).toBe(2)
     expect(scored.every((s) => s.total === 2)).toBe(true)

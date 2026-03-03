@@ -62,8 +62,8 @@ describe('Entity interaction (integration)', () => {
   it('entity type summary on node shows correct types from fields', () => {
     const node = createTestNode({
       fields: createPopulatedNodeFields({
-        script: { markdown: '@Alfa meets !@Voss at ~@Hive Primus' },
-        gmNotes: { markdown: '%@Carnifex lurks nearby' },
+        script: { markdown: '@Alfa meets !@Voss at ~@North District' },
+        gmNotes: { markdown: '%@Target lurks nearby' },
       }),
     })
 
@@ -115,10 +115,10 @@ describe('Entity interaction (integration)', () => {
   it('multiple status auto-logs across different entity types', () => {
     useEntityStore.getState().addEntity('pc', 'Alfa')
     useEntityStore.getState().addEntity('npc', 'Voss')
-    useEntityStore.getState().addEntity('enemy', 'Carnifex')
+    useEntityStore.getState().addEntity('enemy', 'Target')
 
     const oldText = ''
-    const newText = '@Alfa+wounded by %@Carnifex+enraged while !@Voss+dead'
+    const newText = '@Alfa+wounded by %@Target+enraged while !@Voss+dead'
 
     const oldTags = extractStatusTagsFromText(oldText)
     const newTags = extractStatusTagsFromText(newText)
@@ -136,13 +136,13 @@ describe('Entity interaction (integration)', () => {
 
     const alfa = useEntityStore.getState().getByName('Alfa', 'pc')
     const voss = useEntityStore.getState().getByName('Voss', 'npc')
-    const carnifex = useEntityStore.getState().getByName('Carnifex', 'enemy')
+    const targetEnemy = useEntityStore.getState().getByName('Target', 'enemy')
 
     expect(alfa!.statusHistory).toHaveLength(1)
     expect(alfa!.statusHistory[0].status).toBe('wounded')
     expect(voss!.statusHistory).toHaveLength(1)
     expect(voss!.statusHistory[0].status).toBe('dead')
-    expect(carnifex!.statusHistory).toHaveLength(1)
-    expect(carnifex!.statusHistory[0].status).toBe('enraged')
+    expect(targetEnemy!.statusHistory).toHaveLength(1)
+    expect(targetEnemy!.statusHistory[0].status).toBe('enraged')
   })
 })

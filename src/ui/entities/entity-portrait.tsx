@@ -26,7 +26,7 @@ export function EntityPortrait({ entityId, entity }: EntityPortraitProps) {
       setSizeWarning(null)
       const dataUrl = await readFileAsDataUrl(file)
       const { warning } = validateAttachmentSize(dataUrl)
-      if (warning) setSizeWarning(warning)
+      if (warning) setSizeWarning('File size exceeds recommended limit')
       const attachment = createAttachment(file.name, file.type, dataUrl)
       setPortrait(entityId, attachment)
       if (fileRef.current) fileRef.current.value = ''

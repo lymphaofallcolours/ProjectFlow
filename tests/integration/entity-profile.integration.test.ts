@@ -51,7 +51,7 @@ describe('Entity profile data roundtrip (integration)', () => {
   it('custom fields survive save/load roundtrip', () => {
     const id = useEntityStore.getState().addEntity('pc', 'Alfa')
     useEntityStore.getState().updateEntity(id, {
-      custom: { Weapon: 'Bolter', Armor: 'Power Armor' },
+      custom: { Weapon: 'Weapon', Armor: 'Armor' },
     })
 
     const json = serializeCampaign(assembleCampaign())
@@ -59,13 +59,13 @@ describe('Entity profile data roundtrip (integration)', () => {
     hydrateCampaign(deserializeCampaign(json))
 
     const restored = useEntityStore.getState().entities[id]
-    expect(restored.custom['Weapon']).toBe('Bolter')
-    expect(restored.custom['Armor']).toBe('Power Armor')
+    expect(restored.custom['Weapon']).toBe('Weapon')
+    expect(restored.custom['Armor']).toBe('Armor')
   })
 
   it('status history with manual entries survives save/load roundtrip', () => {
     const id = useEntityStore.getState().addEntity('pc', 'Alfa')
-    useEntityStore.getState().addStatus(id, 'node-1', 'wounded', 'Hit by bolter')
+    useEntityStore.getState().addStatus(id, 'node-1', 'wounded', 'Hit in combat')
     useEntityStore.getState().addStatus(id, 'manual', 'promoted')
     useEntityStore.getState().addStatus(id, 'node-2', 'healed')
 
@@ -76,7 +76,7 @@ describe('Entity profile data roundtrip (integration)', () => {
     const restored = useEntityStore.getState().entities[id]
     expect(restored.statusHistory).toHaveLength(3)
     expect(restored.statusHistory[0].status).toBe('wounded')
-    expect(restored.statusHistory[0].note).toBe('Hit by bolter')
+    expect(restored.statusHistory[0].note).toBe('Hit in combat')
     expect(restored.statusHistory[1].status).toBe('promoted')
     expect(restored.statusHistory[1].nodeId).toBe('manual')
     expect(restored.statusHistory[2].status).toBe('healed')

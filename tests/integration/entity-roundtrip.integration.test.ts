@@ -15,16 +15,16 @@ describe('Entity roundtrip (integration)', () => {
   it('persists entities through full save/load cycle', () => {
     // Create entities of each type
     const entityStore = useEntityStore.getState()
-    const pcId = entityStore.addEntity('pc', 'Alfa', 'Kill-Team Leader')
+    const pcId = entityStore.addEntity('pc', 'Alfa', 'Team leader')
     const npcId = entityStore.addEntity('npc', 'Voss', 'Stern sergeant')
-    const enemyId = entityStore.addEntity('enemy', 'Carnifex', 'Tyranid bioform')
-    entityStore.addEntity('object', 'Rosarius', 'Holy artifact')
-    entityStore.addEntity('location', 'Hive Primus', 'Primary hive city')
-    entityStore.addEntity('secret', 'Genestealer Cult', 'Hidden threat')
+    const enemyId = entityStore.addEntity('enemy', 'Target', 'Hostile entity')
+    entityStore.addEntity('object', 'Item', 'An artifact')
+    entityStore.addEntity('location', 'North District', 'Primary district')
+    entityStore.addEntity('secret', 'Hidden Threat', 'A hidden threat')
 
     // Add status history
     entityStore.addStatus(pcId, 'node-1', 'wounded', 'Caught in explosion')
-    entityStore.addStatus(npcId, 'node-2', 'dead', 'Killed by Carnifex')
+    entityStore.addStatus(npcId, 'node-2', 'dead', 'Eliminated by Target')
     entityStore.addStatus(enemyId, 'node-3', 'fleeing')
 
     // Also add a node with entity tags in its fields
@@ -72,9 +72,9 @@ describe('Entity roundtrip (integration)', () => {
     const entityStore = useEntityStore.getState()
     const id = entityStore.addEntity('npc', 'Voss', 'Sergeant')
     entityStore.updateEntity(id, {
-      affiliations: ['Deathwatch', 'Ultramarines'],
+      affiliations: ['Faction A', 'Faction B'],
       relationships: [
-        { targetEntityId: 'some-id', type: 'subordinate', note: 'Reports to Brother-Captain' },
+        { targetEntityId: 'some-id', type: 'subordinate', note: 'Reports to Commander' },
       ],
     })
 
@@ -83,7 +83,7 @@ describe('Entity roundtrip (integration)', () => {
     hydrateCampaign(deserializeCampaign(json))
 
     const restored = useEntityStore.getState().entities[id]
-    expect(restored.affiliations).toEqual(['Deathwatch', 'Ultramarines'])
+    expect(restored.affiliations).toEqual(['Faction A', 'Faction B'])
     expect(restored.relationships).toHaveLength(1)
     expect(restored.relationships![0].type).toBe('subordinate')
   })

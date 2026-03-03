@@ -3,7 +3,7 @@ import { Shield, User, Skull, Package, MapPin, EyeOff } from 'lucide-react'
 import type { Entity } from '@/domain/entity-types'
 import { ENTITY_TYPE_CONFIGS } from '@/domain/entity-types'
 
-const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>> = {
   Shield,
   User,
   Skull,

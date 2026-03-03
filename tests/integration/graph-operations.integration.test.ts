@@ -301,8 +301,8 @@ describe('Graph operations integration', () => {
       const entityStore = useEntityStore.getState()
       entityStore.addEntity('pc', 'Alfa', 'The leader')
       entityStore.addEntity('npc', 'Voss', 'A merchant')
-      entityStore.addEntity('enemy', 'Carnifex', 'The beast')
-      entityStore.addEntity('location', 'Hive Primus', 'Main hive city')
+      entityStore.addEntity('enemy', 'Target', 'The beast')
+      entityStore.addEntity('location', 'North District', 'Main district')
 
       const registry = { entities: useEntityStore.getState().entities }
       const markdown = exportEntityRegistryAsMarkdown(registry)
@@ -310,12 +310,12 @@ describe('Graph operations integration', () => {
       expect(markdown).toContain('# Campaign Entity Codex')
       expect(markdown).toContain('Alfa')
       expect(markdown).toContain('Voss')
-      expect(markdown).toContain('Carnifex')
-      expect(markdown).toContain('Hive Primus')
+      expect(markdown).toContain('Target')
+      expect(markdown).toContain('North District')
       // PCs should appear before NPCs
       expect(markdown.indexOf('Alfa')).toBeLessThan(markdown.indexOf('Voss'))
       // NPCs before Enemies
-      expect(markdown.indexOf('Voss')).toBeLessThan(markdown.indexOf('Carnifex'))
+      expect(markdown.indexOf('Voss')).toBeLessThan(markdown.indexOf('Target'))
     })
   })
 

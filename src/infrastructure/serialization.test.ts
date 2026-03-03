@@ -19,12 +19,12 @@ describe('serializeCampaign', () => {
 
 describe('deserializeCampaign', () => {
   it('roundtrips a campaign without data loss', () => {
-    const original = createTestCampaign({ name: 'Hive Breach' })
+    const original = createTestCampaign({ name: 'Test Campaign' })
     const json = serializeCampaign(original)
     const restored = deserializeCampaign(json)
 
     expect(restored.id).toBe(original.id)
-    expect(restored.name).toBe('Hive Breach')
+    expect(restored.name).toBe('Test Campaign')
     expect(restored.graph.nodes).toEqual(original.graph.nodes)
     expect(restored.graph.edges).toEqual(original.graph.edges)
     expect(restored.settings).toEqual(original.settings)

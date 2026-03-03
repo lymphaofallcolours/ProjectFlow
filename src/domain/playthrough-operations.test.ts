@@ -117,8 +117,8 @@ describe('createPlaythroughEntry', () => {
   })
 
   it('uses provided session label', () => {
-    const entry = createPlaythroughEntry('Session 1 — The Hive')
-    expect(entry.sessionLabel).toBe('Session 1 — The Hive')
+    const entry = createPlaythroughEntry('Session 1 — The Arrival')
+    expect(entry.sessionLabel).toBe('Session 1 — The Arrival')
   })
 
   it('uses provided date', () => {
@@ -247,9 +247,9 @@ describe('buildCumulativeDiffMap', () => {
 
 describe('exportSessionAsMarkdown', () => {
   it('includes header with label and date', () => {
-    const entry = createPlaythroughEntry('Session 12 — Hive Breach', '2026-03-02')
+    const entry = createPlaythroughEntry('Session 12 — The Breach', '2026-03-02')
     const md = exportSessionAsMarkdown(entry, {})
-    expect(md).toContain('# Session: Session 12 — Hive Breach')
+    expect(md).toContain('# Session: Session 12 — The Breach')
     expect(md).toContain('**Date:** 2026-03-02')
   })
 

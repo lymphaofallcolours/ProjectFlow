@@ -11,9 +11,9 @@ describe('searchNodes', () => {
     const node = createTestNode({
       id: 'n1',
       label: 'Scene 1',
-      fields: createPopulatedNodeFields({ script: { markdown: 'The party enters the underhive' } }),
+      fields: createPopulatedNodeFields({ script: { markdown: 'The party enters the lower district' } }),
     })
-    const results = searchNodes(makeNodes(node), 'underhive')
+    const results = searchNodes(makeNodes(node), 'lower district')
     expect(results).toHaveLength(1)
     expect(results[0].nodeId).toBe('n1')
     expect(results[0].fieldKey).toBe('script')
@@ -33,21 +33,21 @@ describe('searchNodes', () => {
   it('is case-insensitive by default', () => {
     const node = createTestNode({
       id: 'n1',
-      fields: createPopulatedNodeFields({ script: { markdown: 'The Carnifex attacks' } }),
+      fields: createPopulatedNodeFields({ script: { markdown: 'The Target attacks' } }),
     })
-    const results = searchNodes(makeNodes(node), 'carnifex')
+    const results = searchNodes(makeNodes(node), 'target')
     expect(results).toHaveLength(1)
   })
 
   it('respects caseSensitive option', () => {
     const node = createTestNode({
       id: 'n1',
-      fields: createPopulatedNodeFields({ script: { markdown: 'The Carnifex attacks' } }),
+      fields: createPopulatedNodeFields({ script: { markdown: 'The Target attacks' } }),
     })
-    const noMatch = searchNodes(makeNodes(node), 'carnifex', { caseSensitive: true })
+    const noMatch = searchNodes(makeNodes(node), 'target', { caseSensitive: true })
     expect(noMatch).toHaveLength(0)
 
-    const match = searchNodes(makeNodes(node), 'Carnifex', { caseSensitive: true })
+    const match = searchNodes(makeNodes(node), 'Target', { caseSensitive: true })
     expect(match).toHaveLength(1)
   })
 
@@ -67,10 +67,10 @@ describe('searchNodes', () => {
     const node = createTestNode({
       id: 'n1',
       fields: createPopulatedNodeFields({
-        soundtrack: [{ trackName: 'Hive Depths', note: 'Start on entry' }],
+        soundtrack: [{ trackName: 'Dark Descent', note: 'Start on entry' }],
       }),
     })
-    const results = searchNodes(makeNodes(node), 'Hive Depths')
+    const results = searchNodes(makeNodes(node), 'Dark Descent')
     expect(results).toHaveLength(1)
     expect(results[0].fieldKey).toBe('soundtrack')
   })

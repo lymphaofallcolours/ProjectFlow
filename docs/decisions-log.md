@@ -71,7 +71,7 @@
 ## 2026-03-02 — Entity search via linear scan with capitalize-aware name parsing
 
 **Status:** Accepted
-**Context:** Entity tag regex must handle multi-word names like "Hive Primus" while stopping at regular text like "leads the charge". A non-greedy regex with `\s` lookahead stops at the first space, breaking multi-word names.
+**Context:** Entity tag regex must handle multi-word names like "North District" while stopping at regular text like "leads the charge". A non-greedy regex with `\s` lookahead stops at the first space, breaking multi-word names.
 **Decision:** Capitalize-aware regex: first word accepts any case, continuation words require uppercase start after space/hyphen. Pattern: `[A-Za-z][a-zA-Z0-9']*(?:[ -][A-Z][a-zA-Z0-9']*)*`. Entity search uses linear scan over `Object.values(nodes)` which is fine for <100 entities.
 **Alternatives rejected:** Greedy match (captures too much), word boundary lookahead (too brittle), trie-based indexing (premature optimization).
 **Consequences:** Entity names with multi-word components must start each word with uppercase. Lowercase-only names are supported as single words. Performance is O(nodes × fields) per search — acceptable for campaign-scale data.

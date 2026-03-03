@@ -1,5 +1,6 @@
 # Phase 8 — Entity System Completion & Spec Parity
 
+
 ## Context
 
 Phase 7 is complete (587 tests, 35 test files). ProjectFlow has groups, attachments, branded PWA icons, and all prior features. However, the entity system is ~60-70% complete compared to `docs/spec.md`. This phase closes every remaining entity gap and brings the app to full spec parity.

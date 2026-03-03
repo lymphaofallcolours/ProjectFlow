@@ -95,10 +95,10 @@ The entity tagging DSL is a core domain concept. Any changes to tag syntax MUST 
 |------|--------|---------|-----------|---------|
 | PC | *(none)* | `@Name` | `#Name` | `@Alfa` |
 | NPC | `!` | `!@Name` | `!#Name` | `!@Voss` |
-| Enemy | `%` | `%@Name` | `%#Name` | `%@Carnifex` |
-| Object | `$` | `$@Name` | `$#Name` | `$@Rosarius` |
-| Location | `~` | `~@Name` | `~#Name` | `~@Hive Primus` |
-| Secret | `&` | `&@Name` | `&#Name` | `&@Genestealer` |
+| Enemy | `%` | `%@Name` | `%#Name` | `%@Target` |
+| Object | `$` | `$@Name` | `$#Name` | `$@Item` |
+| Location | `~` | `~@Name` | `~#Name` | `~@North District` |
+| Secret | `&` | `&@Name` | `&#Name` | `&@Hidden Threat` |
 
 Status markers: `@Alfa+wounded`, `!@Voss+dead`. Parsed by `domain/entity-tag-parser.ts`.
 

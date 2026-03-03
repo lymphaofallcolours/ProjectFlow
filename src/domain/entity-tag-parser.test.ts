@@ -60,30 +60,30 @@ describe('parseEntityTags', () => {
     })
 
     it('parses an enemy present tag', () => {
-      const tags = parseEntityTags('%@Carnifex attacks')
+      const tags = parseEntityTags('%@Target attacks')
       expect(tags).toHaveLength(1)
-      expect(tags[0].name).toBe('Carnifex')
+      expect(tags[0].name).toBe('Target')
       expect(tags[0].entityType).toBe('enemy')
     })
 
     it('parses an object present tag', () => {
-      const tags = parseEntityTags('Found $@Rosarius')
+      const tags = parseEntityTags('Found $@Item')
       expect(tags).toHaveLength(1)
-      expect(tags[0].name).toBe('Rosarius')
+      expect(tags[0].name).toBe('Item')
       expect(tags[0].entityType).toBe('object')
     })
 
     it('parses a location present tag', () => {
-      const tags = parseEntityTags('Arrived at ~@Hive Primus')
+      const tags = parseEntityTags('Arrived at ~@North District')
       expect(tags).toHaveLength(1)
-      expect(tags[0].name).toBe('Hive Primus')
+      expect(tags[0].name).toBe('North District')
       expect(tags[0].entityType).toBe('location')
     })
 
     it('parses a secret present tag', () => {
-      const tags = parseEntityTags('Discovered &@Genestealer')
+      const tags = parseEntityTags('Discovered &@Hidden Threat')
       expect(tags).toHaveLength(1)
-      expect(tags[0].name).toBe('Genestealer')
+      expect(tags[0].name).toBe('Hidden Threat')
       expect(tags[0].entityType).toBe('secret')
     })
   })
@@ -106,9 +106,9 @@ describe('parseEntityTags', () => {
     })
 
     it('parses an enemy mentioned tag', () => {
-      const tags = parseEntityTags('Rumors of %#Hive Tyrant')
+      const tags = parseEntityTags('Rumors of %#Leader')
       expect(tags).toHaveLength(1)
-      expect(tags[0].name).toBe('Hive Tyrant')
+      expect(tags[0].name).toBe('Leader')
       expect(tags[0].entityType).toBe('enemy')
     })
 
@@ -150,13 +150,13 @@ describe('parseEntityTags', () => {
     })
 
     it('parses an enemy with status', () => {
-      const tags = parseEntityTags('%@Carnifex+fleeing')
+      const tags = parseEntityTags('%@Target+fleeing')
       expect(tags).toHaveLength(1)
       expect(tags[0].status).toBe('fleeing')
     })
 
     it('parses an object with status', () => {
-      const tags = parseEntityTags('$@Rosarius+destroyed')
+      const tags = parseEntityTags('$@Item+destroyed')
       expect(tags).toHaveLength(1)
       expect(tags[0].status).toBe('destroyed')
     })
@@ -176,9 +176,9 @@ describe('parseEntityTags', () => {
 
   describe('multi-word names', () => {
     it('parses names with spaces', () => {
-      const tags = parseEntityTags('~@Hive Primus')
+      const tags = parseEntityTags('~@North District')
       expect(tags).toHaveLength(1)
-      expect(tags[0].name).toBe('Hive Primus')
+      expect(tags[0].name).toBe('North District')
     })
 
     it('parses names with apostrophes', () => {
@@ -196,11 +196,11 @@ describe('parseEntityTags', () => {
 
   describe('multiple tags', () => {
     it('parses multiple tags in a single string', () => {
-      const tags = parseEntityTags('@Alfa and !@Voss discuss %#Carnifex')
+      const tags = parseEntityTags('@Alfa and !@Voss discuss %#Target')
       expect(tags).toHaveLength(3)
       expect(tags[0].name).toBe('Alfa')
       expect(tags[1].name).toBe('Voss')
-      expect(tags[2].name).toBe('Carnifex')
+      expect(tags[2].name).toBe('Target')
     })
 
     it('parses adjacent tags', () => {
@@ -211,7 +211,7 @@ describe('parseEntityTags', () => {
     })
 
     it('parses tags separated by commas', () => {
-      const tags = parseEntityTags('@Alfa, !@Voss, %@Carnifex')
+      const tags = parseEntityTags('@Alfa, !@Voss, %@Target')
       expect(tags).toHaveLength(3)
     })
   })
@@ -288,19 +288,19 @@ describe('buildEntityTag', () => {
   })
 
   it('builds an enemy tag', () => {
-    expect(buildEntityTag('enemy', 'Carnifex', 'present')).toBe('%@Carnifex')
+    expect(buildEntityTag('enemy', 'Target', 'present')).toBe('%@Target')
   })
 
   it('builds an object tag', () => {
-    expect(buildEntityTag('object', 'Rosarius', 'present')).toBe('$@Rosarius')
+    expect(buildEntityTag('object', 'Item', 'present')).toBe('$@Item')
   })
 
   it('builds a location tag', () => {
-    expect(buildEntityTag('location', 'Hive Primus', 'mentioned')).toBe('~#Hive Primus')
+    expect(buildEntityTag('location', 'North District', 'mentioned')).toBe('~#North District')
   })
 
   it('builds a secret tag', () => {
-    expect(buildEntityTag('secret', 'Genestealer', 'present')).toBe('&@Genestealer')
+    expect(buildEntityTag('secret', 'Hidden Threat', 'present')).toBe('&@Hidden Threat')
   })
 
   it('includes status marker', () => {
@@ -318,7 +318,7 @@ describe('isValidEntityName', () => {
   })
 
   it('accepts names with spaces', () => {
-    expect(isValidEntityName('Hive Primus')).toBe(true)
+    expect(isValidEntityName('North District')).toBe(true)
   })
 
   it('accepts names with apostrophes', () => {
@@ -366,14 +366,14 @@ describe('parse → build roundtrip', () => {
   })
 
   it('roundtrips an enemy mentioned tag', () => {
-    const tag = '%#Carnifex'
+    const tag = '%#Target'
     const [parsed] = parseEntityTags(tag)
     const rebuilt = buildEntityTag(parsed.entityType, parsed.name, parsed.mode, parsed.status)
     expect(rebuilt).toBe(tag)
   })
 
   it('roundtrips a location present tag', () => {
-    const tag = '~@Hive Primus'
+    const tag = '~@North District'
     const [parsed] = parseEntityTags(`See ${tag} for details`)
     const rebuilt = buildEntityTag(parsed.entityType, parsed.name, parsed.mode, parsed.status)
     expect(rebuilt).toBe(tag)
@@ -387,7 +387,7 @@ describe('parse → build roundtrip', () => {
   })
 
   it('roundtrips an object present tag with status', () => {
-    const tag = '$@Rosarius+destroyed'
+    const tag = '$@Item+destroyed'
     const [parsed] = parseEntityTags(tag)
     const rebuilt = buildEntityTag(parsed.entityType, parsed.name, parsed.mode, parsed.status)
     expect(rebuilt).toBe(tag)
@@ -421,7 +421,7 @@ describe('extractEntityTypesFromNodeFields', () => {
         gmNotes: { markdown: '' },
         dialogues: [
           { entityRef: '@Alfa', line: 'Hello there' },
-          { entityRef: '%@Carnifex', line: 'ROAR' },
+          { entityRef: '%@Target', line: 'ROAR' },
         ],
       }),
     })
@@ -436,7 +436,7 @@ describe('extractEntityTypesFromNodeFields', () => {
         script: { markdown: '' },
         gmNotes: { markdown: '' },
         custom: [
-          { label: 'Loot', content: { markdown: '$@Rosarius is here' } },
+          { label: 'Loot', content: { markdown: '$@Item is here' } },
         ],
       }),
     })
@@ -460,7 +460,7 @@ describe('extractEntityTypesFromNodeFields', () => {
   it('extracts all 6 entity types', () => {
     const node = createTestNode({
       fields: createPopulatedNodeFields({
-        script: { markdown: '@Alfa !@Voss %@Carnifex $@Rosarius ~@Hive &@Secret' },
+        script: { markdown: '@Alfa !@Voss %@Target $@Item ~@Base &@Secret' },
         gmNotes: { markdown: '' },
       }),
     })
@@ -496,7 +496,7 @@ describe('extractStatusTagsFromText', () => {
   })
 
   it('preserves entity type from prefix', () => {
-    const tags = extractStatusTagsFromText('%@Carnifex+enraged')
+    const tags = extractStatusTagsFromText('%@Target+enraged')
     expect(tags[0].entityType).toBe('enemy')
     expect(tags[0].status).toBe('enraged')
   })

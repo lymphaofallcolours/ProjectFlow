@@ -15,23 +15,23 @@ describe('EntityChip', () => {
     })
 
     it('renders enemy chip', () => {
-      render(<EntityChip name="Carnifex" entityType="enemy" mode="present" />)
-      expect(screen.getByText('Carnifex')).toBeDefined()
+      render(<EntityChip name="Target" entityType="enemy" mode="present" />)
+      expect(screen.getByText('Target')).toBeDefined()
     })
 
     it('renders object chip', () => {
-      render(<EntityChip name="Rosarius" entityType="object" mode="present" />)
-      expect(screen.getByText('Rosarius')).toBeDefined()
+      render(<EntityChip name="Item" entityType="object" mode="present" />)
+      expect(screen.getByText('Item')).toBeDefined()
     })
 
     it('renders location chip', () => {
-      render(<EntityChip name="Hive Primus" entityType="location" mode="present" />)
-      expect(screen.getByText('Hive Primus')).toBeDefined()
+      render(<EntityChip name="North District" entityType="location" mode="present" />)
+      expect(screen.getByText('North District')).toBeDefined()
     })
 
     it('renders secret chip', () => {
-      render(<EntityChip name="Genestealer" entityType="secret" mode="present" />)
-      expect(screen.getByText('Genestealer')).toBeDefined()
+      render(<EntityChip name="Hidden Threat" entityType="secret" mode="present" />)
+      expect(screen.getByText('Hidden Threat')).toBeDefined()
     })
   })
 

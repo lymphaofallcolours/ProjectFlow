@@ -134,7 +134,7 @@ describe('Campaign roundtrip (integration)', () => {
 
   it('roundtrips entities through save/load cycle', () => {
     const entityStore = useEntityStore.getState()
-    const id1 = entityStore.addEntity('pc', 'Alfa', 'Kill-Team Leader')
+    const id1 = entityStore.addEntity('pc', 'Alfa', 'Team leader')
     const id2 = entityStore.addEntity('npc', 'Voss', 'Stern sergeant')
     entityStore.addStatus(id1, 'node-1', 'wounded', 'Hit by shrapnel')
     useCampaignStore.getState().setName('Entity Test')
@@ -150,7 +150,7 @@ describe('Campaign roundtrip (integration)', () => {
     const restored = useEntityStore.getState()
     expect(restored.getAllEntities()).toHaveLength(2)
     expect(restored.entities[id1].name).toBe('Alfa')
-    expect(restored.entities[id1].description).toBe('Kill-Team Leader')
+    expect(restored.entities[id1].description).toBe('Team leader')
     expect(restored.entities[id1].statusHistory).toHaveLength(1)
     expect(restored.entities[id1].statusHistory[0].status).toBe('wounded')
     expect(restored.entities[id2].name).toBe('Voss')

@@ -11,13 +11,13 @@ describe('Entity graph integration', () => {
   it('layout positions computed from store entities', () => {
     useEntityStore.getState().addEntity('pc', 'Alfa')
     useEntityStore.getState().addEntity('npc', 'Voss')
-    useEntityStore.getState().addEntity('enemy', 'Carnifex')
+    useEntityStore.getState().addEntity('enemy', 'Target')
 
     const entities = useEntityStore.getState().getAllEntities()
     const { nodes } = computeEntityGraphLayout(entities)
 
     expect(nodes).toHaveLength(3)
-    expect(nodes.map((n) => n.name).sort()).toEqual(['Alfa', 'Carnifex', 'Voss'])
+    expect(nodes.map((n) => n.name).sort()).toEqual(['Alfa', 'Target', 'Voss'])
   })
 
   it('edges reflect store relationships', () => {
@@ -39,8 +39,8 @@ describe('Entity graph integration', () => {
 
   it('type filter excludes entities from layout', () => {
     useEntityStore.getState().addEntity('pc', 'Alfa')
-    useEntityStore.getState().addEntity('enemy', 'Carnifex')
-    useEntityStore.getState().addEntity('location', 'Hive Primus')
+    useEntityStore.getState().addEntity('enemy', 'Target')
+    useEntityStore.getState().addEntity('location', 'North District')
 
     const entities = useEntityStore.getState().getAllEntities()
     const filter = new Set<EntityType>(['pc', 'location'])

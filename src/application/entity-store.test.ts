@@ -132,8 +132,8 @@ describe('useEntityStore', () => {
 
     it('adds status with note', () => {
       const id = useEntityStore.getState().addEntity('pc', 'Alfa')
-      useEntityStore.getState().addStatus(id, 'node-1', 'wounded', 'Hit by Carnifex')
-      expect(useEntityStore.getState().entities[id].statusHistory[0].note).toBe('Hit by Carnifex')
+      useEntityStore.getState().addStatus(id, 'node-1', 'wounded', 'Hit by Target')
+      expect(useEntityStore.getState().entities[id].statusHistory[0].note).toBe('Hit by Target')
     })
 
     it('does nothing for unknown entity', () => {
@@ -240,8 +240,8 @@ describe('useEntityStore', () => {
 
     it('updates custom fields via updateEntity', () => {
       const id = useEntityStore.getState().addEntity('pc', 'Alfa')
-      useEntityStore.getState().updateEntity(id, { custom: { Weapon: 'Bolter' } })
-      expect(useEntityStore.getState().entities[id].custom['Weapon']).toBe('Bolter')
+      useEntityStore.getState().updateEntity(id, { custom: { Weapon: 'Weapon' } })
+      expect(useEntityStore.getState().entities[id].custom['Weapon']).toBe('Weapon')
     })
 
     it('updates relationships via updateEntity', () => {

@@ -65,8 +65,8 @@ describe('updateEntity', () => {
 
   it('updates affiliations', () => {
     const entity = createTestEntity()
-    const updated = updateEntity(entity, { affiliations: ['Deathwatch', 'Ultramarines'] })
-    expect(updated.affiliations).toEqual(['Deathwatch', 'Ultramarines'])
+    const updated = updateEntity(entity, { affiliations: ['Faction A', 'Faction B'] })
+    expect(updated.affiliations).toEqual(['Faction A', 'Faction B'])
   })
 
   it('preserves unchanged fields', () => {
@@ -176,8 +176,8 @@ describe('addStatusEntry', () => {
 
   it('adds a status entry with note', () => {
     const entity = createTestEntity()
-    const updated = addStatusEntry(entity, 'node-1', 'dead', 'Killed by Carnifex')
-    expect(updated.statusHistory[0].note).toBe('Killed by Carnifex')
+    const updated = addStatusEntry(entity, 'node-1', 'dead', 'Killed by Target')
+    expect(updated.statusHistory[0].note).toBe('Killed by Target')
   })
 
   it('preserves existing status entries', () => {
@@ -207,7 +207,7 @@ describe('exportEntityRegistryAsMarkdown', () => {
   it('groups entities by type', () => {
     const pc = createTestEntity({ type: 'pc', name: 'Alfa' })
     const npc = createTestEntity({ type: 'npc', name: 'Voss' })
-    const enemy = createTestEntity({ type: 'enemy', name: 'Carnifex' })
+    const enemy = createTestEntity({ type: 'enemy', name: 'Target' })
     const registry = createTestEntityRegistry([pc, npc, enemy])
     const md = exportEntityRegistryAsMarkdown(registry)
 
@@ -216,35 +216,35 @@ describe('exportEntityRegistryAsMarkdown', () => {
     expect(md).toContain('## NPCs')
     expect(md).toContain('### Voss')
     expect(md).toContain('## Enemys')
-    expect(md).toContain('### Carnifex')
+    expect(md).toContain('### Target')
   })
 
   it('includes entity description', () => {
-    const pc = createTestEntity({ type: 'pc', name: 'Alfa', description: 'Battle-brother of the Kill-Team' })
+    const pc = createTestEntity({ type: 'pc', name: 'Alfa', description: 'Battle-brother of the team' })
     const registry = createTestEntityRegistry([pc])
     const md = exportEntityRegistryAsMarkdown(registry)
 
-    expect(md).toContain('Battle-brother of the Kill-Team')
+    expect(md).toContain('Battle-brother of the team')
   })
 
   it('includes affiliations', () => {
     const npc = createTestEntity({ type: 'npc', name: 'Voss' })
-    npc.affiliations = ['Deathwatch', 'Inquisition']
+    npc.affiliations = ['Faction A', 'Faction C']
     const registry = createTestEntityRegistry([npc])
     const md = exportEntityRegistryAsMarkdown(registry)
 
-    expect(md).toContain('**Affiliations:** Deathwatch, Inquisition')
+    expect(md).toContain('**Affiliations:** Faction A, Faction C')
   })
 
   it('includes status history', () => {
     let entity = createTestEntity({ type: 'pc', name: 'Alfa' })
-    entity = addStatusEntry(entity, 'node-1', 'wounded', 'Hit by bolter')
+    entity = addStatusEntry(entity, 'node-1', 'wounded', 'Hit in combat')
     entity = addStatusEntry(entity, 'node-2', 'healed')
     const registry = createTestEntityRegistry([entity])
     const md = exportEntityRegistryAsMarkdown(registry)
 
     expect(md).toContain('**Status History:**')
-    expect(md).toContain('- wounded — Hit by bolter')
+    expect(md).toContain('- wounded — Hit in combat')
     expect(md).toContain('- healed')
   })
 
@@ -380,13 +380,13 @@ describe('removeEntityRelationship', () => {
 describe('addEntityCustomField', () => {
   it('adds a custom field', () => {
     const entity = createTestEntity()
-    const updated = addEntityCustomField(entity, 'Weapon', 'Bolter')
-    expect(updated.custom['Weapon']).toBe('Bolter')
+    const updated = addEntityCustomField(entity, 'Weapon', 'Weapon')
+    expect(updated.custom['Weapon']).toBe('Weapon')
   })
 
   it('does not mutate original', () => {
     const entity = createTestEntity()
-    addEntityCustomField(entity, 'Weapon', 'Bolter')
+    addEntityCustomField(entity, 'Weapon', 'Weapon')
     expect(entity.custom['Weapon']).toBeUndefined()
   })
 })
@@ -394,17 +394,17 @@ describe('addEntityCustomField', () => {
 describe('removeEntityCustomField', () => {
   it('removes a custom field', () => {
     const entity = createTestEntity()
-    const withField = addEntityCustomField(entity, 'Weapon', 'Bolter')
+    const withField = addEntityCustomField(entity, 'Weapon', 'Weapon')
     const updated = removeEntityCustomField(withField, 'Weapon')
     expect(updated.custom['Weapon']).toBeUndefined()
   })
 
   it('preserves other custom fields', () => {
     let entity = createTestEntity()
-    entity = addEntityCustomField(entity, 'Weapon', 'Bolter')
-    entity = addEntityCustomField(entity, 'Armor', 'Power Armor')
+    entity = addEntityCustomField(entity, 'Weapon', 'Weapon')
+    entity = addEntityCustomField(entity, 'Armor', 'Armor')
     const updated = removeEntityCustomField(entity, 'Weapon')
-    expect(updated.custom['Armor']).toBe('Power Armor')
+    expect(updated.custom['Armor']).toBe('Armor')
     expect(updated.custom['Weapon']).toBeUndefined()
   })
 })
@@ -412,9 +412,9 @@ describe('removeEntityCustomField', () => {
 describe('updateEntityCustomField', () => {
   it('updates an existing custom field value', () => {
     let entity = createTestEntity()
-    entity = addEntityCustomField(entity, 'Weapon', 'Bolter')
-    const updated = updateEntityCustomField(entity, 'Weapon', 'Heavy Bolter')
-    expect(updated.custom['Weapon']).toBe('Heavy Bolter')
+    entity = addEntityCustomField(entity, 'Weapon', 'Weapon')
+    const updated = updateEntityCustomField(entity, 'Weapon', 'Heavy Weapon')
+    expect(updated.custom['Weapon']).toBe('Heavy Weapon')
   })
 
   it('returns entity unchanged if field does not exist', () => {

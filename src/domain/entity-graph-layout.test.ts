@@ -19,7 +19,7 @@ describe('computeEntityGraphLayout', () => {
   it('separates entities of different types into different clusters', () => {
     const entities = [
       createTestEntity({ id: 'a', type: 'pc', name: 'Alfa' }),
-      createTestEntity({ id: 'b', type: 'enemy', name: 'Carnifex' }),
+      createTestEntity({ id: 'b', type: 'enemy', name: 'Target' }),
     ]
     const { nodes } = computeEntityGraphLayout(entities)
     const pc = nodes.find((n) => n.entityId === 'a')!
@@ -49,7 +49,7 @@ describe('computeEntityGraphLayout', () => {
   it('filters entities by type', () => {
     const entities = [
       createTestEntity({ id: 'a', type: 'pc', name: 'Alfa' }),
-      createTestEntity({ id: 'b', type: 'enemy', name: 'Carnifex' }),
+      createTestEntity({ id: 'b', type: 'enemy', name: 'Target' }),
       createTestEntity({ id: 'c', type: 'npc', name: 'Voss' }),
     ]
     const { nodes } = computeEntityGraphLayout(entities, new Set(['pc', 'npc']))
@@ -63,7 +63,7 @@ describe('computeEntityGraphLayout', () => {
         id: 'a', type: 'pc', name: 'Alfa',
         relationships: [{ targetEntityId: 'b', type: 'enemy-of' }],
       }),
-      createTestEntity({ id: 'b', type: 'enemy', name: 'Carnifex' }),
+      createTestEntity({ id: 'b', type: 'enemy', name: 'Target' }),
     ]
     // Filter out enemies
     const { edges } = computeEntityGraphLayout(entities, new Set(['pc']))
