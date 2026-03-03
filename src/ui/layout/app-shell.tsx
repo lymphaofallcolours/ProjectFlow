@@ -3,7 +3,7 @@ import { StatusBar } from './status-bar'
 import { GraphCanvas } from '@/ui/graph/graph-canvas'
 import { OverlayRoot } from '@/ui/overlays/overlay-root'
 import { EntitySidebar } from '@/ui/entities/entity-sidebar'
-import { LegendPanel } from '@/ui/components/legend-panel'
+import { HelpPanel } from '@/ui/components/help-panel'
 import { SearchPanel } from '@/ui/components/search-panel'
 import { SessionTimeline } from '@/ui/components/session-timeline'
 import { TemplateManager } from '@/ui/components/template-manager'
@@ -27,7 +27,7 @@ export function AppShell() {
         <EntitySidebar />
         <TemplateManager />
         <SessionTimeline />
-        <LegendPanel />
+        <HelpPanel />
         <EntityRelationshipGraph />
         <CampaignDashboard />
       </main>

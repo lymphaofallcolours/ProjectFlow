@@ -29,6 +29,7 @@ import {
   updateNodeArcLabel as updateArcLabelOp,
   updateNodeTags as updateNodeTagsOp,
   rewireEdge as rewireEdgeOp,
+  transposeNodePositions,
 } from '@/domain/graph-operations'
 import {
   setNodePlaythroughStatus as setPlaythroughOp,
@@ -45,6 +46,7 @@ import {
 } from '@/domain/group-operations'
 import { createSnapshot } from '@/domain/history-operations'
 import { useHistoryStore } from './history-store'
+import { useUIStore } from './ui-store'
 
 type GraphState = {
   nodes: Record<string, StoryNode>
@@ -125,6 +127,9 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   deleteNode: (id) => {
     if (!get().nodes[id]) return
     saveHistory()
+    if (useUIStore.getState().radialNodeId === id) {
+      useUIStore.getState().hideRadialSubnodes()
+    }
     set((state) => {
       const result = removeNodeOp(state.nodes, state.edges, id)
       const nextSelected = new Set(state.selectedNodeIds)
@@ -137,6 +142,10 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     const ids = Array.from(get().selectedNodeIds)
     if (ids.length === 0) return
     saveHistory()
+    const currentRadialId = useUIStore.getState().radialNodeId
+    if (currentRadialId && ids.includes(currentRadialId)) {
+      useUIStore.getState().hideRadialSubnodes()
+    }
     set((state) => {
       const result = removeNodesOp(state.nodes, state.edges, ids)
       return { ...result, selectedNodeIds: new Set<string>() }
@@ -267,7 +276,15 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   },
 
   setViewport: (viewport) => set({ viewport }),
-  setScrollDirection: (scrollDirection) => set({ scrollDirection }),
+  setScrollDirection: (scrollDirection) => {
+    const current = get().scrollDirection
+    if (current === scrollDirection) return
+    saveHistory()
+    set((state) => ({
+      scrollDirection,
+      nodes: transposeNodePositions(state.nodes),
+    }))
+  },
 
   selectNodes: (ids) => set({ selectedNodeIds: new Set(ids) }),
 
@@ -392,6 +409,17 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   deleteGroup: (groupId, cascade) => {
     if (!get().nodes[groupId]) return
     saveHistory()
+    const currentRadialId = useUIStore.getState().radialNodeId
+    if (currentRadialId) {
+      if (currentRadialId === groupId) {
+        useUIStore.getState().hideRadialSubnodes()
+      } else if (cascade) {
+        const childIds = getGroupChildIds(get().nodes, groupId)
+        if (childIds.includes(currentRadialId)) {
+          useUIStore.getState().hideRadialSubnodes()
+        }
+      }
+    }
     if (cascade) {
       set((state) => deleteGroupWithChildrenOp(state.nodes, state.edges, groupId))
     } else {

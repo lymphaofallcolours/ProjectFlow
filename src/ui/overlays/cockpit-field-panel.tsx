@@ -8,16 +8,18 @@ import { FieldEditor } from './field-editors/field-editor'
 type CockpitFieldPanelProps = {
   node: StoryNode
   fieldDef: FieldDefinition
+  forceExpanded?: boolean
+  scrollableMode?: boolean
 }
 
 /**
  * A single field panel within the cockpit grid. Shows the field icon,
- * label, and editor. Empty fields start collapsed to save space —
- * click to expand.
+ * label, and editor. All panels start expanded by default.
+ * Click header to collapse/expand individually.
  */
-export function CockpitFieldPanel({ node, fieldDef }: CockpitFieldPanelProps) {
+export function CockpitFieldPanel({ node, fieldDef, forceExpanded, scrollableMode }: CockpitFieldPanelProps) {
   const populated = isFieldPopulated(node.fields, fieldDef.key)
-  const [expanded, setExpanded] = useState(populated)
+  const [expanded, setExpanded] = useState(forceExpanded ?? true)
 
   const toggle = useCallback(() => setExpanded((v) => !v), [])
 
@@ -54,9 +56,9 @@ export function CockpitFieldPanel({ node, fieldDef }: CockpitFieldPanelProps) {
         </span>
       </button>
 
-      {/* Editor body — collapsible */}
+      {/* Editor body — collapsible, optionally scrollable */}
       {expanded && (
-        <div className="px-3.5 pb-3.5 border-t border-border">
+        <div className={`px-3.5 pb-3.5 border-t border-border ${scrollableMode ? 'max-h-[300px] overflow-y-auto' : ''}`}>
           <div className="pt-3">
             <FieldEditor node={node} fieldKey={fieldDef.key} />
           </div>

@@ -324,6 +324,70 @@
 **Alternatives rejected:** Storing inverse relationships (doubles the data, sync bugs on add/remove), computed property on Entity (domain type would need framework awareness).
 **Consequences:** Incoming relationships are always fresh. No sync issues. For 50 entities with ~5 relationships each, scan is ~250 comparisons — negligible.
 
+## 2026-03-03 — Drag position overlay instead of local node state for smooth dragging
+
+**Status:** Accepted
+**Context:** React Flow in controlled mode needs position changes applied back to the nodes array during drag for smooth visual updates. The previous implementation only called `moveNode()` on drag-end, causing teleporting. A local `useState` + `useEffect` sync pattern was rejected by the linter (no setState in effects, no ref access during render).
+**Decision:** Maintain `dragPositions: Record<string, Position>` as state. During drag, update this map. Derive `displayNodes` via `useMemo` by merging store nodes with drag overrides. On drag-end, clear overrides and persist to Zustand.
+**Alternatives rejected:** `useState` + `useEffect` sync (lint: no setState in effects), render-phase ref access (lint: no ref.current in render), React Flow `useNodesState` (loses Zustand as source of truth).
+**Consequences:** Position overrides are only in state during drag. Between drags, `displayNodes === storeNodes` (zero overhead). The `isDraggingRef` is only accessed in callbacks (lint-safe).
+
+## 2026-03-03 — Centroid-relative transposition for layout direction switching
+
+**Status:** Accepted
+**Context:** Toggling between horizontal and vertical scroll direction only changed handle anchor positions. Nodes kept their old positions, resulting in mismatched layouts.
+**Decision:** `transposeNodePositions()` pure function swaps `(x - cx, y - cy)` → `(y - cy, x - cx)` relative to the graph centroid. Called from `setScrollDirection` in graph-store. History is pushed before transposing.
+**Alternatives rejected:** Full dagre re-layout (adds dependency, destroys manual arrangements), keep positions unchanged (user must manually reposition everything).
+**Consequences:** Double transpose restores original positions. Single-node graphs are fixed points. Undo restores pre-transpose state.
+
+## 2026-03-03 — Single-tone flat node fills replacing glass gradients
+
+**Status:** Accepted
+**Context:** In light mode, the glass gradient (`surface-glass` → accent at 0.08 opacity) made nodes nearly invisible against the light canvas. User requested "no colour gradient, but rather a single tone, even if translucid."
+**Decision:** Replace `fill={url(#glass-gradient)}` with inline `color-mix(in srgb, accentColor 25%, var(--color-node-fill-base))`. `--color-node-fill-base` is `rgba(255,255,255,0.72)` in light mode, `rgba(30,40,55,0.70)` in dark. SVG gradient definitions removed.
+**Alternatives rejected:** Increasing gradient opacity (still a gradient, user explicitly wanted flat), solid opaque fills (loses glass aesthetic).
+**Consequences:** Nodes are visibly tinted per scene type. Glass reflection sheen overlay remains for subtle depth. Each node's fill is a computed CSS color, not an SVG gradient reference.
+
+## 2026-03-03 — Native DOM events for useLongPress to avoid React Flow conflicts
+
+**Status:** Accepted
+**Context:** The `useLongPress` hook used React synthetic event handlers (`onMouseDown`, `onMouseUp`, `onMouseLeave`) spread onto the node's root div. This interfered with React Flow's internal event chain for node selection, requiring two clicks to select a node.
+**Decision:** Rewrite `useLongPress` to return a `React.RefCallback<HTMLElement>` that attaches native DOM `pointerdown`/`pointerup`/`pointerleave` event listeners. Native listeners fire alongside React Flow's handlers without interfering.
+**Alternatives rejected:** Moving handlers to an inner div (breaks long-press on full node area), using `useEffect` + ref (extra lifecycle management), `capture: true` phase listeners (too invasive).
+**Consequences:** Hook API changed from returning a spread object to returning a ref callback. `story-node.tsx` uses `ref={longPressRef}` instead of `{...longPressHandlers}`. Native events don't interfere with React Flow's click/selection handling.
+
+## 2026-03-03 — Shift replaces Alt for subnode trigger, Control for multi-select
+
+**Status:** Accepted
+**Context:** Alt key is captured by Firefox for toggling the menu bar, making Alt+Click unreliable for subnode triggers. Shift was previously used for multi-select (`selectionKeyCode`, `multiSelectionKeyCode`).
+**Decision:** Shift for subnode triggers (Shift+Click, Shift key alone with selected node, long press). Control for multi-select. `selectionKeyCode={null}` (lasso via `selectionOnDrag` only).
+**Alternatives rejected:** Meta key for multi-select (unreliable on Linux/Windows), keeping Alt (broken in Firefox), separate modifier for lasso vs additive select (too many keys).
+**Consequences:** Shift+Click on a node opens subnodes instead of adding to selection. Ctrl+Click adds to selection. `selectionOnDrag` provides lasso without needing a key. Keyboard shortcut handler also responds to lone Shift press when a single node is selected.
+
+## 2026-03-03 — onNodesChange handles select changes for controlled React Flow
+
+**Status:** Accepted
+**Context:** React Flow v12 in controlled mode requires `onNodesChange` to process `select` type changes. Without this, the `selected` CSS class isn't applied to nodes even though `onSelectionChange` updates the Zustand store.
+**Decision:** Handle `select` changes in `onNodesChange` by building the new selection set from the current Zustand state plus the incoming changes, then calling `selectNodes()`. Keep `onSelectionChange` as a secondary sync mechanism.
+**Alternatives rejected:** Relying solely on `onSelectionChange` (race condition with controlled mode reconciliation), using `applyNodeChanges` (doesn't fit our hybrid Zustand/React Flow model).
+**Consequences:** Node selection works reliably on first click. Both `onNodesChange` and `onSelectionChange` can fire — they produce the same result so no conflict.
+
+## 2026-03-03 — Deferred drag position clear via requestAnimationFrame
+
+**Status:** Accepted
+**Context:** When a node drag ends, `setDragPositions({})` (React state) and `moveNode()` (Zustand) may not batch together. There's a frame where `dragPositions` is cleared but `storeNodes` hasn't updated yet, causing nodes to flash at their old position.
+**Decision:** Defer `setDragPositions({})` via `requestAnimationFrame` so the Zustand update renders first. Belt-and-suspenders: `displayNodes` memo skips drag overrides when the store position already matches.
+**Alternatives rejected:** Using `flushSync` (heavy, blocks), setTimeout (imprecise), merging both states into one store (loses separation).
+**Consequences:** Zero blink on drag end. The extra frame of drag overlay is invisible since the store has already committed the new position.
+
+## 2026-03-03 — CSS custom property --accent-mix for theme-aware node fills
+
+**Status:** Accepted
+**Context:** Light mode needed stronger accent tinting on nodes (40%) while dark mode should stay subtle (25%). A single hardcoded percentage doesn't work for both.
+**Decision:** CSS variable `--accent-mix` set to `40%` in light theme, `25%` in dark theme. Used in `color-mix(in srgb, accentColor var(--accent-mix), var(--color-node-fill-base))`.
+**Alternatives rejected:** Separate nodeFillColor per theme (requires JS theme detection in component), two hardcoded values with theme check (more complex than CSS variable).
+**Consequences:** Theme-aware accent mixing with zero JS overhead. CSS does the work. Adding new themes only requires setting `--accent-mix`.
+
 ---
 
 <!-- Entries above — newest first -->

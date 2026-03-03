@@ -39,6 +39,9 @@ type UIState = {
   // Campaign dashboard
   dashboardOpen: boolean
 
+  // Canvas background
+  canvasBackground: 'none' | 'dots' | 'grid'
+
   // Auto-save
   autoSaveEnabled: boolean
   autoSaveIntervalMs: number
@@ -60,6 +63,7 @@ type UIState = {
   toggleTemplateManager: () => void
   toggleEntityGraph: () => void
   toggleDashboard: () => void
+  cycleCanvasBackground: () => void
   toggleAutoSave: () => void
   setAutoSaveIntervalMs: (ms: number) => void
   setAutoSaveStatus: (status: 'saving' | 'saved' | null) => void
@@ -77,6 +81,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   templateManagerOpen: false,
   entityGraphOpen: false,
   dashboardOpen: false,
+  canvasBackground: 'dots' as const,
   autoSaveEnabled: false,
   autoSaveIntervalMs: 60_000,
   autoSaveStatus: null,
@@ -132,6 +137,13 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   toggleDashboard: () =>
     set((state) => ({ dashboardOpen: !state.dashboardOpen })),
+
+  cycleCanvasBackground: () =>
+    set((state) => {
+      const order: Array<'dots' | 'grid' | 'none'> = ['dots', 'grid', 'none']
+      const idx = order.indexOf(state.canvasBackground)
+      return { canvasBackground: order[(idx + 1) % order.length] }
+    }),
 
   toggleAutoSave: () =>
     set((state) => ({ autoSaveEnabled: !state.autoSaveEnabled })),

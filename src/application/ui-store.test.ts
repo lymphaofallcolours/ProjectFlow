@@ -14,6 +14,7 @@ beforeEach(() => {
     templateManagerOpen: false,
     entityGraphOpen: false,
     dashboardOpen: false,
+    canvasBackground: 'dots',
     autoSaveEnabled: false,
     autoSaveIntervalMs: 60_000,
     autoSaveStatus: null,
@@ -215,6 +216,21 @@ describe('useUIStore', () => {
       expect(useUIStore.getState().dashboardOpen).toBe(true)
       useUIStore.getState().toggleDashboard()
       expect(useUIStore.getState().dashboardOpen).toBe(false)
+    })
+  })
+
+  describe('canvas background', () => {
+    it('defaults to dots', () => {
+      expect(useUIStore.getState().canvasBackground).toBe('dots')
+    })
+
+    it('cycles through dots → grid → none → dots', () => {
+      useUIStore.getState().cycleCanvasBackground()
+      expect(useUIStore.getState().canvasBackground).toBe('grid')
+      useUIStore.getState().cycleCanvasBackground()
+      expect(useUIStore.getState().canvasBackground).toBe('none')
+      useUIStore.getState().cycleCanvasBackground()
+      expect(useUIStore.getState().canvasBackground).toBe('dots')
     })
   })
 })

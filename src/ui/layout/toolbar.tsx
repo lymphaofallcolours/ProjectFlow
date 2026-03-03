@@ -19,6 +19,9 @@ import {
   LayoutTemplate,
   Network,
   BarChart3,
+  Grip,
+  Grid3X3,
+  Square,
 } from 'lucide-react'
 import { useUIStore } from '@/application/ui-store'
 import { useGraphStore } from '@/application/graph-store'
@@ -43,12 +46,15 @@ export function Toolbar() {
   const toggleDashboard = useUIStore((s) => s.toggleDashboard)
   const toggleLegendPanel = useUIStore((s) => s.toggleLegendPanel)
   const toggleSearchPanel = useUIStore((s) => s.toggleSearchPanel)
+  const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const diffOverlayActive = useSessionStore((s) => s.diffOverlayActive)
   const toggleDiffOverlay = useSessionStore((s) => s.toggleDiffOverlay)
   const canUndo = useHistoryStore((s) => s.past.length > 0)
   const canRedo = useHistoryStore((s) => s.future.length > 0)
   const undo = useGraphStore((s) => s.undo)
   const redo = useGraphStore((s) => s.redo)
+  const canvasBackground = useUIStore((s) => s.canvasBackground)
+  const cycleCanvasBackground = useUIStore((s) => s.cycleCanvasBackground)
   const autoSaveEnabled = useUIStore((s) => s.autoSaveEnabled)
   const toggleAutoSave = useUIStore((s) => s.toggleAutoSave)
   const importSubgraph = useGraphStore((s) => s.importSubgraph)
@@ -105,6 +111,7 @@ export function Toolbar() {
           label={diffOverlayActive ? 'Hide Diff' : 'Show Diff'}
           onClick={toggleDiffOverlay}
           active={diffOverlayActive}
+          disabled={!activeSessionId}
         />
 
         <div className="w-px h-5 bg-border mx-1" />
@@ -133,7 +140,7 @@ export function Toolbar() {
         <ToolbarButton icon={<Network size={16} />} label="Relationships" onClick={toggleEntityGraph} />
         <ToolbarButton icon={<BarChart3 size={16} />} label="Dashboard" onClick={toggleDashboard} />
         <ToolbarButton icon={<LayoutTemplate size={16} />} label="Templates" onClick={toggleTemplateManager} />
-        <ToolbarButton icon={<HelpCircle size={16} />} label="Legend" onClick={toggleLegendPanel} />
+        <ToolbarButton icon={<HelpCircle size={16} />} label="Help" onClick={toggleLegendPanel} />
 
         <div className="w-px h-5 bg-border mx-1" />
 
@@ -155,6 +162,16 @@ export function Toolbar() {
             : <ArrowUpDown size={16} />}
           label={scrollDirection === 'horizontal' ? 'Horizontal' : 'Vertical'}
           onClick={handleScrollToggle}
+        />
+
+        <ToolbarButton
+          icon={canvasBackground === 'dots'
+            ? <Grip size={16} />
+            : canvasBackground === 'grid'
+              ? <Grid3X3 size={16} />
+              : <Square size={16} />}
+          label={`Background: ${canvasBackground}`}
+          onClick={cycleCanvasBackground}
         />
 
         <ToolbarButton

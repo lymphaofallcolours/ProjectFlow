@@ -1,76 +1,98 @@
-import { useRef, useCallback } from 'react'
-
-type LongPressHandlers = {
-  onMouseDown: (e: React.MouseEvent) => void
-  onMouseUp: () => void
-  onMouseLeave: () => void
-  onTouchStart: (e: React.TouchEvent) => void
-  onTouchEnd: () => void
-}
+import { useRef, useEffect, useCallback } from 'react'
 
 /**
  * Custom hook for detecting long press (~500ms).
- * Cancels if the pointer moves more than 5px (to avoid conflict with drag).
+ * Uses native DOM event listeners via a ref to avoid interfering with
+ * React Flow's synthetic event handling (which caused double-click-to-select bugs).
+ * Cancels if the pointer moves more than the moveThreshold (default 15px).
  */
 export function useLongPress(
   callback: () => void,
   options?: { threshold?: number; moveThreshold?: number },
-): LongPressHandlers {
+): React.RefCallback<HTMLElement> {
   const threshold = options?.threshold ?? 500
-  const moveThreshold = options?.moveThreshold ?? 5
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const startPosRef = useRef<{ x: number; y: number } | null>(null)
+  const moveThreshold = options?.moveThreshold ?? 15
+  const callbackRef = useRef(callback)
+  const cleanupRef = useRef<(() => void) | null>(null)
 
-  const clear = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
+  // Keep callback ref current without re-attaching listeners
+  useEffect(() => {
+    callbackRef.current = callback
+  }, [callback])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanupRef.current?.()
     }
-    startPosRef.current = null
   }, [])
 
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      startPosRef.current = { x: e.clientX, y: e.clientY }
+  const refCallback = useCallback(
+    (element: HTMLElement | null) => {
+      // Detach from previous element
+      cleanupRef.current?.()
+      cleanupRef.current = null
 
-      const handleMove = (moveEvent: MouseEvent) => {
-        if (!startPosRef.current) return
-        const dx = moveEvent.clientX - startPosRef.current.x
-        const dy = moveEvent.clientY - startPosRef.current.y
-        if (Math.sqrt(dx * dx + dy * dy) > moveThreshold) {
-          clear()
-          document.removeEventListener('mousemove', handleMove)
+      if (!element) return
+
+      let timer: ReturnType<typeof setTimeout> | null = null
+      let startPos: { x: number; y: number } | null = null
+      let moveHandler: ((e: PointerEvent) => void) | null = null
+
+      const clear = () => {
+        if (timer) {
+          clearTimeout(timer)
+          timer = null
         }
+        if (moveHandler) {
+          document.removeEventListener('pointermove', moveHandler)
+          moveHandler = null
+        }
+        startPos = null
       }
 
-      document.addEventListener('mousemove', handleMove)
+      const onPointerDown = (e: PointerEvent) => {
+        // Only trigger on left mouse button
+        if (e.button !== 0) return
+        startPos = { x: e.clientX, y: e.clientY }
 
-      timerRef.current = setTimeout(() => {
-        document.removeEventListener('mousemove', handleMove)
-        callback()
+        moveHandler = (moveEvent: PointerEvent) => {
+          if (!startPos) return
+          const dx = moveEvent.clientX - startPos.x
+          const dy = moveEvent.clientY - startPos.y
+          if (Math.sqrt(dx * dx + dy * dy) > moveThreshold) {
+            clear()
+          }
+        }
+
+        document.addEventListener('pointermove', moveHandler)
+
+        timer = setTimeout(() => {
+          if (moveHandler) {
+            document.removeEventListener('pointermove', moveHandler)
+            moveHandler = null
+          }
+          callbackRef.current()
+          timer = null
+          startPos = null
+        }, threshold)
+      }
+
+      const onPointerUp = () => clear()
+
+      element.addEventListener('pointerdown', onPointerDown)
+      element.addEventListener('pointerup', onPointerUp)
+      element.addEventListener('pointerleave', onPointerUp)
+
+      cleanupRef.current = () => {
         clear()
-      }, threshold)
+        element.removeEventListener('pointerdown', onPointerDown)
+        element.removeEventListener('pointerup', onPointerUp)
+        element.removeEventListener('pointerleave', onPointerUp)
+      }
     },
-    [callback, threshold, moveThreshold, clear],
+    [threshold, moveThreshold],
   )
 
-  const onMouseUp = useCallback(() => clear(), [clear])
-  const onMouseLeave = useCallback(() => clear(), [clear])
-
-  const onTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      const touch = e.touches[0]
-      startPosRef.current = { x: touch.clientX, y: touch.clientY }
-
-      timerRef.current = setTimeout(() => {
-        callback()
-        clear()
-      }, threshold)
-    },
-    [callback, threshold, clear],
-  )
-
-  const onTouchEnd = useCallback(() => clear(), [clear])
-
-  return { onMouseDown, onMouseUp, onMouseLeave, onTouchStart, onTouchEnd }
+  return refCallback
 }

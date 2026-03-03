@@ -5,27 +5,31 @@
 ## Current Session
 
 **Date:** 2026-03-03
-**Goal:** Phase 9 — Campaign Intelligence & Navigation (complete)
+**Goal:** Fix subnode crash, long-press behavior, context menu UX
 
 ### Completed This Session
 
-- **Commit 1:** Node tag system — updateNodeTags domain op, setNodeTags store action with undo, TagChipEditor in context menu (colored chips, add/remove), Tags mode in search panel (frequency counts, click-to-select), Tag icon indicator on story nodes. Fix pre-existing TS error in use-flow-nodes.ts. 8 new tests.
-- **Commit 2:** Entity relationship graph — entity-graph-layout.ts pure domain layout (type-clustered circles, zero deps), EntityGraphNodeComponent (circular badge), EntityRelationshipGraph panel (ReactFlowProvider, type filter pills, click-to-navigate), toolbar button, Ctrl+Shift+R shortcut, Escape chain. 9 new tests.
-- **Commit 3:** Incoming relationships + campaign dashboard — computeIncomingRelationships domain function, "Referenced By" in entity relationships editor, CampaignDashboard panel (entity/node counts, graph stats, session stats, top 5 connected, top 5 tagged), toolbar button, Escape chain. 10 new tests.
-- **Commit 4:** Integration tests + docs — 11 integration tests (tag system, entity graph, dashboard), all docs updated (architecture, decisions-log, changelog, wip), plan archived.
+- **Previous batch:** dot visibility, subnode dismiss/opacity, help panel (4 fixes)
+- **Fix 5: Subnode crash (white screen)** — eliminated stale `radialNodeId` closures in `onSelectionChange` and `onNodeClick` (now read fresh via `useUIStore.getState()`); added `radialNodeExists` render guard; added `radialNodeId` cleanup to `deleteNode`, `deleteSelectedNodes`, and `deleteGroup` in graph-store
+- **Fix 6: Long-press on unselected nodes** — `handleLongPress` in story-node now calls `selectNodes([id])` before `showRadialSubnodes`, so a single long-press selects AND shows subnodes
+- **Fix 7: Context menu Escape dismiss** — added `useEscapeKey(onClose)` to `NodeContextMenu` and `EdgeContextMenu` (canvas already had it, refactored to use shared hook)
+- **Fix 8: Context menu viewport overflow** — new `useMenuPosition` hook uses `useLayoutEffect` to measure menu dimensions and reposition upward/leftward when overflowing viewport bounds; applied to all 3 context menus
+- **Fix 9: Right-pointing combat triangle** — rotated triangle from upward to right-pointing (`M 4,4 L 140,62 L 4,120 Z`), wide left edge gives more text room; handle insets for all 4 directions; label padding shifted left toward centroid
 
 ### Test Coverage
 
-- ~690 tests total across 45 test files
-- Domain: ~227 (65 parser + 34 entity ops + 21 search + 61 graph ops + 33 playthrough ops + 3 history ops + 13 subgraph ops + 12 template ops + 29 group ops + 13 attachment ops + 6 entity graph layout)
-- Application: ~190 (77 graph store + 34 entity store + 22 session store + 16 history store + 29 UI store + 8 campaign store)
+- ~706 unit/integration tests across 46 test files
+- 25 E2E tests (Chromium + Firefox) across 6 test suites
+- Domain: ~232 + 3 node shapes = ~235
+- Application: ~193 + 2 UI store = ~195
 - Infrastructure: 13 (serialization)
-- UI: 66 (12 entity chip + 18 keyboard shortcuts + 5 entity highlight + 8 useFlowNodes + 4 attachment gallery + 8 entity profile + 6 entity chip interaction + 4 status auto-logging + 2 node selector + 1 app)
-- Integration: ~104 (10 campaign roundtrip + 3 entity roundtrip + 6 entity search + 8 overlay state + 8 playthrough roundtrip + 4 session timeline + 20 graph operations + 3 PWA build + 5 performance + 8 group operations + 5 attachment roundtrip + 4 PWA icons + 5 entity profile roundtrip + 6 entity interaction + 4 tag system + 3 entity graph + 4 dashboard)
+- UI: 66 (unchanged)
+- Integration: ~104 (unchanged)
+- E2E: 25 (node-selection 3, canvas-interaction 3, campaign-name 2, subnode-trigger 3, node-drag 1, cockpit-modes 1 × 2 browsers)
 
 ### Blocked / Needs Attention
 
-- (none)
+- Firefox Playwright Ctrl+Click test skipped — React Flow pane intercepts pointer events in Firefox's Playwright driver; works fine in manual testing
 
 ### Next Steps (Phase 10)
 

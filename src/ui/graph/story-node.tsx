@@ -6,7 +6,7 @@ import type { StoryNode } from '@/domain/types'
 import { SCENE_TYPE_CONFIG } from '@/domain/types'
 import type { EntityType } from '@/domain/entity-types'
 import { ENTITY_TYPE_CONFIGS } from '@/domain/entity-types'
-import { getShapePath, NODE_DIMENSIONS } from './node-shapes'
+import { getShapePath, getHandleInsets, NODE_DIMENSIONS } from './node-shapes'
 import { useGraphStore } from '@/application/graph-store'
 import { useUIStore } from '@/application/ui-store'
 import { useSessionStore } from '@/application/session-store'
@@ -60,6 +60,7 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
   }, [diffOverlayActive, activeSessionId, playthroughLog, storyNode.id])
 
   const handleLongPress = useCallback(() => {
+    useGraphStore.getState().selectNodes([storyNode.id])
     showRadialSubnodes(storyNode.id)
   }, [showRadialSubnodes, storyNode.id])
 
@@ -71,7 +72,7 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
     [toggleGroupCollapsed, storyNode.id],
   )
 
-  const longPressHandlers = useLongPress(handleLongPress)
+  const longPressRef = useLongPress(handleLongPress)
 
   const config = SCENE_TYPE_CONFIG[storyNode.sceneType]
   const dim = NODE_DIMENSIONS[config.shape]
@@ -80,6 +81,7 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
 
   const targetPos = scrollDirection === 'horizontal' ? Position.Left : Position.Top
   const sourcePos = scrollDirection === 'horizontal' ? Position.Right : Position.Bottom
+  const handleInsets = getHandleInsets(config.shape)
 
   // Dim if entity filter is active and this node doesn't match
   const entityDimmed = isHighlighted === false
@@ -97,18 +99,19 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
     ? `var(--color-${PLAYTHROUGH_STATUS_CONFIG[storyNode.playthroughStatus].color})`
     : null
 
-  // Shared gradient/filter IDs (defined once at canvas level)
-  const glassGradientId = `glass-${storyNode.sceneType}`
+  // Single-tone translucent fill — flat color, no gradient.
+  // --accent-mix is 40% in light mode, 25% in dark mode.
+  const nodeFillColor = `color-mix(in srgb, ${accentColor} var(--accent-mix), var(--color-node-fill-base))`
 
   return (
     <div
+      ref={longPressRef}
       className="relative group transition-opacity duration-200"
       style={{
         width: dim.width,
         height: dim.height,
         opacity: dimmed ? 0.3 : 1,
       }}
-      {...longPressHandlers}
     >
       {/* Stacked shadow layers — visible when group is collapsed */}
       {storyNode.isGroup && storyNode.collapsed && (
@@ -120,6 +123,7 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
         width={dim.width}
         height={dim.height}
         viewBox={`0 0 ${dim.width} ${dim.height}`}
+        overflow="visible"
         className="absolute inset-0"
       >
         {/* Group dashed border ring */}
@@ -158,10 +162,10 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
           />
         )}
 
-        {/* Glass fill */}
+        {/* Solid tinted fill */}
         <path
           d={shapePath}
-          fill={`url(#${glassGradientId})`}
+          fill={nodeFillColor}
           stroke={diffRingColor ?? (selected ? accentColor : 'var(--color-surface-glass-border)')}
           strokeWidth={diffRingColor ? 2 : selected ? 2 : 1}
           className="transition-all duration-150"
@@ -175,8 +179,11 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
         />
       </svg>
 
-      {/* Label + arc label */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-3">
+      {/* Label + arc label — triangle text shifted left toward wide base */}
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-3"
+        style={config.shape === 'triangle' ? { paddingLeft: 8, paddingRight: 50 } : undefined}
+      >
         {storyNode.arcLabel && (
           <span
             className="text-[9px] font-medium tracking-widest uppercase mb-0.5 opacity-60"
@@ -243,18 +250,26 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
         />
       )}
 
-      {/* Handles */}
+      {/* Handles — inset for shapes that don't fill the bounding box (triangle) */}
       <Handle
         type="target"
         position={targetPos}
         className="!w-2.5 !h-2.5 !rounded-full !border-2 !bg-surface-glass"
-        style={{ borderColor: accentColor }}
+        style={{
+          borderColor: accentColor,
+          ...(targetPos === Position.Left && handleInsets.left != null ? { left: handleInsets.left } : {}),
+          ...(targetPos === Position.Top && handleInsets.top != null ? { top: handleInsets.top } : {}),
+        }}
       />
       <Handle
         type="source"
         position={sourcePos}
         className="!w-2.5 !h-2.5 !rounded-full !border-2 !bg-surface-glass"
-        style={{ borderColor: accentColor }}
+        style={{
+          borderColor: accentColor,
+          ...(sourcePos === Position.Right && handleInsets.right != null ? { right: handleInsets.right } : {}),
+          ...(sourcePos === Position.Bottom && handleInsets.bottom != null ? { bottom: handleInsets.bottom } : {}),
+        }}
       />
     </div>
   )

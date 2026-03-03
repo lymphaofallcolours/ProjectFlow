@@ -111,6 +111,22 @@ export function useKeyboardShortcuts() {
         return
       }
 
+      // Shift (alone) → toggle radial subnodes for selected node
+      if (e.key === 'Shift' && !ctrl && !e.altKey) {
+        const graph = useGraphStore.getState()
+        const ui = useUIStore.getState()
+        const selectedIds = Array.from(graph.selectedNodeIds)
+        if (selectedIds.length === 1) {
+          e.preventDefault()
+          if (ui.radialNodeId === selectedIds[0]) {
+            ui.hideRadialSubnodes()
+          } else {
+            ui.showRadialSubnodes(selectedIds[0])
+          }
+        }
+        return
+      }
+
       // Escape → priority chain dismissal
       if (e.key === 'Escape') {
         e.preventDefault()

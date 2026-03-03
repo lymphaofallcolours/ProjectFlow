@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useGraphStore } from './graph-store'
 import { useHistoryStore } from './history-store'
+import { useUIStore } from './ui-store'
 import { createNode as domainCreateNode, createEdge as domainCreateEdge } from '@/domain/graph-operations'
 
 beforeEach(() => {
   useGraphStore.getState().reset()
   useHistoryStore.getState().reset()
+  useUIStore.getState().hideRadialSubnodes()
 })
 
 describe('useGraphStore', () => {
@@ -50,6 +52,22 @@ describe('useGraphStore', () => {
       useGraphStore.getState().selectNodes([id])
       useGraphStore.getState().deleteNode(id)
       expect(useGraphStore.getState().selectedNodeIds.has(id)).toBe(false)
+    })
+
+    it('clears radialNodeId when deleting the active radial node', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useUIStore.getState().showRadialSubnodes(id)
+      expect(useUIStore.getState().radialNodeId).toBe(id)
+      useGraphStore.getState().deleteNode(id)
+      expect(useUIStore.getState().radialNodeId).toBeNull()
+    })
+
+    it('preserves radialNodeId when deleting a different node', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      useUIStore.getState().showRadialSubnodes(a)
+      useGraphStore.getState().deleteNode(b)
+      expect(useUIStore.getState().radialNodeId).toBe(a)
     })
   })
 
@@ -177,6 +195,15 @@ describe('useGraphStore', () => {
       useGraphStore.getState().addNode('event', { x: 0, y: 0 })
       useGraphStore.getState().deleteSelectedNodes()
       expect(Object.keys(useGraphStore.getState().nodes)).toHaveLength(1)
+    })
+
+    it('clears radialNodeId when selection contains radial target', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 0 })
+      useUIStore.getState().showRadialSubnodes(a)
+      useGraphStore.getState().selectNodes([a, b])
+      useGraphStore.getState().deleteSelectedNodes()
+      expect(useUIStore.getState().radialNodeId).toBeNull()
     })
   })
 
@@ -357,6 +384,43 @@ describe('useGraphStore', () => {
     it('changes scroll direction', () => {
       useGraphStore.getState().setScrollDirection('vertical')
       expect(useGraphStore.getState().scrollDirection).toBe('vertical')
+    })
+
+    it('transposes node positions when direction changes', () => {
+      const store = useGraphStore.getState()
+      store.addNode('event', { x: 0, y: 100 })
+      store.addNode('narration', { x: 200, y: 100 })
+      const nodesBefore = Object.values(useGraphStore.getState().nodes)
+      expect(nodesBefore).toHaveLength(2)
+
+      store.setScrollDirection('vertical')
+      const nodesAfter = Object.values(useGraphStore.getState().nodes)
+
+      // Positions should have changed (X/Y swapped relative to centroid)
+      const posBefore = nodesBefore.map((n) => n.position).sort((a, b) => a.x - b.x)
+      const posAfter = nodesAfter.map((n) => n.position).sort((a, b) => a.x - b.x)
+      expect(posAfter).not.toEqual(posBefore)
+    })
+
+    it('does not transpose when setting same direction', () => {
+      const store = useGraphStore.getState()
+      store.addNode('event', { x: 50, y: 80 })
+      const posBefore = Object.values(useGraphStore.getState().nodes)[0].position
+
+      store.setScrollDirection('horizontal') // same as default
+      const posAfter = Object.values(useGraphStore.getState().nodes)[0].position
+
+      expect(posAfter).toEqual(posBefore)
+    })
+
+    it('pushes history before transposing', () => {
+      const store = useGraphStore.getState()
+      store.addNode('event', { x: 0, y: 0 })
+      store.setScrollDirection('vertical')
+
+      // Should be able to undo the transpose
+      const { past } = useHistoryStore.getState()
+      expect(past.length).toBeGreaterThan(0)
     })
   })
 

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -13,7 +13,6 @@ import type {
   OnNodesChange,
   OnEdgesChange,
   OnConnect,
-  NodeChange,
   Connection,
   NodeMouseHandler,
   OnSelectionChangeFunc,
@@ -54,7 +53,7 @@ export function GraphCanvas() {
 
 /** Inner canvas with access to useReactFlow() */
 function GraphCanvasInner() {
-  const { flowNodes, flowEdges } = useFlowNodes()
+  const { flowNodes: storeNodes, flowEdges } = useFlowNodes()
   const { screenToFlowPosition } = useReactFlow()
   const moveNode = useGraphStore((s) => s.moveNode)
   const pushHistory = useGraphStore((s) => s.pushHistory)
@@ -65,40 +64,81 @@ function GraphCanvasInner() {
   const hideRadialSubnodes = useUIStore((s) => s.hideRadialSubnodes)
   const showRadialSubnodes = useUIStore((s) => s.showRadialSubnodes)
   const radialNodeId = useUIStore((s) => s.radialNodeId)
+  const canvasBackground = useUIStore((s) => s.canvasBackground)
   const openCockpit = useUIStore((s) => s.openCockpit)
+  const radialNodeExists = useGraphStore((s) => radialNodeId ? !!s.nodes[radialNodeId] : false)
 
   // Compute entity highlight set once for all nodes
   const highlightSet = useEntityHighlight()
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null)
 
-  // Track whether we're in a drag to avoid duplicate snapshots
+  // Drag position overrides — only populated while actively dragging.
+  // Merged with store nodes via useMemo to give React Flow smooth visual updates.
+  const [dragPositions, setDragPositions] = useState<Record<string, { x: number; y: number }>>({})
   const isDraggingRef = useRef(false)
 
+  // Merge store nodes with in-flight drag positions for smooth rendering.
+  // Skip stale overrides (store already has final position) to prevent blink on drag end.
+  const displayNodes = useMemo(() => {
+    const keys = Object.keys(dragPositions)
+    if (keys.length === 0) return storeNodes
+    return storeNodes.map((node) => {
+      const dragPos = dragPositions[node.id]
+      if (!dragPos) return node
+      if (node.position.x === dragPos.x && node.position.y === dragPos.y) return node
+      return { ...node, position: dragPos }
+    })
+  }, [storeNodes, dragPositions])
+
   const onNodesChange: OnNodesChange = useCallback(
-    (changes: NodeChange[]) => {
+    (changes) => {
+      // Handle selection changes — required in controlled mode for the `selected`
+      // class to be applied by React Flow's NodeWrapper.
+      const selectChanges = changes.filter((c) => c.type === 'select')
+      if (selectChanges.length > 0) {
+        const current = new Set(useGraphStore.getState().selectedNodeIds)
+        for (const change of selectChanges) {
+          if (change.type === 'select') {
+            if (change.selected) current.add(change.id)
+            else current.delete(change.id)
+          }
+        }
+        selectNodes(Array.from(current))
+      }
+
       for (const change of changes) {
         if (change.type === 'position' && change.position) {
-          if (change.dragging && !isDraggingRef.current) {
-            isDraggingRef.current = true
-          }
-          if (!change.dragging && isDraggingRef.current) {
+          if (change.dragging) {
+            // During drag: update local override for smooth visual movement
+            setDragPositions((prev) => ({ ...prev, [change.id]: change.position! }))
+            if (!isDraggingRef.current) {
+              isDraggingRef.current = true
+              pushHistory()
+            }
+          } else if (isDraggingRef.current) {
+            // Drag ended: persist to Zustand first, defer clearing overrides
+            // to avoid a blink frame where store hasn't updated yet.
             isDraggingRef.current = false
-            pushHistory()
             moveNode(change.id, change.position)
+            requestAnimationFrame(() => setDragPositions({}))
           }
         }
       }
     },
-    [moveNode, pushHistory],
+    [moveNode, pushHistory, selectNodes],
   )
 
   const onSelectionChange: OnSelectionChangeFunc = useCallback(
     ({ nodes }) => {
       const ids = nodes.map((n) => n.id)
       selectNodes(ids)
+      const currentRadialId = useUIStore.getState().radialNodeId
+      if (currentRadialId && !ids.includes(currentRadialId)) {
+        hideRadialSubnodes()
+      }
     },
-    [selectNodes],
+    [selectNodes, hideRadialSubnodes],
   )
 
   const onEdgesChange: OnEdgesChange = useCallback(
@@ -160,11 +200,16 @@ function GraphCanvasInner() {
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (event, node) => {
-      if (event.altKey) {
+      if (event.shiftKey) {
         showRadialSubnodes(node.id)
+      } else {
+        const currentRadialId = useUIStore.getState().radialNodeId
+        if (currentRadialId && currentRadialId !== node.id) {
+          hideRadialSubnodes()
+        }
       }
     },
-    [showRadialSubnodes],
+    [showRadialSubnodes, hideRadialSubnodes],
   )
 
   const onNodeDoubleClick: NodeMouseHandler = useCallback(
@@ -178,7 +223,7 @@ function GraphCanvasInner() {
   return (
     <HighlightContext.Provider value={highlightSet}>
       <ReactFlow
-        nodes={flowNodes}
+        nodes={displayNodes}
         edges={flowEdges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
@@ -193,10 +238,11 @@ function GraphCanvasInner() {
         onPaneContextMenu={onPaneContextMenu}
         onNodeDoubleClick={onNodeDoubleClick}
         onMoveEnd={(_event, viewport) => setViewport(viewport)}
-        selectionKeyCode="Shift"
-        multiSelectionKeyCode="Shift"
+        selectionKeyCode={null}
+        multiSelectionKeyCode="Control"
         selectionOnDrag
         selectionMode={SelectionMode.Partial}
+        panOnScroll
         deleteKeyCode={null}
         fitView
         proOptions={{ hideAttribution: true }}
@@ -206,7 +252,14 @@ function GraphCanvasInner() {
         }}
         className="bg-canvas"
       >
-        <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="var(--color-border)" />
+        {canvasBackground !== 'none' && (
+          <Background
+            variant={canvasBackground === 'grid' ? BackgroundVariant.Lines : BackgroundVariant.Dots}
+            gap={24}
+            size={canvasBackground === 'grid' ? 1 : 2.5}
+            color="var(--color-text-muted)"
+          />
+        )}
         <Controls showInteractive={false} />
         <MiniMap
           nodeColor={() => 'var(--color-surface-glass-border)'}
@@ -214,7 +267,7 @@ function GraphCanvasInner() {
           pannable
           zoomable
         />
-        {/* Shared SVG defs — gradients and filters used by all nodes */}
+        {/* Shared SVG defs — filters used by all nodes */}
         <svg>
           <defs>
             <marker
@@ -226,30 +279,8 @@ function GraphCanvasInner() {
               markerHeight="6"
               orient="auto-start-reverse"
             >
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-text-muted)" />
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-edge)" />
             </marker>
-
-            {/* Glass gradients — one per scene type */}
-            <linearGradient id="glass-event" x1="0" y1="0" x2="0.3" y2="1">
-              <stop offset="0%" stopColor="var(--color-surface-glass)" />
-              <stop offset="100%" stopColor="var(--color-node-event)" stopOpacity="0.08" />
-            </linearGradient>
-            <linearGradient id="glass-narration" x1="0" y1="0" x2="0.3" y2="1">
-              <stop offset="0%" stopColor="var(--color-surface-glass)" />
-              <stop offset="100%" stopColor="var(--color-node-narration)" stopOpacity="0.08" />
-            </linearGradient>
-            <linearGradient id="glass-combat" x1="0" y1="0" x2="0.3" y2="1">
-              <stop offset="0%" stopColor="var(--color-surface-glass)" />
-              <stop offset="100%" stopColor="var(--color-node-combat)" stopOpacity="0.08" />
-            </linearGradient>
-            <linearGradient id="glass-social" x1="0" y1="0" x2="0.3" y2="1">
-              <stop offset="0%" stopColor="var(--color-surface-glass)" />
-              <stop offset="100%" stopColor="var(--color-node-social)" stopOpacity="0.08" />
-            </linearGradient>
-            <linearGradient id="glass-investigation" x1="0" y1="0" x2="0.3" y2="1">
-              <stop offset="0%" stopColor="var(--color-surface-glass)" />
-              <stop offset="100%" stopColor="var(--color-node-investigation)" stopOpacity="0.08" />
-            </linearGradient>
 
             {/* Glass reflection highlight */}
             <linearGradient id="highlight-sheen" x1="0" y1="0" x2="0" y2="1">
@@ -293,7 +324,7 @@ function GraphCanvasInner() {
       )}
 
       {/* Radial subnodes — rendered here for React Flow context access */}
-      {radialNodeId && <RadialSubnodes nodeId={radialNodeId} />}
+      {radialNodeId && radialNodeExists && <RadialSubnodes nodeId={radialNodeId} />}
     </HighlightContext.Provider>
   )
 }

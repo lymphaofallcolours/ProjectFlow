@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef } from 'react'
 import type { SceneType } from '@/domain/types'
 import { SCENE_TYPES, SCENE_TYPE_CONFIG } from '@/domain/types'
 import { useGraphStore } from '@/application/graph-store'
+import { useEscapeKey } from '@/ui/hooks/use-escape-key'
+import { useMenuPosition } from '@/ui/hooks/use-menu-position'
 
 type CanvasContextMenuProps = {
   position: { x: number; y: number }
@@ -29,20 +31,18 @@ export function CanvasContextMenu({ position, flowPosition, onClose }: CanvasCon
     [addNode, flowPosition, onClose],
   )
 
+  useEscapeKey(onClose)
+  useMenuPosition(ref, position)
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         onClose()
       }
     }
-    function handleEscape(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
     document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('keydown', handleEscape)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('keydown', handleEscape)
     }
   }, [onClose])
 

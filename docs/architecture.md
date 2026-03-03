@@ -17,7 +17,7 @@ src/
 │   ├── entity-operations.ts    # Pure CRUD for Entity and EntityRegistry (create, update, status, portrait, relationships, custom fields, computeIncomingRelationships)
 │   ├── entity-graph-layout.ts  # Pure layout computation for entity relationship graph (type-clustered circular layout)
 │   ├── search.ts               # Full-text and entity-aware node search across all fields
-│   ├── graph-operations.ts     # Pure functions: createNode, removeNode, updateField, updateNodeTags, duplicate, clipboard, rewire, etc. (group-aware)
+│   ├── graph-operations.ts     # Pure functions: createNode, removeNode, updateField, updateNodeTags, duplicate, clipboard, rewire, transposeNodePositions, etc. (group-aware)
 │   ├── group-operations.ts     # Pure group CRUD: create, add/remove children, collapse, delete (keep/cascade), boundary/internal edges
 │   ├── attachment-operations.ts # Pure attachment CRUD: create, validate size, add/remove from RichContent, campaign size estimation
 │   ├── subgraph-operations.ts  # Subgraph file format (.pfsg.json), serialize/deserialize/validate for cross-campaign export/import
@@ -43,7 +43,7 @@ src/
 │
 ├── ui/                         # React components — ALL React imports live here
 │   ├── components/             # Reusable UI components
-│   │   ├── legend-panel.tsx    # Floating tag syntax cheatsheet (entity DSL reference)
+│   │   ├── help-panel.tsx      # Multi-section help & reference panel (entity tags, shortcuts, interactions, workflow, sessions)
 │   │   ├── search-panel.tsx    # Search panel with text, entity, and tags filter modes
 │   │   ├── campaign-dashboard.tsx # Left slide-in panel: entity/node counts, graph stats, session stats, top connected, top tagged
 │   │   ├── session-timeline.tsx # Right slide-out panel: session visits, export, end session
@@ -80,8 +80,9 @@ src/
 │   │       └── custom-field-editor.tsx    # Label + content list editor with template picker (TipTap for content) + attachment gallery
 │   │
 │   ├── hooks/                  # Shared React hooks
-│   │   ├── use-long-press.ts   # 500ms hold detection, cancels on 5px drag
+│   │   ├── use-long-press.ts   # 500ms hold detection via native DOM events (ref callback), cancels on 15px drag
 │   │   ├── use-escape-key.ts   # Global Escape keydown listener
+│   │   ├── use-menu-position.ts # Viewport-aware menu positioning via useLayoutEffect DOM mutation
 │   │   ├── use-keyboard-shortcuts.ts  # Global shortcuts (Ctrl+/ legend, Ctrl+F search, Ctrl+E entities, Ctrl+T timeline, Ctrl+D diff, Ctrl+Z undo, Ctrl+Shift+Z redo, Ctrl+Shift+R entity graph, Ctrl+S save, Ctrl+A select all, Escape chain, Ctrl+C/X/V clipboard, Delete)
 │   │   ├── use-auto-save.ts   # Interval-based auto-save hook with status flash
 │   │   └── use-entity-highlight.ts # Computes entity highlight set once for all nodes (canvas-level)
@@ -150,7 +151,7 @@ User right-clicks canvas → ui/graph/canvas-context-menu.tsx
 
 ```
 Tier 1: Single click → selects node (glow highlight, handles accent color)
-Tier 2: Hold (500ms) or Alt+click → radial subnodes appear around node
+Tier 2: Hold (500ms) or Shift+click → radial subnodes appear around node
         Click a subnode → field panel slides in over blurred backdrop
 Tier 3: Double-click → full cockpit overlay with responsive grid of all 11 fields
 ```
@@ -429,3 +430,4 @@ All reads from stores; no derived/cached state needed at campaign scale
 - **Error handling:** Domain functions throw for truly unexpected errors. Infrastructure validates campaign schema on load. UI catches at component boundaries.
 - **Performance:** React Flow nodes MUST be memoized (`React.memo`). `nodeTypes` object MUST be at module level (not in render). Blurred overlays use CSS `backdrop-filter: blur()` which is GPU-intensive — test on lower-end hardware. SVG gradients/filters are shared at canvas level (not per-node). Entity highlight uses React context for O(1) per-node lookup. `useFlowNodes` splits base node data from selection state for better memo stability.
 - **PWA:** Service worker precaches all static assets via vite-plugin-pwa + Workbox. No runtime caching (no API calls). Manifest enables standalone install. Online/offline status tracked in status bar.
+- **E2E Testing:** Playwright with Chromium + Firefox. Config in `playwright.config.ts`, tests in `tests/e2e/`. Auto-starts Vite dev server. Shared helper (`tests/e2e/helpers.ts`) for node creation. Excluded from Vitest via `vitest.config.ts` exclude pattern.

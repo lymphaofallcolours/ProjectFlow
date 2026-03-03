@@ -2,6 +2,61 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## Subnode Crash, Long-Press, Context Menu Fixes (2026-03-03)
+
+### fix: resolve subnode crash, improve long-press and context menus
+- **Subnode crash fix**: eliminated stale `radialNodeId` closures in graph-canvas callbacks (use `getState()` fresh reads); added `radialNodeExists` render guard; cleanup in `deleteNode`, `deleteSelectedNodes`, `deleteGroup`
+- **Long-press on unselected nodes**: `handleLongPress` now calls `selectNodes` before `showRadialSubnodes` — single gesture selects + shows subnodes
+- **Context menu Escape**: added `useEscapeKey(onClose)` to `NodeContextMenu` and `EdgeContextMenu`; refactored `CanvasContextMenu` to use shared hook
+- **Context menu viewport overflow**: new `useMenuPosition` hook measures and repositions menus that overflow viewport bounds
+- **Right-pointing triangle**: rotated combat triangle from upward to right-pointing; wider text area, handles at tip (horizontal) or top/bottom slopes (vertical)
+- 3 new unit tests for radialNodeId cleanup on deletion
+
+## UI Polish — Dots, Subnodes, Help Panel (2026-03-03)
+
+### fix: improve dot visibility, subnode dismiss/contrast, add help panel
+- **Dot visibility**: increased dot size 1.5→2.5 for light mode contrast
+- **Subnode dismiss**: clicking a different node (without Shift) now hides subnodes; deselecting the radial node also dismisses
+- **Subnode opacity**: opaque surface background, size 36→40, empty opacity 0.75, populated glow 40%
+- **Help panel**: replaced legend-panel.tsx with 5-section help & reference panel (entity tags, shortcuts, interactions, workflow, sessions/diff)
+
+## UI Fixes, E2E Testing & Polish (2026-03-03)
+
+### test: add Playwright E2E testing with 6 test suites (25 tests, Chromium + Firefox)
+- Playwright setup: `playwright.config.ts`, auto-starts Vite dev server, Chromium + Firefox
+- `node-selection.e2e.test.ts`: single-click select, canvas deselect, Ctrl+Click multi-select
+- `canvas-interaction.e2e.test.ts`: wheel pan, Ctrl+scroll zoom, background cycle
+- `campaign-name.e2e.test.ts`: click-to-edit, Enter confirm, Escape cancel
+- `subnode-trigger.e2e.test.ts`: Shift+Click, canvas dismiss, Shift key toggle
+- `node-drag.e2e.test.ts`: drag moves node without blinking
+- `cockpit-modes.e2e.test.ts`: double-click cockpit, scrollable toggle
+- Shared `helpers.ts` for node creation, Vitest excludes e2e directory
+
+### feat: 10 UI fixes — selection, interactions, theming, canvas, cockpit
+- **Fix single-click selection**: rewrote `useLongPress` from React synthetic to native DOM events (ref callback), plus `onNodesChange` handles select changes for React Flow controlled mode
+- **Light mode contrast**: CSS `--accent-mix` variable (40% light, 25% dark), darker canvas/node fills, stronger edge opacity
+- **Triangle handle positioning**: `getHandleInsets()` calculates triangle perimeter intersection at horizontal midline (~39px inset)
+- **Subnode triggers**: Alt→Shift (Firefox compatibility), long-press moveThreshold 5→15px, Shift key alone with selected node
+- **Subnode visibility**: scrim overlay behind subnodes, empty field opacity 0.35→0.55
+- **Node drag blink fix**: deferred `setDragPositions({})` via `requestAnimationFrame`, displayNodes guard against stale overrides
+- **Canvas backgrounds**: `canvasBackground` state (dots/grid/none) with toolbar cycle button
+- **Wheel-to-pan**: `panOnScroll` prop — raw wheel pans, Shift+wheel horizontal, Ctrl+wheel zoom
+- **Cockpit scrollable mode**: toggle between auto-expand and scrollable (max-h-300px) field panels
+- **Campaign name editing**: click-to-edit in status bar, Enter/Escape confirm/cancel
+- Selection keys changed: Shift→Control for multi-select, selectionKeyCode→null (lasso via selectionOnDrag)
+- 5 new unit tests (3 node shapes, 2 UI store)
+
+## Previous UI Fixes (2026-03-03)
+
+### fix: six UI improvements — node rendering, interactions, layout, cockpit, theming
+- Fix circle node SVG cropping: add overflow="visible" to node SVG elements
+- Fix layout direction switching: transposeNodePositions swaps X/Y relative to centroid on toggle
+- Fix node interactions: long press restricted to left-click only (prevents right-click conflict)
+- Smooth node dragging: drag position overlay pattern with useMemo-derived displayNodes
+- Cockpit panels expanded by default with collective collapse/expand all button
+- Light theme visibility: single-tone flat node fills (color-mix), dedicated --color-edge variable
+- 8 new tests (5 transposeNodePositions + 3 setScrollDirection)
+
 ## Phase 9 — Campaign Intelligence & Navigation (2026-03-03)
 
 ### docs: add integration tests, update all docs, polish for Phase 9 completion

@@ -5,6 +5,8 @@ import { useGraphStore } from '@/application/graph-store'
 import { MenuItem } from './context-menu'
 import { EdgeLabelInput } from './edge-label-input'
 import { NodeSelectorInput } from '@/ui/components/node-selector-input'
+import { useEscapeKey } from '@/ui/hooks/use-escape-key'
+import { useMenuPosition } from '@/ui/hooks/use-menu-position'
 
 type EdgeContextMenuProps = {
   edgeId: string
@@ -25,6 +27,9 @@ export function EdgeContextMenu({ edgeId, position, onClose }: EdgeContextMenuPr
   const disconnectEdge = useGraphStore((s) => s.disconnectEdge)
   const rewireEdge = useGraphStore((s) => s.rewireEdge)
   const ref = useRef<HTMLDivElement>(null)
+
+  useEscapeKey(onClose)
+  useMenuPosition(ref, position)
 
   const [editingLabel, setEditingLabel] = useState(false)
   const [showRewire, setShowRewire] = useState(false)

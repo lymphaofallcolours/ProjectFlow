@@ -10,7 +10,7 @@ import type { StoryEdge } from '@/domain/types'
 export type StoryEdgeData = { storyEdge: StoryEdge }
 
 const EDGE_STYLE_CONFIG = {
-  default: { dashArray: undefined, color: 'var(--color-border)', opacity: 1 },
+  default: { dashArray: undefined, color: 'var(--color-edge)', opacity: 1 },
   conditional: { dashArray: '8 4', color: 'var(--color-node-social)', opacity: 0.85 },
   secret: { dashArray: '3 3', color: 'var(--color-text-muted)', opacity: 0.4 },
 } as const

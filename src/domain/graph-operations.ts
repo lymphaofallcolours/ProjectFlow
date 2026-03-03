@@ -372,3 +372,37 @@ export function rewireEdge(
     },
   }
 }
+
+/**
+ * Transpose all node positions by swapping X/Y coordinates relative to the
+ * graph centroid. Used when switching between horizontal and vertical layout
+ * direction so the spatial arrangement matches the new orientation.
+ */
+export function transposeNodePositions(
+  nodes: Record<string, StoryNode>,
+): Record<string, StoryNode> {
+  const nodeList = Object.values(nodes)
+  if (nodeList.length === 0) return nodes
+
+  // Compute centroid
+  let cx = 0
+  let cy = 0
+  for (const node of nodeList) {
+    cx += node.position.x
+    cy += node.position.y
+  }
+  cx /= nodeList.length
+  cy /= nodeList.length
+
+  // Swap (x - cx, y - cy) → (y - cy, x - cx) then re-center
+  const result: Record<string, StoryNode> = {}
+  for (const node of nodeList) {
+    const dx = node.position.x - cx
+    const dy = node.position.y - cy
+    result[node.id] = {
+      ...node,
+      position: { x: dy + cx, y: dx + cy },
+    }
+  }
+  return result
+}

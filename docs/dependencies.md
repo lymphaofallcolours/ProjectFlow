@@ -82,9 +82,11 @@
 **Removal risk:** Very low — only used for icon generation script, never imported by application code.
 **Added:** Phase 7, Commit 5.
 
-### @playwright/test (not yet installed)
-**Purpose:** E2E testing for critical user flows.
-**Added:** (planned for Phase 2+)
+### @playwright/test (^1.52.0)
+**Purpose:** E2E testing for critical user flows. Chromium + Firefox browsers. Auto-starts Vite dev server via `webServer` config.
+**Chosen over:** Cypress (heavier, less multi-browser support), TestCafe (less ecosystem), manual QA (not reproducible).
+**Removal risk:** Low — dev dependency only, no runtime impact.
+**Added:** Phase 9 polish (2026-03-03).
 
 ### eslint + typescript-eslint
 **Purpose:** Code quality and formatting. Catches type errors, enforces conventions.

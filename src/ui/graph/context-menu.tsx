@@ -9,6 +9,8 @@ import { serializeSubgraph } from '@/domain/subgraph-operations'
 import { saveSubgraphToFile } from '@/infrastructure/file-io'
 import { PlaythroughNotesInput } from './playthrough-notes-input'
 import { EdgeLabelInput } from './edge-label-input'
+import { useEscapeKey } from '@/ui/hooks/use-escape-key'
+import { useMenuPosition } from '@/ui/hooks/use-menu-position'
 
 type ContextMenuProps = {
   nodeId: string
@@ -61,6 +63,9 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
   const nodeCollapsed = useGraphStore((s) => s.nodes[nodeId]?.collapsed)
   const nodePosition = useGraphStore((s) => s.nodes[nodeId]?.position)
   const ref = useRef<HTMLDivElement>(null)
+
+  useEscapeKey(onClose)
+  useMenuPosition(ref, position)
 
   const [awaitingNotes, setAwaitingNotes] = useState(false)
   const [editingArcLabel, setEditingArcLabel] = useState(false)

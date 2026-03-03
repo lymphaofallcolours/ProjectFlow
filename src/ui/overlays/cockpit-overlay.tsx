@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { X, Check } from 'lucide-react'
+import { X, Check, ChevronsUpDown, Maximize2, ScrollText } from 'lucide-react'
 import { useGraphStore } from '@/application/graph-store'
 import { useUIStore } from '@/application/ui-store'
 import { FIELD_DEFINITIONS, SCENE_TYPE_CONFIG } from '@/domain/types'
@@ -13,11 +13,26 @@ type CockpitOverlayProps = {
 /**
  * Tier 3 overlay — the full cockpit. Shows all 11 field panels in a
  * responsive grid. Triggered by double-clicking a node.
+ * All panels start expanded. Collective collapse/expand via header button.
  */
 export function CockpitOverlay({ nodeId }: CockpitOverlayProps) {
   const node = useGraphStore((s) => s.nodes[nodeId])
   const renameNode = useGraphStore((s) => s.renameNode)
   const closeOverlay = useUIStore((s) => s.closeOverlay)
+
+  // Collective expand/collapse — toggles between all-expanded and all-collapsed.
+  // Individual panels can still be toggled independently after a collective action.
+  const [allExpanded, setAllExpanded] = useState(true)
+  const [forceExpandedKey, setForceExpandedKey] = useState(0)
+  const [scrollableMode, setScrollableMode] = useState(false)
+
+  const toggleAll = useCallback(() => {
+    setAllExpanded((v) => !v)
+    // Increment key to trigger useEffect in children even if value is same
+    setForceExpandedKey((k) => k + 1)
+  }, [])
+
+  const toggleScrollableMode = useCallback(() => setScrollableMode((v) => !v), [])
 
   if (!node) return null
 
@@ -32,6 +47,10 @@ export function CockpitOverlay({ nodeId }: CockpitOverlayProps) {
           label={node.label}
           sceneTypeLabel={config.label}
           accentColor={accentColor}
+          allExpanded={allExpanded}
+          scrollableMode={scrollableMode}
+          onToggleAll={toggleAll}
+          onToggleScrollable={toggleScrollableMode}
           onRename={(label) => renameNode(nodeId, label)}
           onClose={closeOverlay}
         />
@@ -44,9 +63,11 @@ export function CockpitOverlay({ nodeId }: CockpitOverlayProps) {
         >
           {FIELD_DEFINITIONS.map((fieldDef) => (
             <CockpitFieldPanel
-              key={fieldDef.key}
+              key={`${fieldDef.key}-${forceExpandedKey}`}
               node={node}
               fieldDef={fieldDef}
+              forceExpanded={allExpanded}
+              scrollableMode={scrollableMode}
             />
           ))}
         </div>
@@ -55,17 +76,25 @@ export function CockpitOverlay({ nodeId }: CockpitOverlayProps) {
   )
 }
 
-/** Cockpit header with inline-editable node label and scene type badge */
+/** Cockpit header with inline-editable node label, scene type badge, and collapse/expand all */
 function CockpitHeader({
   label,
   sceneTypeLabel,
   accentColor,
+  allExpanded,
+  scrollableMode,
+  onToggleAll,
+  onToggleScrollable,
   onRename,
   onClose,
 }: {
   label: string
   sceneTypeLabel: string
   accentColor: string
+  allExpanded: boolean
+  scrollableMode: boolean
+  onToggleAll: () => void
+  onToggleScrollable: () => void
   onRename: (label: string) => void
   onClose: () => void
 }) {
@@ -140,10 +169,37 @@ function CockpitHeader({
         </button>
       )}
 
+      {/* Scrollable / Auto-expand toggle */}
+      <button
+        onClick={onToggleScrollable}
+        data-testid="cockpit-scroll-toggle"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg
+          text-[10px] font-medium uppercase tracking-wider
+          text-text-secondary hover:text-text-primary
+          hover:bg-white/8 transition-colors cursor-pointer"
+        title={scrollableMode ? 'Click to switch to auto-expand' : 'Click to switch to scrollable'}
+      >
+        {scrollableMode ? <ScrollText size={13} /> : <Maximize2 size={13} />}
+        <span>{scrollableMode ? 'Scrollable' : 'Auto-expand'}</span>
+      </button>
+
+      {/* Collapse / Expand all toggle */}
+      <button
+        onClick={onToggleAll}
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg
+          text-[10px] font-medium uppercase tracking-wider
+          text-text-secondary hover:text-text-primary
+          hover:bg-white/8 transition-colors cursor-pointer"
+        title={allExpanded ? 'Collapse all panels' : 'Expand all panels'}
+      >
+        <ChevronsUpDown size={13} />
+        <span>{allExpanded ? 'Collapse all' : 'Expand all'}</span>
+      </button>
+
       {/* Close button */}
       <button
         onClick={onClose}
-        className="p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer ml-auto"
+        className="p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
       >
         <X size={18} className="text-text-muted" />
       </button>

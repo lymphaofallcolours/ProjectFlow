@@ -21,6 +21,7 @@ import {
   extractSubgraph,
   pasteSubgraph,
   rewireEdge,
+  transposeNodePositions,
 } from './graph-operations'
 import { createTestNode, createTestGroupNode, createTestEdge, createPopulatedNodeFields } from '../../tests/fixtures/factories'
 
@@ -572,5 +573,58 @@ describe('updateNodeTags', () => {
     const node = createTestNode({ metadata: { createdAt: 'c', updatedAt: 'u', tags: ['a', 'b'] } })
     const result = updateNodeTags(node, [])
     expect(result.metadata.tags).toEqual([])
+  })
+})
+
+describe('transposeNodePositions', () => {
+  it('returns empty record for empty input', () => {
+    expect(transposeNodePositions({})).toEqual({})
+  })
+
+  it('swaps X and Y coordinates relative to centroid', () => {
+    const a = createTestNode({ id: 'a', position: { x: 0, y: 100 } })
+    const b = createTestNode({ id: 'b', position: { x: 200, y: 100 } })
+    const nodes = { a, b }
+
+    const result = transposeNodePositions(nodes)
+
+    // Centroid is (100, 100). a is at (-100, 0) from centroid → (0, -100)
+    // So a moves to (100 + 0, 100 + (-100)) = (100, 0)
+    // b is at (100, 0) from centroid → (0, 100) → (100 + 0, 100 + 100) = (100, 200)
+    expect(result['a'].position).toEqual({ x: 100, y: 0 })
+    expect(result['b'].position).toEqual({ x: 100, y: 200 })
+  })
+
+  it('is its own inverse (double transpose restores original)', () => {
+    const a = createTestNode({ id: 'a', position: { x: 50, y: 200 } })
+    const b = createTestNode({ id: 'b', position: { x: 150, y: 300 } })
+    const c = createTestNode({ id: 'c', position: { x: 250, y: 100 } })
+    const nodes = { a, b, c }
+
+    const transposed = transposeNodePositions(nodes)
+    const restored = transposeNodePositions(transposed)
+
+    // Positions should be approximately equal after double transpose
+    expect(restored['a'].position.x).toBeCloseTo(50, 5)
+    expect(restored['a'].position.y).toBeCloseTo(200, 5)
+    expect(restored['b'].position.x).toBeCloseTo(150, 5)
+    expect(restored['b'].position.y).toBeCloseTo(300, 5)
+    expect(restored['c'].position.x).toBeCloseTo(250, 5)
+    expect(restored['c'].position.y).toBeCloseTo(100, 5)
+  })
+
+  it('preserves non-position node data', () => {
+    const a = createTestNode({ id: 'a', position: { x: 10, y: 20 }, label: 'Test' })
+    const result = transposeNodePositions({ a })
+    expect(result['a'].label).toBe('Test')
+    expect(result['a'].id).toBe('a')
+  })
+
+  it('handles single node (centroid is the node itself)', () => {
+    const a = createTestNode({ id: 'a', position: { x: 42, y: 99 } })
+    const result = transposeNodePositions({ a })
+    // Single node: centroid = (42, 99), dx=0, dy=0, swap → still (42, 99)
+    expect(result['a'].position.x).toBeCloseTo(42 + (99 - 99), 5)
+    expect(result['a'].position.y).toBeCloseTo(99 + (42 - 42), 5)
   })
 })
