@@ -34,6 +34,12 @@
 **Removal risk:** High — all content editing uses TipTap. Custom EntityChip NodeView renders inline entity chips.
 **Added:** Phase 2, Commit 3.
 
+### @tiptap/extension-link (3.20.0)
+**Purpose:** TipTap extension for automatic URL detection and clickable hyperlinks. Detects URLs in text and renders them as `<a>` tags with configurable behavior.
+**Chosen over:** Custom ProseMirror plugin (reinvents URL detection), regex post-processing (doesn't update DOM in real-time).
+**Removal risk:** Low — isolated extension, only affects link rendering in text fields.
+**Added:** Phase 8, Commit 4.
+
 ### tailwindcss (^4.2.1)
 **Purpose:** Utility-first CSS — fast styling, custom theme via `@theme` blocks and CSS custom properties. Aeroglass theme with frosted translucent surfaces.
 **Chosen over:** CSS Modules (more verbose), Styled Components (runtime overhead), vanilla CSS (slower dev).

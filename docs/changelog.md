@@ -2,6 +2,44 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## Phase 8 — Entity System Completion & Spec Parity (2026-03-03)
+
+### docs: add integration tests, update all docs, polish for Phase 8 completion
+- 5 entity profile integration tests: portrait, relationships, custom fields, status history roundtrip, backward compat
+- 6 entity interaction integration tests: chip click flow, status auto-logging, entity type summary, edge rewire, relationship navigation, multiple status auto-logs
+- All docs updated (architecture, decisions-log, changelog, wip, dependencies), plan archived
+
+### feat: add status auto-logging, TipTap Link extension, and edge rewire UI
+- Status auto-logging in TipTap: diffs old/new text for status markers, calls addStatus for new tags
+- nodeId prop threaded through field-editor → rich-content-editor → tiptap-editor
+- @tiptap/extension-link with autolink and openOnClick
+- NodeSelectorInput: searchable dropdown for graph node selection
+- Edge context menu gains "Rewire" section with source/target dropdowns
+- 6 new tests (status auto-logging, node selector)
+
+### feat: add clickable entity chips, portal tooltips, and node entity type summary
+- Entity chips are clickable: opens entity sidebar, selects entity
+- openEntitySidebar (non-toggling) action in UI store
+- Portal-based entity tooltip: name, type, description preview, last status (300ms/150ms delays)
+- EntityTypeSummary sub-component on StoryNode: scans fields, renders up to 6 type icons
+- 6 new tests (chip interaction, tooltip, entity type summary)
+
+### feat: add entity profile sub-components for portrait, history, relationships, custom fields
+- EntityPortrait: circular image upload/display with hover overlay and size warning
+- EntityHistoryEditor: chronological status entries, add manual entry, delete
+- EntityRelationshipsEditor: CRUD with entity selector, type input, navigate to target
+- EntityCustomFieldsEditor: key-value editor for arbitrary custom fields
+- EntityProfile restructured with collapsible sections (SectionHeader with chevron + count badge)
+- 8 new tests (profile rendering, sections, toggle)
+
+### feat: expand entity domain ops and store for full profile support
+- entity-operations.ts: setEntityPortrait, addEntityRelationship, removeEntityRelationship, addEntityCustomField, removeEntityCustomField, updateEntityCustomField
+- entity-store.ts: setPortrait, addRelationship, removeRelationship actions; expanded updateEntity whitelist (portrait, statusHistory, relationships, custom)
+- entity-tag-parser.ts: extractEntityTypesFromNodeFields, extractStatusTagsFromText
+- 38 new tests (17 domain ops, 10 parser, 11 store)
+
+---
+
 ## Phase 7 — Subgraph Grouping, Image Attachments, PWA Icons (2026-03-03)
 
 ### docs: add integration tests, PWA icons, update all docs for Phase 7 completion

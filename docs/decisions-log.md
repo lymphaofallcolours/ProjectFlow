@@ -244,6 +244,46 @@
 **Alternatives rejected:** Allow nesting (significantly increases complexity: recursive collapse, multi-level edge remapping, deeper DOM structures).
 **Consequences:** Flat group structure. A group can only contain non-group nodes. Nesting may be added in a future phase if there's demand.
 
+## 2026-03-03 — Portal-based entity tooltip to escape TipTap overflow
+
+**Status:** Accepted
+**Context:** Entity chips render inside TipTap's ProseMirror DOM which has `overflow: hidden`. A tooltip positioned relative to the chip gets clipped.
+**Decision:** Portal-based tooltip using `createPortal(…, document.body)`. Positioned via `getBoundingClientRect()` on the chip element. 300ms hover delay before showing, 150ms delay before hiding.
+**Alternatives rejected:** CSS `overflow: visible` on ProseMirror container (breaks text layout), tooltip inside ProseMirror DOM (clipped), Radix/Floating UI (adds dependency for a single component).
+**Consequences:** Tooltip renders at document root, escaping all overflow constraints. Position must be recalculated on each show. Clean portal cleanup on unmount.
+
+## 2026-03-03 — Status auto-logging via text diff in TipTap onUpdate
+
+**Status:** Accepted
+**Context:** When a user types `@Alfa+wounded` in a text field, the entity "Alfa" should automatically gain a "wounded" status entry. Needed to detect new status markers without double-logging.
+**Decision:** Diff-based detection in `tiptap-editor.tsx` `onUpdate` callback. Previous text stored in a ref. On each update, extract status tags from both old and new text via `extractStatusTagsFromText()`, compute diff (new markers not in old set), call `entityStore.addStatus()` for each.
+**Alternatives rejected:** MutationObserver on ProseMirror DOM (complex, fragile), post-save scanning (too late, loses context), manual button to log status (breaks writing flow).
+**Consequences:** `nodeId` prop must be threaded through `field-editor.tsx → rich-content-editor.tsx → tiptap-editor.tsx` to provide context for status entries. Status is logged immediately on typing, not on save. Duplicate detection via `name:status` key set.
+
+## 2026-03-03 — Entity profile split into sub-components with collapsible sections
+
+**Status:** Accepted
+**Context:** Entity profile was ~60 lines with only name, description, and affiliations. Adding portrait, history, relationships, and custom fields would balloon it past 200 lines.
+**Decision:** Split into 4 sub-components: `EntityPortrait`, `EntityHistoryEditor`, `EntityRelationshipsEditor`, `EntityCustomFieldsEditor`. Mounted in `entity-profile.tsx` with collapsible `SectionHeader` sub-component (chevron toggle + count badge). History and relationships start expanded, custom fields start collapsed.
+**Alternatives rejected:** Tabbed interface (loses overview), single monolith component (too long), separate routes/pages (overkill for a sidebar).
+**Consequences:** Each sub-component is under ~80 lines. Profile renders all sections in a scrollable column. Collapsible sections manage vertical space.
+
+## 2026-03-03 — TipTap Link extension for URL auto-linking
+
+**Status:** Accepted
+**Context:** Users paste URLs in text fields but they render as plain text. Needed clickable hyperlinks.
+**Decision:** Add `@tiptap/extension-link` with `autolink: true`, `openOnClick: true`. Minimal configuration, no custom UI.
+**Alternatives rejected:** Custom ProseMirror plugin for link detection (reinvents the wheel), regex-based post-processing (doesn't update DOM), no link support (poor UX).
+**Consequences:** URLs in text fields are automatically detected and rendered as clickable links. Opens in new tab on click. Adds one dependency.
+
+## 2026-03-03 — Edge rewire via dropdown in edge context menu
+
+**Status:** Accepted
+**Context:** `rewireEdge` domain function existed since Phase 4 but had no UI. Users couldn't change edge source/target without deleting and recreating edges.
+**Decision:** Add "Rewire" section to `edge-context-menu.tsx` with two `NodeSelectorInput` dropdowns (source, target). `NodeSelectorInput` is a new reusable searchable dropdown component. Pre-populated with current values, excludes the other endpoint from selection.
+**Alternatives rejected:** Drag-to-rewire on edge handles (conflicts with React Flow's built-in handle behavior), modal dialog (too heavy for a quick operation), inline text input for node ID (poor UX).
+**Consequences:** New `NodeSelectorInput` component is reusable for any node selection need. Edge context menu grows but rewire section is toggleable (hidden by default, expanded on click).
+
 ---
 
 <!-- Entries above — newest first -->

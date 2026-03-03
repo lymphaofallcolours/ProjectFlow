@@ -13,8 +13,8 @@ src/
 ├── domain/                     # Core types, business rules — ZERO framework imports
 │   ├── types.ts                # Campaign, StoryNode, StoryEdge, NodeFields, SceneType, etc.
 │   ├── entity-types.ts         # Entity, EntityType, EntityRegistry, ENTITY_TYPE_CONFIGS
-│   ├── entity-tag-parser.ts    # Regex parser for entity tagging DSL ([!%$~&]?[@#]Name(+status)?)
-│   ├── entity-operations.ts    # Pure CRUD for Entity and EntityRegistry (create, update, status)
+│   ├── entity-tag-parser.ts    # Regex parser for entity tagging DSL ([!%$~&]?[@#]Name(+status)?), extractEntityTypesFromNodeFields, extractStatusTagsFromText
+│   ├── entity-operations.ts    # Pure CRUD for Entity and EntityRegistry (create, update, status, portrait, relationships, custom fields)
 │   ├── search.ts               # Full-text and entity-aware node search across all fields
 │   ├── graph-operations.ts     # Pure functions: createNode, removeNode, updateField, duplicate, clipboard, rewire, etc. (group-aware)
 │   ├── group-operations.ts     # Pure group CRUD: create, add/remove children, collapse, delete (keep/cascade), boundary/internal edges
@@ -29,7 +29,7 @@ src/
 │   ├── graph-store.ts          # useGraphStore — nodes, edges, viewport, selection, clipboard, undo/redo, importSubgraph, group actions
 │   ├── history-store.ts        # useHistoryStore — past/future snapshot stacks for undo/redo
 │   ├── campaign-store.ts       # useCampaignStore — campaign metadata + custom field template CRUD
-│   ├── entity-store.ts         # useEntityStore — entity CRUD, registry, status tracking
+│   ├── entity-store.ts         # useEntityStore — entity CRUD, registry, status tracking, portrait, relationships
 │   ├── session-store.ts        # useSessionStore — playthrough sessions, diff overlay, timeline toggle
 │   ├── ui-store.ts             # useUIStore — theme, overlay state, radial node, sidebar/panel toggles, template manager, auto-save state
 │   └── campaign-actions.ts     # assemble/hydrate/save/load/auto-save campaign orchestration (incl. entity + session + history)
@@ -46,16 +46,17 @@ src/
 │   │   ├── search-panel.tsx    # Search panel with text and entity filter modes
 │   │   ├── session-timeline.tsx # Right slide-out panel: session visits, export, end session
 │   │   ├── template-manager.tsx # Left slide-in panel: campaign field template CRUD
+│   │   ├── node-selector-input.tsx # Searchable dropdown for selecting a graph node (used in edge rewire)
 │   │   └── pwa-prompt.tsx     # Dismissable PWA install banner (beforeinstallprompt)
 │   ├── graph/                  # React Flow canvas and custom nodes/edges
 │   │   ├── graph-canvas.tsx    # ReactFlow wrapper, interaction handlers, context menus, shared SVG defs, HighlightContext provider
-│   │   ├── story-node.tsx      # Memoized custom node with shared SVG glass shapes + long press + highlight context + diff overlay ring/dot + group collapse/expand + stacked shadow
+│   │   ├── story-node.tsx      # Memoized custom node with shared SVG glass shapes + long press + highlight context + diff overlay ring/dot + group collapse/expand + stacked shadow + entity type summary badges
 │   │   ├── highlight-context.tsx # React context providing Set<string> of entity-highlighted node IDs
 │   │   ├── story-edge.tsx      # Custom edge with glass label pill + style-based rendering (default/conditional/secret)
 │   │   ├── node-shapes.ts      # SVG path data for 5 shapes (circle, square, triangle, diamond, hexagon)
 │   │   ├── use-flow-nodes.ts   # Domain → React Flow node/edge conversion, collapsed group filtering, edge remapping/dedup
 │   │   ├── context-menu.tsx    # Right-click node: change type, arc label, duplicate, delete, playthrough, clipboard, export subgraph, group/ungroup/collapse (multi-select variant)
-│   │   ├── edge-context-menu.tsx  # Right-click edge: change style, set label, delete edge
+│   │   ├── edge-context-menu.tsx  # Right-click edge: change style, set label, delete edge, rewire source/target
 │   │   ├── edge-label-input.tsx   # Inline text input for edge labels and arc labels in context menus
 │   │   ├── playthrough-notes-input.tsx # Inline notes input for "modified" playthrough status
 │   │   └── canvas-context-menu.tsx  # Right-click canvas: new node with type picker
@@ -86,15 +87,20 @@ src/
 │   ├── entities/               # Entity registry UI
 │   │   ├── entity-sidebar.tsx  # Slide-in entity registry sidebar panel with codex export
 │   │   ├── entity-list.tsx     # Filterable entity list with type chips
-│   │   ├── entity-profile.tsx  # Entity detail view and inline editing
-│   │   └── entity-create-dialog.tsx  # Entity creation form dialog
+│   │   ├── entity-profile.tsx  # Entity detail view with collapsible sections (portrait, history, relationships, custom fields)
+│   │   ├── entity-portrait.tsx # Circular portrait upload/display with hover overlay and size warning
+│   │   ├── entity-history-editor.tsx    # Status history list: chronological entries, add manual, delete
+│   │   ├── entity-relationships-editor.tsx # Relationship CRUD: entity selector, type input, navigate to target
+│   │   ├── entity-custom-fields.tsx     # Key-value editor for arbitrary custom fields
+│   │   └── entity-create-dialog.tsx     # Entity creation form dialog
 │   │
 │   ├── editor/                 # TipTap editor and entity autocomplete
-│   │   ├── tiptap-editor.tsx   # TipTap rich text editor wrapper component
+│   │   ├── tiptap-editor.tsx   # TipTap rich text editor wrapper with Link extension + status auto-logging
 │   │   ├── attachment-gallery.tsx # Image attachment gallery below editor: thumbnail grid, drag-drop, file picker, size warnings
 │   │   ├── entity-mention-extension.ts  # Two Mention extension instances (@ present, # mentioned)
 │   │   ├── entity-chip.tsx     # Inline entity chip rendering (colored by type)
-│   │   ├── entity-chip-node-view.tsx    # TipTap NodeView bridge for chip rendering
+│   │   ├── entity-chip-node-view.tsx    # TipTap NodeView bridge: clickable chips (open sidebar), hover tooltip
+│   │   ├── entity-tooltip.tsx  # Portal-based tooltip: entity name, type, description preview, status
 │   │   └── entity-suggestion.tsx        # Autocomplete dropdown for entity tag insertion
 │   │
 │   └── layout/                 # App shell and chrome
@@ -317,6 +323,43 @@ Moving a group → graphStore.moveNode(groupId, pos)
 Deletion:
   → "Ungroup" → deleteGroup(id, cascade=false) → clears groupId on children, removes group node
   → "Delete Group + Children" → deleteGroup(id, cascade=true) → removes group + all children + their edges
+```
+
+### Entity Chip Click + Tooltip (Phase 8)
+
+```
+User hovers over entity chip in TipTap → entity-chip-node-view.tsx
+  → 300ms delay → renders EntityTooltip via createPortal(…, document.body)
+  → tooltip shows: entity name, type icon, description preview (80 chars), last status
+  → mouse leave → 150ms delay → hides tooltip
+
+User clicks entity chip → entity-chip-node-view.tsx onClick
+  → entityStore.getByName(name, type) → finds entity
+  → uiStore.openEntitySidebar() → non-toggling open
+  → uiStore.selectEntity(entity.id) → sidebar scrolls to entity profile
+```
+
+### Status Auto-Logging (Phase 8)
+
+```
+User types "@Alfa+wounded" in TipTap field → tiptap-editor.tsx onUpdate
+  → extractStatusTagsFromText(oldText) vs extractStatusTagsFromText(newText)
+  → diff: new status tags not present in old text
+  → for each new tag: entityStore.getByName(tag.name, tag.entityType)
+  → entityStore.addStatus(entity.id, nodeId, tag.status)
+  → entity's statusHistory updated, visible in entity profile history editor
+nodeId threaded: field-editor.tsx → rich-content-editor.tsx → tiptap-editor.tsx
+```
+
+### Edge Rewire (Phase 8)
+
+```
+User right-clicks edge → edge-context-menu.tsx → "Rewire" button
+  → showRewire = true → renders two NodeSelectorInput dropdowns (source, target)
+  → NodeSelectorInput: searchable list of all graph nodes, filtered by text input
+  → user selects new source or target node
+  → graphStore.rewireEdge(edgeId, newSource?, newTarget?)
+  → domain/graph-operations.rewireEdge() validates and updates edge endpoints
 ```
 
 ### Attachment Gallery (Phase 7)
