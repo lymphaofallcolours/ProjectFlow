@@ -12,32 +12,68 @@ export function supportsFileSystemAccess(): boolean {
   return 'showSaveFilePicker' in window
 }
 
+// Cached file handle for auto-save (avoids picker on subsequent saves)
+let cachedFileHandle: FileSystemFileHandle | null = null
+
+export function getCachedFileHandle(): FileSystemFileHandle | null {
+  return cachedFileHandle
+}
+
+export function clearCachedFileHandle(): void {
+  cachedFileHandle = null
+}
+
 export async function saveToFile(content: string, filename: string): Promise<void> {
   if (supportsFileSystemAccess()) {
-    await saveWithFileSystemAccess(content, filename)
+    const handle = await getFSWindow().showSaveFilePicker({
+      suggestedName: filename,
+      types: [{
+        description: 'ProjectFlow Campaign',
+        accept: { 'application/json': ['.json'] },
+      }],
+    })
+    cachedFileHandle = handle
+    const writable = await handle.createWritable()
+    await writable.write(content)
+    await writable.close()
   } else {
     saveWithDownload(content, filename)
   }
 }
 
-export async function loadFromFile(): Promise<string | null> {
-  if (supportsFileSystemAccess()) {
-    return loadWithFileSystemAccess()
+/**
+ * Save silently using cached file handle (no picker).
+ * Returns true on success, false if no cached handle or save fails.
+ */
+export async function saveToFileQuiet(content: string): Promise<boolean> {
+  if (!cachedFileHandle) return false
+  try {
+    const writable = await cachedFileHandle.createWritable()
+    await writable.write(content)
+    await writable.close()
+    return true
+  } catch {
+    return false
   }
-  return loadWithFileInput()
 }
 
-async function saveWithFileSystemAccess(content: string, filename: string): Promise<void> {
-  const handle = await getFSWindow().showSaveFilePicker({
-    suggestedName: filename,
-    types: [{
-      description: 'ProjectFlow Campaign',
-      accept: { 'application/json': ['.json'] },
-    }],
-  })
-  const writable = await handle.createWritable()
-  await writable.write(content)
-  await writable.close()
+export async function loadFromFile(): Promise<string | null> {
+  if (supportsFileSystemAccess()) {
+    try {
+      const [handle] = await getFSWindow().showOpenFilePicker({
+        types: [{
+          description: 'ProjectFlow Campaign',
+          accept: { 'application/json': ['.json'] },
+        }],
+      })
+      cachedFileHandle = handle
+      const file = await handle.getFile()
+      return file.text()
+    } catch {
+      return null
+    }
+  }
+  return loadWithFileInput()
 }
 
 function saveWithDownload(content: string, filename: string): void {
@@ -50,21 +86,6 @@ function saveWithDownload(content: string, filename: string): void {
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
-}
-
-async function loadWithFileSystemAccess(): Promise<string | null> {
-  try {
-    const [handle] = await getFSWindow().showOpenFilePicker({
-      types: [{
-        description: 'ProjectFlow Campaign',
-        accept: { 'application/json': ['.json'] },
-      }],
-    })
-    const file = await handle.getFile()
-    return file.text()
-  } catch {
-    return null
-  }
 }
 
 function loadWithFileInput(): Promise<string | null> {

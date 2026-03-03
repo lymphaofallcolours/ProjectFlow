@@ -2,6 +2,7 @@ import { useGraphStore } from '@/application/graph-store'
 import { useCampaignStore } from '@/application/campaign-store'
 import { useEntityStore } from '@/application/entity-store'
 import { useSessionStore } from '@/application/session-store'
+import { useUIStore } from '@/application/ui-store'
 
 export function StatusBar() {
   const nodeCount = useGraphStore((s) => Object.keys(s.nodes).length)
@@ -12,6 +13,7 @@ export function StatusBar() {
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const playthroughLog = useSessionStore((s) => s.playthroughLog)
   const diffOverlayActive = useSessionStore((s) => s.diffOverlayActive)
+  const autoSaveStatus = useUIStore((s) => s.autoSaveStatus)
 
   const activeSession = playthroughLog.find((e) => e.id === activeSessionId)
 
@@ -46,6 +48,14 @@ export function StatusBar() {
         <>
           <span className="opacity-30">|</span>
           <span className="text-status-modified">◉ Diff</span>
+        </>
+      )}
+      {autoSaveStatus && (
+        <>
+          <span className="opacity-30">|</span>
+          <span className={autoSaveStatus === 'saving' ? 'text-text-muted' : 'text-status-played'}>
+            {autoSaveStatus === 'saving' ? 'Saving...' : 'Saved ✓'}
+          </span>
         </>
       )}
     </div>

@@ -14,6 +14,7 @@ import {
   EyeOff,
   Undo2,
   Redo2,
+  Timer,
 } from 'lucide-react'
 import { useUIStore } from '@/application/ui-store'
 import { useGraphStore } from '@/application/graph-store'
@@ -39,6 +40,8 @@ export function Toolbar() {
   const canRedo = useHistoryStore((s) => s.future.length > 0)
   const undo = useGraphStore((s) => s.undo)
   const redo = useGraphStore((s) => s.redo)
+  const autoSaveEnabled = useUIStore((s) => s.autoSaveEnabled)
+  const toggleAutoSave = useUIStore((s) => s.toggleAutoSave)
 
   const handleThemeToggle = useCallback(() => {
     const next = theme === 'dark' ? 'light' : 'dark'
@@ -112,6 +115,12 @@ export function Toolbar() {
 
         <ToolbarButton icon={<Save size={16} />} label="Save" onClick={handleSave} />
         <ToolbarButton icon={<FolderOpen size={16} />} label="Load" onClick={handleLoad} />
+        <ToolbarButton
+          icon={<Timer size={16} />}
+          label={autoSaveEnabled ? 'Auto-save On' : 'Auto-save'}
+          onClick={toggleAutoSave}
+          active={autoSaveEnabled}
+        />
 
         <div className="w-px h-5 bg-border mx-1" />
 

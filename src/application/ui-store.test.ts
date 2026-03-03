@@ -11,6 +11,9 @@ beforeEach(() => {
     legendPanelOpen: false,
     searchPanelOpen: false,
     entityHighlightFilter: null,
+    autoSaveEnabled: false,
+    autoSaveIntervalMs: 60_000,
+    autoSaveStatus: null,
   })
 })
 
@@ -139,6 +142,37 @@ describe('useUIStore', () => {
       useUIStore.getState().setEntityHighlightFilter({ entityName: 'Alfa' })
       useUIStore.getState().setEntityHighlightFilter(null)
       expect(useUIStore.getState().entityHighlightFilter).toBeNull()
+    })
+  })
+
+  describe('auto-save', () => {
+    it('defaults to disabled', () => {
+      expect(useUIStore.getState().autoSaveEnabled).toBe(false)
+    })
+
+    it('toggles auto-save', () => {
+      useUIStore.getState().toggleAutoSave()
+      expect(useUIStore.getState().autoSaveEnabled).toBe(true)
+      useUIStore.getState().toggleAutoSave()
+      expect(useUIStore.getState().autoSaveEnabled).toBe(false)
+    })
+
+    it('sets auto-save interval', () => {
+      useUIStore.getState().setAutoSaveIntervalMs(30_000)
+      expect(useUIStore.getState().autoSaveIntervalMs).toBe(30_000)
+    })
+
+    it('sets auto-save status', () => {
+      useUIStore.getState().setAutoSaveStatus('saving')
+      expect(useUIStore.getState().autoSaveStatus).toBe('saving')
+      useUIStore.getState().setAutoSaveStatus('saved')
+      expect(useUIStore.getState().autoSaveStatus).toBe('saved')
+      useUIStore.getState().setAutoSaveStatus(null)
+      expect(useUIStore.getState().autoSaveStatus).toBeNull()
+    })
+
+    it('defaults to 60s interval', () => {
+      expect(useUIStore.getState().autoSaveIntervalMs).toBe(60_000)
     })
   })
 })

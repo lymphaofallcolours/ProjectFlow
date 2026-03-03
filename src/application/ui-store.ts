@@ -30,6 +30,11 @@ type UIState = {
   searchPanelOpen: boolean
   entityHighlightFilter: { entityName: string; entityType?: string } | null
 
+  // Auto-save
+  autoSaveEnabled: boolean
+  autoSaveIntervalMs: number
+  autoSaveStatus: 'saving' | 'saved' | null
+
   setTheme: (theme: 'light' | 'dark') => void
   toggleTheme: () => void
   openFieldPanel: (nodeId: string, fieldKey: FieldKey) => void
@@ -42,6 +47,9 @@ type UIState = {
   toggleLegendPanel: () => void
   toggleSearchPanel: () => void
   setEntityHighlightFilter: (filter: { entityName: string; entityType?: string } | null) => void
+  toggleAutoSave: () => void
+  setAutoSaveIntervalMs: (ms: number) => void
+  setAutoSaveStatus: (status: 'saving' | 'saved' | null) => void
 }
 
 export const useUIStore = create<UIState>((set, get) => ({
@@ -53,6 +61,9 @@ export const useUIStore = create<UIState>((set, get) => ({
   legendPanelOpen: false,
   searchPanelOpen: false,
   entityHighlightFilter: null,
+  autoSaveEnabled: false,
+  autoSaveIntervalMs: 60_000,
+  autoSaveStatus: null,
 
   setTheme: (theme) => set({ theme }),
   toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
@@ -94,4 +105,11 @@ export const useUIStore = create<UIState>((set, get) => ({
     set((state) => ({ searchPanelOpen: !state.searchPanelOpen })),
 
   setEntityHighlightFilter: (filter) => set({ entityHighlightFilter: filter }),
+
+  toggleAutoSave: () =>
+    set((state) => ({ autoSaveEnabled: !state.autoSaveEnabled })),
+
+  setAutoSaveIntervalMs: (ms) => set({ autoSaveIntervalMs: ms }),
+
+  setAutoSaveStatus: (status) => set({ autoSaveStatus: status }),
 }))

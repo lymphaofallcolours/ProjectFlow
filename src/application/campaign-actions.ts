@@ -1,7 +1,7 @@
 import type { Campaign } from '@/domain/types'
 import { createCampaign } from '@/domain/campaign-operations'
 import { serializeCampaign, deserializeCampaign } from '@/infrastructure/serialization'
-import { saveToFile, loadFromFile } from '@/infrastructure/file-io'
+import { saveToFile, loadFromFile, saveToFileQuiet, clearCachedFileHandle } from '@/infrastructure/file-io'
 import { useGraphStore } from './graph-store'
 import { useCampaignStore } from './campaign-store'
 import { useEntityStore } from './entity-store'
@@ -62,7 +62,14 @@ export async function loadCampaignAction(): Promise<boolean> {
   return true
 }
 
+export async function autoSaveCampaignAction(): Promise<boolean> {
+  const campaign = assembleCampaign()
+  const json = serializeCampaign(campaign)
+  return saveToFileQuiet(json)
+}
+
 export function newCampaignAction(name: string): void {
+  clearCachedFileHandle()
   useGraphStore.getState().reset()
   useCampaignStore.getState().reset()
   useEntityStore.getState().reset()
