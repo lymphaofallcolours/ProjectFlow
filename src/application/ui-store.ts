@@ -46,6 +46,7 @@ type UIState = {
   showRadialSubnodes: (nodeId: string) => void
   hideRadialSubnodes: () => void
   toggleEntitySidebar: () => void
+  openEntitySidebar: () => void
   selectEntity: (id: string | null) => void
   toggleLegendPanel: () => void
   toggleSearchPanel: () => void
@@ -100,6 +101,8 @@ export const useUIStore = create<UIState>((set, get) => ({
       entitySidebarOpen: !state.entitySidebarOpen,
       selectedEntityId: state.entitySidebarOpen ? null : state.selectedEntityId,
     })),
+
+  openEntitySidebar: () => set({ entitySidebarOpen: true }),
 
   selectEntity: (id) => set({ selectedEntityId: id }),
 

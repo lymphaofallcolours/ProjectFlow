@@ -1,8 +1,11 @@
 import { memo, useCallback, useContext, useMemo } from 'react'
 import { Handle, Position } from '@xyflow/react'
 import type { NodeProps, Node } from '@xyflow/react'
+import { Shield, User, Skull, Package, MapPin, EyeOff } from 'lucide-react'
 import type { StoryNode } from '@/domain/types'
 import { SCENE_TYPE_CONFIG } from '@/domain/types'
+import type { EntityType } from '@/domain/entity-types'
+import { ENTITY_TYPE_CONFIGS } from '@/domain/entity-types'
 import { getShapePath, NODE_DIMENSIONS } from './node-shapes'
 import { useGraphStore } from '@/application/graph-store'
 import { useUIStore } from '@/application/ui-store'
@@ -11,6 +14,7 @@ import { useLongPress } from '@/ui/hooks/use-long-press'
 import { buildDiffMap, PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
 import { HighlightContext } from './highlight-context'
 import { getGroupChildIds } from '@/domain/group-operations'
+import { extractEntityTypesFromNodeFields } from '@/domain/entity-tag-parser'
 
 export type StoryNodeData = {
   storyNode: StoryNode
@@ -213,6 +217,11 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
         </button>
       )}
 
+      {/* Entity type summary icons — bottom center */}
+      {!storyNode.isGroup && (
+        <EntityTypeSummary storyNode={storyNode} />
+      )}
+
       {/* Status dot — bottom right, always visible when status is set */}
       {statusDotColor && (
         <div
@@ -237,6 +246,43 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
         className="!w-2.5 !h-2.5 !rounded-full !border-2 !bg-surface-glass"
         style={{ borderColor: accentColor }}
       />
+    </div>
+  )
+})
+
+const ENTITY_ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>> = {
+  Shield, User, Skull, Package, MapPin, EyeOff,
+}
+
+/** Small icon row showing which entity types appear in a node's fields */
+const EntityTypeSummary = memo(function EntityTypeSummary({ storyNode }: { storyNode: StoryNode }) {
+  const types = useMemo(
+    () => extractEntityTypesFromNodeFields(storyNode),
+    [storyNode],
+  )
+
+  if (types.size === 0) return null
+
+  const typeArray = Array.from(types).slice(0, 6)
+
+  return (
+    <div
+      className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex items-center gap-px
+        pointer-events-none"
+    >
+      {typeArray.map((type: EntityType) => {
+        const cfg = ENTITY_TYPE_CONFIGS.find((c) => c.type === type)
+        if (!cfg) return null
+        const Icon = ENTITY_ICON_MAP[cfg.icon]
+        if (!Icon) return null
+        return (
+          <Icon
+            key={type}
+            size={8}
+            style={{ color: cfg.color, opacity: 0.7 }}
+          />
+        )
+      })}
     </div>
   )
 })
