@@ -1,9 +1,12 @@
 import { create } from 'zustand'
-import type { Entity, EntityType, EntityRegistry } from '@/domain/entity-types'
+import type { Entity, EntityType, EntityRegistry, EntityRelationship } from '@/domain/entity-types'
 import {
   createEntity,
   updateEntity as updateEntityOp,
   addStatusEntry as addStatusEntryOp,
+  setEntityPortrait as setEntityPortraitOp,
+  addEntityRelationship as addEntityRelationshipOp,
+  removeEntityRelationship as removeEntityRelationshipOp,
 } from '@/domain/entity-operations'
 
 type EntityState = {
@@ -15,9 +18,12 @@ type EntityState = {
   getAllEntities: () => Entity[]
 
   addEntity: (type: EntityType, name: string, description?: string) => string
-  updateEntity: (id: string, updates: Partial<Pick<Entity, 'name' | 'description' | 'affiliations' | 'relationships'>>) => void
+  updateEntity: (id: string, updates: Partial<Pick<Entity, 'name' | 'description' | 'affiliations' | 'relationships' | 'portrait' | 'statusHistory' | 'custom'>>) => void
   removeEntity: (id: string) => void
   addStatus: (entityId: string, nodeId: string, status: string, note?: string) => void
+  setPortrait: (entityId: string, portrait: Entity['portrait'] | null) => void
+  addRelationship: (entityId: string, relationship: EntityRelationship) => void
+  removeRelationship: (entityId: string, targetEntityId: string) => void
 
   loadRegistry: (registry: EntityRegistry) => void
   reset: () => void
@@ -77,6 +83,45 @@ export const useEntityStore = create<EntityState>((set, get) => ({
         entities: {
           ...state.entities,
           [entityId]: addStatusEntryOp(entity, nodeId, status, note),
+        },
+      }
+    })
+  },
+
+  setPortrait: (entityId, portrait) => {
+    set((state) => {
+      const entity = state.entities[entityId]
+      if (!entity) return state
+      return {
+        entities: {
+          ...state.entities,
+          [entityId]: setEntityPortraitOp(entity, portrait),
+        },
+      }
+    })
+  },
+
+  addRelationship: (entityId, relationship) => {
+    set((state) => {
+      const entity = state.entities[entityId]
+      if (!entity) return state
+      return {
+        entities: {
+          ...state.entities,
+          [entityId]: addEntityRelationshipOp(entity, relationship),
+        },
+      }
+    })
+  },
+
+  removeRelationship: (entityId, targetEntityId) => {
+    set((state) => {
+      const entity = state.entities[entityId]
+      if (!entity) return state
+      return {
+        entities: {
+          ...state.entities,
+          [entityId]: removeEntityRelationshipOp(entity, targetEntityId),
         },
       }
     })

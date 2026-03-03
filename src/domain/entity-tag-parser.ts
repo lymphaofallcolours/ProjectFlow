@@ -76,3 +76,63 @@ export function isValidEntityName(name: string): boolean {
   if (!name || name.length === 0) return false
   return /^[A-Za-z][A-Za-z0-9 '-]*$/.test(name)
 }
+
+/**
+ * Extract all unique entity types found across all text fields of a StoryNode.
+ * Scans script, gmNotes, vibe, events, combat, characters, secrets markdown,
+ * dialogue lines, and custom field content.
+ */
+export function extractEntityTypesFromNodeFields(node: {
+  fields: {
+    script: { markdown: string }
+    gmNotes: { markdown: string }
+    vibe: { markdown: string }
+    events: { markdown: string }
+    combat: { markdown: string }
+    characters: { markdown: string }
+    secrets: { markdown: string }
+    dialogues: { entityRef: string; line: string }[]
+    custom: { content: { markdown: string } }[]
+  }
+}): Set<EntityType> {
+  const types = new Set<EntityType>()
+  const richFields = ['script', 'gmNotes', 'vibe', 'events', 'combat', 'characters', 'secrets'] as const
+  for (const key of richFields) {
+    const text = node.fields[key].markdown
+    if (text) {
+      for (const tag of parseEntityTags(text)) {
+        types.add(tag.entityType)
+      }
+    }
+  }
+  for (const dialogue of node.fields.dialogues) {
+    const combined = `${dialogue.entityRef} ${dialogue.line}`
+    for (const tag of parseEntityTags(combined)) {
+      types.add(tag.entityType)
+    }
+  }
+  for (const field of node.fields.custom) {
+    if (field.content.markdown) {
+      for (const tag of parseEntityTags(field.content.markdown)) {
+        types.add(tag.entityType)
+      }
+    }
+  }
+  return types
+}
+
+/**
+ * Extract all status tags from text.
+ * Returns an array of { name, entityType, status } for each tag with a +status suffix.
+ */
+export function extractStatusTagsFromText(
+  text: string,
+): Array<{ name: string; entityType: EntityType; status: string }> {
+  return parseEntityTags(text)
+    .filter((tag) => tag.status !== undefined)
+    .map((tag) => ({
+      name: tag.name,
+      entityType: tag.entityType,
+      status: tag.status!,
+    }))
+}

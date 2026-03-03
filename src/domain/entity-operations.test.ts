@@ -8,8 +8,14 @@ import {
   getEntitiesByType,
   addStatusEntry,
   exportEntityRegistryAsMarkdown,
+  setEntityPortrait,
+  addEntityRelationship,
+  removeEntityRelationship,
+  addEntityCustomField,
+  removeEntityCustomField,
+  updateEntityCustomField,
 } from './entity-operations'
-import { createTestEntity, createTestEntityRegistry } from '../../tests/fixtures/factories'
+import { createTestEntity, createTestEntityRegistry, createTestAttachment } from '../../tests/fixtures/factories'
 
 describe('createEntity', () => {
   it('creates an entity with required fields', () => {
@@ -268,5 +274,151 @@ describe('exportEntityRegistryAsMarkdown', () => {
     const md = exportEntityRegistryAsMarkdown(registry)
 
     expect(md.startsWith('# Campaign Entity Codex')).toBe(true)
+  })
+})
+
+describe('setEntityPortrait', () => {
+  it('sets a portrait on an entity', () => {
+    const entity = createTestEntity()
+    const portrait = createTestAttachment({ filename: 'portrait.png' })
+    const updated = setEntityPortrait(entity, portrait)
+    expect(updated.portrait).toBeDefined()
+    expect(updated.portrait?.filename).toBe('portrait.png')
+  })
+
+  it('removes portrait when set to null', () => {
+    const portrait = createTestAttachment()
+    const entity = createTestEntity({ portrait })
+    const updated = setEntityPortrait(entity, null)
+    expect(updated.portrait).toBeUndefined()
+  })
+
+  it('does not mutate the original entity', () => {
+    const entity = createTestEntity()
+    const portrait = createTestAttachment()
+    setEntityPortrait(entity, portrait)
+    expect(entity.portrait).toBeUndefined()
+  })
+})
+
+describe('addEntityRelationship', () => {
+  it('adds a relationship to an entity', () => {
+    const entity = createTestEntity()
+    const updated = addEntityRelationship(entity, {
+      targetEntityId: 'target-1',
+      type: 'ally',
+    })
+    expect(updated.relationships).toHaveLength(1)
+    expect(updated.relationships![0].targetEntityId).toBe('target-1')
+    expect(updated.relationships![0].type).toBe('ally')
+  })
+
+  it('adds relationship with optional note', () => {
+    const entity = createTestEntity()
+    const updated = addEntityRelationship(entity, {
+      targetEntityId: 'target-1',
+      type: 'rival',
+      note: 'Old grudge',
+    })
+    expect(updated.relationships![0].note).toBe('Old grudge')
+  })
+
+  it('prevents self-referencing relationship', () => {
+    const entity = createTestEntity({ id: 'self-id' })
+    const updated = addEntityRelationship(entity, {
+      targetEntityId: 'self-id',
+      type: 'ally',
+    })
+    expect(updated.relationships).toBeUndefined()
+  })
+
+  it('prevents duplicate relationship to same target', () => {
+    let entity = createTestEntity()
+    entity = addEntityRelationship(entity, {
+      targetEntityId: 'target-1',
+      type: 'ally',
+    })
+    entity = addEntityRelationship(entity, {
+      targetEntityId: 'target-1',
+      type: 'rival',
+    })
+    expect(entity.relationships).toHaveLength(1)
+  })
+
+  it('allows multiple relationships to different targets', () => {
+    let entity = createTestEntity()
+    entity = addEntityRelationship(entity, { targetEntityId: 'target-1', type: 'ally' })
+    entity = addEntityRelationship(entity, { targetEntityId: 'target-2', type: 'rival' })
+    expect(entity.relationships).toHaveLength(2)
+  })
+
+  it('does not mutate original entity', () => {
+    const entity = createTestEntity()
+    addEntityRelationship(entity, { targetEntityId: 'target-1', type: 'ally' })
+    expect(entity.relationships).toBeUndefined()
+  })
+})
+
+describe('removeEntityRelationship', () => {
+  it('removes a relationship by target id', () => {
+    let entity = createTestEntity()
+    entity = addEntityRelationship(entity, { targetEntityId: 'target-1', type: 'ally' })
+    entity = addEntityRelationship(entity, { targetEntityId: 'target-2', type: 'rival' })
+    const updated = removeEntityRelationship(entity, 'target-1')
+    expect(updated.relationships).toHaveLength(1)
+    expect(updated.relationships![0].targetEntityId).toBe('target-2')
+  })
+
+  it('returns entity unchanged if target not found', () => {
+    const entity = createTestEntity({ relationships: [] })
+    const updated = removeEntityRelationship(entity, 'nonexistent')
+    expect(updated.relationships).toEqual([])
+  })
+})
+
+describe('addEntityCustomField', () => {
+  it('adds a custom field', () => {
+    const entity = createTestEntity()
+    const updated = addEntityCustomField(entity, 'Weapon', 'Bolter')
+    expect(updated.custom['Weapon']).toBe('Bolter')
+  })
+
+  it('does not mutate original', () => {
+    const entity = createTestEntity()
+    addEntityCustomField(entity, 'Weapon', 'Bolter')
+    expect(entity.custom['Weapon']).toBeUndefined()
+  })
+})
+
+describe('removeEntityCustomField', () => {
+  it('removes a custom field', () => {
+    const entity = createTestEntity()
+    const withField = addEntityCustomField(entity, 'Weapon', 'Bolter')
+    const updated = removeEntityCustomField(withField, 'Weapon')
+    expect(updated.custom['Weapon']).toBeUndefined()
+  })
+
+  it('preserves other custom fields', () => {
+    let entity = createTestEntity()
+    entity = addEntityCustomField(entity, 'Weapon', 'Bolter')
+    entity = addEntityCustomField(entity, 'Armor', 'Power Armor')
+    const updated = removeEntityCustomField(entity, 'Weapon')
+    expect(updated.custom['Armor']).toBe('Power Armor')
+    expect(updated.custom['Weapon']).toBeUndefined()
+  })
+})
+
+describe('updateEntityCustomField', () => {
+  it('updates an existing custom field value', () => {
+    let entity = createTestEntity()
+    entity = addEntityCustomField(entity, 'Weapon', 'Bolter')
+    const updated = updateEntityCustomField(entity, 'Weapon', 'Heavy Bolter')
+    expect(updated.custom['Weapon']).toBe('Heavy Bolter')
+  })
+
+  it('returns entity unchanged if field does not exist', () => {
+    const entity = createTestEntity()
+    const updated = updateEntityCustomField(entity, 'Nonexistent', 'Value')
+    expect(updated).toBe(entity)
   })
 })

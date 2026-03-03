@@ -1,5 +1,5 @@
 // Entity CRUD operations — ZERO framework imports
-import type { Entity, EntityType, EntityRegistry } from './entity-types'
+import type { Entity, EntityType, EntityRegistry, EntityRelationship } from './entity-types'
 import { ENTITY_TYPE_CONFIGS } from './entity-types'
 
 export function createEntity(
@@ -19,9 +19,61 @@ export function createEntity(
 
 export function updateEntity(
   entity: Entity,
-  updates: Partial<Pick<Entity, 'name' | 'description' | 'affiliations' | 'relationships'>>,
+  updates: Partial<Pick<Entity, 'name' | 'description' | 'affiliations' | 'relationships' | 'portrait' | 'statusHistory' | 'custom'>>,
 ): Entity {
   return { ...entity, ...updates }
+}
+
+export function setEntityPortrait(
+  entity: Entity,
+  portrait: Entity['portrait'] | null,
+): Entity {
+  return portrait ? { ...entity, portrait } : { ...entity, portrait: undefined }
+}
+
+export function addEntityRelationship(
+  entity: Entity,
+  relationship: EntityRelationship,
+): Entity {
+  if (relationship.targetEntityId === entity.id) return entity
+  const existing = entity.relationships ?? []
+  if (existing.some((r) => r.targetEntityId === relationship.targetEntityId)) return entity
+  return { ...entity, relationships: [...existing, relationship] }
+}
+
+export function removeEntityRelationship(
+  entity: Entity,
+  targetEntityId: string,
+): Entity {
+  const existing = entity.relationships ?? []
+  return { ...entity, relationships: existing.filter((r) => r.targetEntityId !== targetEntityId) }
+}
+
+export function addEntityCustomField(
+  entity: Entity,
+  fieldName: string,
+  value: string,
+): Entity {
+  return { ...entity, custom: { ...entity.custom, [fieldName]: value } }
+}
+
+export function removeEntityCustomField(
+  entity: Entity,
+  fieldName: string,
+): Entity {
+  const custom = Object.fromEntries(
+    Object.entries(entity.custom).filter(([key]) => key !== fieldName),
+  )
+  return { ...entity, custom }
+}
+
+export function updateEntityCustomField(
+  entity: Entity,
+  fieldName: string,
+  value: string,
+): Entity {
+  if (!(fieldName in entity.custom)) return entity
+  return { ...entity, custom: { ...entity.custom, [fieldName]: value } }
 }
 
 export function deleteEntity(

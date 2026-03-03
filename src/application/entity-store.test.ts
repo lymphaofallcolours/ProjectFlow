@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useEntityStore } from './entity-store'
-import { createTestEntity, createTestEntityRegistry } from '../../tests/fixtures/factories'
+import { createTestEntity, createTestEntityRegistry, createTestAttachment } from '../../tests/fixtures/factories'
 
 describe('useEntityStore', () => {
   beforeEach(() => {
@@ -167,6 +167,89 @@ describe('useEntityStore', () => {
       useEntityStore.getState().addEntity('npc', 'Voss')
       useEntityStore.getState().reset()
       expect(useEntityStore.getState().getAllEntities()).toHaveLength(0)
+    })
+  })
+
+  describe('setPortrait', () => {
+    it('sets a portrait on an entity', () => {
+      const id = useEntityStore.getState().addEntity('pc', 'Alfa')
+      const portrait = createTestAttachment({ filename: 'portrait.png' })
+      useEntityStore.getState().setPortrait(id, portrait)
+      expect(useEntityStore.getState().entities[id].portrait?.filename).toBe('portrait.png')
+    })
+
+    it('removes portrait when set to null', () => {
+      const id = useEntityStore.getState().addEntity('pc', 'Alfa')
+      const portrait = createTestAttachment()
+      useEntityStore.getState().setPortrait(id, portrait)
+      useEntityStore.getState().setPortrait(id, null)
+      expect(useEntityStore.getState().entities[id].portrait).toBeUndefined()
+    })
+
+    it('does nothing for unknown entity', () => {
+      useEntityStore.getState().setPortrait('nonexistent', createTestAttachment())
+      expect(useEntityStore.getState().getAllEntities()).toHaveLength(0)
+    })
+  })
+
+  describe('addRelationship', () => {
+    it('adds a relationship to an entity', () => {
+      const id = useEntityStore.getState().addEntity('pc', 'Alfa')
+      useEntityStore.getState().addRelationship(id, {
+        targetEntityId: 'target-1',
+        type: 'ally',
+      })
+      const entity = useEntityStore.getState().entities[id]
+      expect(entity.relationships).toHaveLength(1)
+      expect(entity.relationships![0].type).toBe('ally')
+    })
+
+    it('does nothing for unknown entity', () => {
+      useEntityStore.getState().addRelationship('nonexistent', {
+        targetEntityId: 'target-1',
+        type: 'ally',
+      })
+      expect(useEntityStore.getState().getAllEntities()).toHaveLength(0)
+    })
+  })
+
+  describe('removeRelationship', () => {
+    it('removes a relationship from an entity', () => {
+      const id = useEntityStore.getState().addEntity('pc', 'Alfa')
+      useEntityStore.getState().addRelationship(id, {
+        targetEntityId: 'target-1',
+        type: 'ally',
+      })
+      useEntityStore.getState().removeRelationship(id, 'target-1')
+      expect(useEntityStore.getState().entities[id].relationships).toHaveLength(0)
+    })
+
+    it('does nothing for unknown entity', () => {
+      useEntityStore.getState().removeRelationship('nonexistent', 'target-1')
+      expect(useEntityStore.getState().getAllEntities()).toHaveLength(0)
+    })
+  })
+
+  describe('updateEntity with expanded whitelist', () => {
+    it('updates portrait via updateEntity', () => {
+      const id = useEntityStore.getState().addEntity('pc', 'Alfa')
+      const portrait = createTestAttachment({ filename: 'avatar.png' })
+      useEntityStore.getState().updateEntity(id, { portrait })
+      expect(useEntityStore.getState().entities[id].portrait?.filename).toBe('avatar.png')
+    })
+
+    it('updates custom fields via updateEntity', () => {
+      const id = useEntityStore.getState().addEntity('pc', 'Alfa')
+      useEntityStore.getState().updateEntity(id, { custom: { Weapon: 'Bolter' } })
+      expect(useEntityStore.getState().entities[id].custom['Weapon']).toBe('Bolter')
+    })
+
+    it('updates relationships via updateEntity', () => {
+      const id = useEntityStore.getState().addEntity('pc', 'Alfa')
+      useEntityStore.getState().updateEntity(id, {
+        relationships: [{ targetEntityId: 'target-1', type: 'ally' }],
+      })
+      expect(useEntityStore.getState().entities[id].relationships).toHaveLength(1)
     })
   })
 })

@@ -4,7 +4,10 @@ import {
   resolveEntityType,
   buildEntityTag,
   isValidEntityName,
+  extractEntityTypesFromNodeFields,
+  extractStatusTagsFromText,
 } from './entity-tag-parser'
+import { createTestNode, createPopulatedNodeFields } from '../../tests/fixtures/factories'
 
 describe('resolveEntityType', () => {
   it('maps empty prefix to pc', () => {
@@ -388,5 +391,113 @@ describe('parse → build roundtrip', () => {
     const [parsed] = parseEntityTags(tag)
     const rebuilt = buildEntityTag(parsed.entityType, parsed.name, parsed.mode, parsed.status)
     expect(rebuilt).toBe(tag)
+  })
+})
+
+describe('extractEntityTypesFromNodeFields', () => {
+  it('returns empty set for node with no entity tags', () => {
+    const node = createTestNode()
+    const types = extractEntityTypesFromNodeFields(node)
+    expect(types.size).toBe(0)
+  })
+
+  it('extracts entity types from rich content fields', () => {
+    const node = createTestNode({
+      fields: createPopulatedNodeFields({
+        script: { markdown: '@Alfa enters the room' },
+        gmNotes: { markdown: '!@Voss is watching' },
+      }),
+    })
+    const types = extractEntityTypesFromNodeFields(node)
+    expect(types.has('pc')).toBe(true)
+    expect(types.has('npc')).toBe(true)
+    expect(types.size).toBe(2)
+  })
+
+  it('extracts entity types from dialogue entries', () => {
+    const node = createTestNode({
+      fields: createPopulatedNodeFields({
+        script: { markdown: '' },
+        gmNotes: { markdown: '' },
+        dialogues: [
+          { entityRef: '@Alfa', line: 'Hello there' },
+          { entityRef: '%@Carnifex', line: 'ROAR' },
+        ],
+      }),
+    })
+    const types = extractEntityTypesFromNodeFields(node)
+    expect(types.has('pc')).toBe(true)
+    expect(types.has('enemy')).toBe(true)
+  })
+
+  it('extracts entity types from custom fields', () => {
+    const node = createTestNode({
+      fields: createPopulatedNodeFields({
+        script: { markdown: '' },
+        gmNotes: { markdown: '' },
+        custom: [
+          { label: 'Loot', content: { markdown: '$@Rosarius is here' } },
+        ],
+      }),
+    })
+    const types = extractEntityTypesFromNodeFields(node)
+    expect(types.has('object')).toBe(true)
+  })
+
+  it('deduplicates types across fields', () => {
+    const node = createTestNode({
+      fields: createPopulatedNodeFields({
+        script: { markdown: '@Alfa does something' },
+        gmNotes: { markdown: '@Bravo also does something' },
+        characters: { markdown: '@Charlie too' },
+      }),
+    })
+    const types = extractEntityTypesFromNodeFields(node)
+    expect(types.has('pc')).toBe(true)
+    expect(types.size).toBe(1)
+  })
+
+  it('extracts all 6 entity types', () => {
+    const node = createTestNode({
+      fields: createPopulatedNodeFields({
+        script: { markdown: '@Alfa !@Voss %@Carnifex $@Rosarius ~@Hive &@Secret' },
+        gmNotes: { markdown: '' },
+      }),
+    })
+    const types = extractEntityTypesFromNodeFields(node)
+    expect(types.size).toBe(6)
+  })
+})
+
+describe('extractStatusTagsFromText', () => {
+  it('returns empty array for text without status tags', () => {
+    expect(extractStatusTagsFromText('@Alfa enters')).toEqual([])
+  })
+
+  it('extracts a single status tag', () => {
+    const tags = extractStatusTagsFromText('@Alfa+wounded')
+    expect(tags).toHaveLength(1)
+    expect(tags[0]).toEqual({ name: 'Alfa', entityType: 'pc', status: 'wounded' })
+  })
+
+  it('extracts multiple status tags', () => {
+    const tags = extractStatusTagsFromText('@Alfa+wounded !@Voss+dead')
+    expect(tags).toHaveLength(2)
+    expect(tags[0].name).toBe('Alfa')
+    expect(tags[0].status).toBe('wounded')
+    expect(tags[1].name).toBe('Voss')
+    expect(tags[1].status).toBe('dead')
+  })
+
+  it('ignores tags without status markers', () => {
+    const tags = extractStatusTagsFromText('@Alfa enters while !@Voss+dead watches')
+    expect(tags).toHaveLength(1)
+    expect(tags[0].name).toBe('Voss')
+  })
+
+  it('preserves entity type from prefix', () => {
+    const tags = extractStatusTagsFromText('%@Carnifex+enraged')
+    expect(tags[0].entityType).toBe('enemy')
+    expect(tags[0].status).toBe('enraged')
   })
 })
