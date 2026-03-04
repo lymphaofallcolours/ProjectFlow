@@ -18,6 +18,7 @@ import {
   Upload,
   LayoutTemplate,
   Network,
+  Blocks,
   BarChart3,
   Grip,
   Grid3X3,
@@ -43,6 +44,7 @@ export function Toolbar() {
   const toggleEntitySidebar = useUIStore((s) => s.toggleEntitySidebar)
   const toggleTemplateManager = useUIStore((s) => s.toggleTemplateManager)
   const toggleEntityGraph = useUIStore((s) => s.toggleEntityGraph)
+  const toggleGraphTemplatePanel = useUIStore((s) => s.toggleGraphTemplatePanel)
   const toggleDashboard = useUIStore((s) => s.toggleDashboard)
   const toggleLegendPanel = useUIStore((s) => s.toggleLegendPanel)
   const toggleSearchPanel = useUIStore((s) => s.toggleSearchPanel)
@@ -138,6 +140,7 @@ export function Toolbar() {
         <ToolbarButton icon={<Search size={16} />} label="Search" onClick={toggleSearchPanel} />
         <ToolbarButton icon={<Users size={16} />} label="Entities" onClick={toggleEntitySidebar} />
         <ToolbarButton icon={<Network size={16} />} label="Relationships" onClick={toggleEntityGraph} />
+        <ToolbarButton icon={<Blocks size={16} />} label="Structures" onClick={toggleGraphTemplatePanel} />
         <ToolbarButton icon={<BarChart3 size={16} />} label="Dashboard" onClick={toggleDashboard} />
         <ToolbarButton icon={<LayoutTemplate size={16} />} label="Templates" onClick={toggleTemplateManager} />
         <ToolbarButton icon={<HelpCircle size={16} />} label="Help" onClick={toggleLegendPanel} />

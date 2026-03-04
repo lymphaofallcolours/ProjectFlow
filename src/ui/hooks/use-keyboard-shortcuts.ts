@@ -153,6 +153,10 @@ export function useKeyboardShortcuts() {
           ui.toggleDashboard()
           return
         }
+        if (ui.graphTemplatePanelOpen) {
+          ui.toggleGraphTemplatePanel()
+          return
+        }
         // 4. Close panels (search, entity sidebar, legend, timeline)
         if (ui.searchPanelOpen) {
           ui.toggleSearchPanel()

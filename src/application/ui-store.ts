@@ -36,6 +36,9 @@ type UIState = {
   // Entity relationship graph
   entityGraphOpen: boolean
 
+  // Graph structure templates
+  graphTemplatePanelOpen: boolean
+
   // Campaign dashboard
   dashboardOpen: boolean
 
@@ -62,6 +65,7 @@ type UIState = {
   setEntityHighlightFilter: (filter: { entityName: string; entityType?: string } | null) => void
   toggleTemplateManager: () => void
   toggleEntityGraph: () => void
+  toggleGraphTemplatePanel: () => void
   toggleDashboard: () => void
   cycleCanvasBackground: () => void
   toggleAutoSave: () => void
@@ -80,6 +84,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   entityHighlightFilter: null,
   templateManagerOpen: false,
   entityGraphOpen: false,
+  graphTemplatePanelOpen: false,
   dashboardOpen: false,
   canvasBackground: 'dots' as const,
   autoSaveEnabled: false,
@@ -134,6 +139,9 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   toggleEntityGraph: () =>
     set((state) => ({ entityGraphOpen: !state.entityGraphOpen })),
+
+  toggleGraphTemplatePanel: () =>
+    set((state) => ({ graphTemplatePanelOpen: !state.graphTemplatePanelOpen })),
 
   toggleDashboard: () =>
     set((state) => ({ dashboardOpen: !state.dashboardOpen })),

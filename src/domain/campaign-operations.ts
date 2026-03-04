@@ -39,6 +39,7 @@ export function createCampaign(name: string): Campaign {
     graph: createEmptyGraph(),
     entityRegistry: createEmptyEntityRegistry(),
     customFieldTemplates: [],
+    graphTemplates: [],
     settings: createDefaultSettings(),
     playthroughLog: [],
     schemaVersion: CURRENT_SCHEMA_VERSION,

@@ -184,6 +184,18 @@ export type NarrativeGraph = {
   scrollDirection: ScrollDirection
 }
 
+// --- Graph Structure Template ---
+
+export type GraphTemplate = {
+  id: string
+  name: string
+  description: string
+  category: 'builtin' | 'custom'
+  nodes: StoryNode[]
+  edges: StoryEdge[]
+  createdAt: string
+}
+
 // --- Campaign Settings ---
 
 export type CampaignSettings = {
@@ -204,6 +216,7 @@ export type Campaign = {
   graph: NarrativeGraph
   entityRegistry: EntityRegistry
   customFieldTemplates: CustomFieldTemplate[]
+  graphTemplates: GraphTemplate[]
   settings: CampaignSettings
   playthroughLog: PlaythroughEntry[]
   schemaVersion: number

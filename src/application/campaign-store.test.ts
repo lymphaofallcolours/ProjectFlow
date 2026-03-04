@@ -65,6 +65,7 @@ describe('useCampaignStore — template CRUD', () => {
       updatedAt: '2026-01-01T00:00:00.000Z',
       schemaVersion: 1,
       customFieldTemplates: [{ id: 't1', label: 'Tpl', icon: 'Star' }],
+      graphTemplates: [],
       graph: { nodes: {}, edges: {}, viewport: { x: 0, y: 0, zoom: 1 }, scrollDirection: 'horizontal' as const },
       entityRegistry: { entities: {} },
       settings: { theme: 'dark' as const, scrollDirection: 'horizontal' as const, autoSaveEnabled: false, autoSaveIntervalMs: 60000 },
@@ -73,5 +74,55 @@ describe('useCampaignStore — template CRUD', () => {
     useCampaignStore.getState().loadCampaign(campaign)
     expect(useCampaignStore.getState().customFieldTemplates).toHaveLength(1)
     expect(useCampaignStore.getState().customFieldTemplates[0].label).toBe('Tpl')
+  })
+})
+
+describe('useCampaignStore — graph template CRUD', () => {
+  it('starts with empty graph templates', () => {
+    expect(useCampaignStore.getState().graphTemplates).toEqual([])
+  })
+
+  it('addGraphTemplate stores a template', () => {
+    const template = {
+      id: 'gt1',
+      name: 'Linear',
+      description: 'A chain',
+      category: 'custom' as const,
+      nodes: [],
+      edges: [],
+      createdAt: new Date().toISOString(),
+    }
+    useCampaignStore.getState().addGraphTemplate(template)
+    expect(useCampaignStore.getState().graphTemplates).toHaveLength(1)
+    expect(useCampaignStore.getState().graphTemplates[0].name).toBe('Linear')
+  })
+
+  it('removeGraphTemplate deletes by id', () => {
+    const t1 = { id: 'g1', name: 'A', description: '', category: 'custom' as const, nodes: [], edges: [], createdAt: '' }
+    const t2 = { id: 'g2', name: 'B', description: '', category: 'custom' as const, nodes: [], edges: [], createdAt: '' }
+    useCampaignStore.getState().addGraphTemplate(t1)
+    useCampaignStore.getState().addGraphTemplate(t2)
+    useCampaignStore.getState().removeGraphTemplate('g1')
+    expect(useCampaignStore.getState().graphTemplates).toHaveLength(1)
+    expect(useCampaignStore.getState().graphTemplates[0].name).toBe('B')
+  })
+
+  it('loadGraphTemplates replaces all', () => {
+    useCampaignStore.getState().addGraphTemplate({
+      id: 'old', name: 'Old', description: '', category: 'custom', nodes: [], edges: [], createdAt: '',
+    })
+    useCampaignStore.getState().loadGraphTemplates([
+      { id: 'new', name: 'New', description: '', category: 'custom', nodes: [], edges: [], createdAt: '' },
+    ])
+    expect(useCampaignStore.getState().graphTemplates).toHaveLength(1)
+    expect(useCampaignStore.getState().graphTemplates[0].name).toBe('New')
+  })
+
+  it('reset clears graph templates', () => {
+    useCampaignStore.getState().addGraphTemplate({
+      id: 'x', name: 'X', description: '', category: 'custom', nodes: [], edges: [], createdAt: '',
+    })
+    useCampaignStore.getState().reset()
+    expect(useCampaignStore.getState().graphTemplates).toEqual([])
   })
 })

@@ -2,6 +2,15 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## v1.1.0 (2026-03-04)
+
+### feat: add graph structure templates with built-in patterns
+- 4 built-in graph structure templates: Linear Adventure, Branching Choice, Combat Encounter, Social Intrigue
+- Graph template picker panel (Structures button in toolbar): browse, insert, delete custom templates
+- Save selection as custom structure template (from picker or multi-select context menu)
+- `GraphTemplate` type added to domain, `graphTemplates` persisted in campaign files (backward-compatible)
+- 15 new tests (6 domain + 5 campaign store + 4 graph store)
+
 ## v1.0.1 (2026-03-04)
 
 ### fix: batch node movement to preserve relative positions

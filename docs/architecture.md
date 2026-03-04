@@ -24,20 +24,21 @@ src/
 │   ├── history-operations.ts   # HistorySnapshot type, createSnapshot, MAX_HISTORY_SIZE
 │   ├── campaign-operations.ts  # createCampaign, createDefaultSettings, schema version
 │   ├── template-operations.ts # Pure template CRUD: create, update, delete, instantiateTemplate
+│   ├── graph-templates.ts     # Built-in graph structure templates (blueprints → nodes+edges), createCustomTemplate
 │   └── playthrough-operations.ts # Session CRUD, node visit tracking, diff maps, markdown export
 │
 ├── application/                # State management, orchestration
 │   ├── graph-store.ts          # useGraphStore — nodes, edges, viewport, selection, clipboard, undo/redo, importSubgraph, group actions, setNodeTags
 │   ├── history-store.ts        # useHistoryStore — past/future snapshot stacks for undo/redo
-│   ├── campaign-store.ts       # useCampaignStore — campaign metadata + custom field template CRUD
+│   ├── campaign-store.ts       # useCampaignStore — campaign metadata + custom field template CRUD + graph template CRUD
 │   ├── entity-store.ts         # useEntityStore — entity CRUD, registry, status tracking, portrait, relationships
 │   ├── session-store.ts        # useSessionStore — playthrough sessions, diff overlay, timeline toggle
-│   ├── ui-store.ts             # useUIStore — theme, overlay state, radial node, sidebar/panel toggles, template manager, entity graph, dashboard, auto-save state
+│   ├── ui-store.ts             # useUIStore — theme, overlay state, radial node, sidebar/panel toggles, template manager, graph template picker, entity graph, dashboard, auto-save state
 │   └── campaign-actions.ts     # assemble/hydrate/save/load/auto-save campaign orchestration (incl. entity + session + history)
 │
 ├── infrastructure/             # Browser APIs, serialization, file I/O
 │   ├── file-io.ts              # Save/load JSON via File System Access API + fallback, file handle caching for auto-save, subgraph file I/O, readFileAsDataUrl
-│   ├── serialization.ts        # Campaign ↔ JSON with schema versioning (validates entityRegistry + playthroughLog + customFieldTemplates)
+│   ├── serialization.ts        # Campaign ↔ JSON with schema versioning (validates entityRegistry + playthroughLog + customFieldTemplates + graphTemplates)
 │   ├── markdown-export.ts      # Blob download helper for session markdown + entity codex export
 │   └── theme.ts                # Dark/light mode persistence (localStorage + .dark class)
 │
@@ -48,6 +49,7 @@ src/
 │   │   ├── campaign-dashboard.tsx # Left slide-in panel: entity/node counts, graph stats, session stats, top connected, top tagged
 │   │   ├── session-timeline.tsx # Right slide-out panel: session visits, export, end session
 │   │   ├── template-manager.tsx # Left slide-in panel: campaign field template CRUD
+│   │   ├── graph-template-picker.tsx # Left slide-in panel: built-in + custom graph structure templates, insert, save selection
 │   │   ├── node-selector-input.tsx # Searchable dropdown for selecting a graph node (used in edge rewire)
 │   │   └── pwa-prompt.tsx     # Dismissable PWA install banner (beforeinstallprompt)
 │   ├── graph/                  # React Flow canvas and custom nodes/edges
@@ -57,7 +59,7 @@ src/
 │   │   ├── story-edge.tsx      # Custom edge with glass label pill + style-based rendering (default/conditional/secret)
 │   │   ├── node-shapes.ts      # SVG path data for 5 shapes (circle, square, triangle, diamond, hexagon)
 │   │   ├── use-flow-nodes.ts   # Domain → React Flow node/edge conversion, collapsed group filtering, edge remapping/dedup
-│   │   ├── context-menu.tsx    # Right-click node: change type, arc label, tags (TagChipEditor), duplicate, delete, playthrough, clipboard, export subgraph, group/ungroup/collapse (multi-select variant)
+│   │   ├── context-menu.tsx    # Right-click node: change type, arc label, tags (TagChipEditor), duplicate, delete, playthrough, clipboard, export subgraph, save as structure, group/ungroup/collapse (multi-select variant)
 │   │   ├── edge-context-menu.tsx  # Right-click edge: change style, set label, delete edge, rewire source/target
 │   │   ├── edge-label-input.tsx   # Inline text input for edge labels and arc labels in context menus
 │   │   ├── playthrough-notes-input.tsx # Inline notes input for "modified" playthrough status

@@ -55,5 +55,10 @@ export function validateCampaignSchema(data: unknown): data is Campaign {
     if (!Array.isArray(obj.customFieldTemplates)) return false
   }
 
+  // graphTemplates is optional for backward compat, but must be an array if present
+  if (obj.graphTemplates !== undefined) {
+    if (!Array.isArray(obj.graphTemplates)) return false
+  }
+
   return true
 }

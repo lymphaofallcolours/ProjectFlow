@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Trash2, Copy, Scissors, Clipboard, CheckCircle, Edit3, XCircle, Circle, Tag, Download, FolderOpen, FolderClosed, Ungroup, FolderX, Minus, X } from 'lucide-react'
+import { Trash2, Copy, Scissors, Clipboard, CheckCircle, Edit3, XCircle, Circle, Tag, Download, Blocks, FolderOpen, FolderClosed, Ungroup, FolderX, Minus, X } from 'lucide-react'
 import type { SceneType, PlaythroughStatus } from '@/domain/types'
 import { SCENE_TYPES, SCENE_TYPE_CONFIG } from '@/domain/types'
 import { PLAYTHROUGH_STATUSES, PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
@@ -7,6 +7,9 @@ import { useGraphStore } from '@/application/graph-store'
 import { useSessionStore } from '@/application/session-store'
 import { serializeSubgraph } from '@/domain/subgraph-operations'
 import { saveSubgraphToFile } from '@/infrastructure/file-io'
+import { extractSubgraph } from '@/domain/graph-operations'
+import { createCustomTemplate } from '@/domain/graph-templates'
+import { useCampaignStore } from '@/application/campaign-store'
 import { PlaythroughNotesInput } from './playthrough-notes-input'
 import { EdgeLabelInput } from './edge-label-input'
 import { useEscapeKey } from '@/ui/hooks/use-escape-key'
@@ -101,6 +104,8 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
     onClose()
   }, [cutSelectedNodes, onClose])
 
+  const addGraphTemplate = useCampaignStore((s) => s.addGraphTemplate)
+
   const handleExportSubgraph = useCallback(async () => {
     const { nodes, edges } = useGraphStore.getState()
     const ids = Array.from(selectedNodeIds)
@@ -108,6 +113,19 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
     await saveSubgraphToFile(json, 'subgraph.pfsg.json')
     onClose()
   }, [selectedNodeIds, onClose])
+
+  const handleSaveAsStructure = useCallback(() => {
+    const { nodes, edges } = useGraphStore.getState()
+    const sub = extractSubgraph(nodes, edges, Array.from(selectedNodeIds))
+    const template = createCustomTemplate(
+      `Structure (${selectedNodeIds.size} nodes)`,
+      '',
+      sub.nodes,
+      sub.edges,
+    )
+    addGraphTemplate(template)
+    onClose()
+  }, [selectedNodeIds, addGraphTemplate, onClose])
 
   const handleGroupSelected = useCallback(() => {
     const pos = nodePosition ?? { x: 0, y: 0 }
@@ -214,6 +232,11 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
             icon={<Download size={14} className="text-text-muted" />}
             label="Export Subgraph"
             onClick={handleExportSubgraph}
+          />
+          <MenuItem
+            icon={<Blocks size={14} className="text-text-muted" />}
+            label="Save as Structure"
+            onClick={handleSaveAsStructure}
           />
 
           <div className="h-px bg-border my-1 mx-2" />

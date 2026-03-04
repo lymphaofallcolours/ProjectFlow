@@ -7,6 +7,7 @@ import { HelpPanel } from '@/ui/components/help-panel'
 import { SearchPanel } from '@/ui/components/search-panel'
 import { SessionTimeline } from '@/ui/components/session-timeline'
 import { TemplateManager } from '@/ui/components/template-manager'
+import { GraphTemplatePicker } from '@/ui/components/graph-template-picker'
 import { EntityRelationshipGraph } from '@/ui/entities/entity-relationship-graph'
 import { CampaignDashboard } from '@/ui/components/campaign-dashboard'
 import { PWAInstallPrompt } from '@/ui/components/pwa-prompt'
@@ -26,6 +27,7 @@ export function AppShell() {
         <SearchPanel />
         <EntitySidebar />
         <TemplateManager />
+        <GraphTemplatePicker />
         <SessionTimeline />
         <HelpPanel />
         <EntityRelationshipGraph />
