@@ -2,6 +2,8 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## v1.0.0 — Public Release (2026-03-04)
+
 ## Playthrough Notes, Light Mode, Subnode Polish (2026-03-03)
 
 ### fix: surface playthrough notes, improve light mode contrast, fix subnode behavior
