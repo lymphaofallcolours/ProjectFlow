@@ -2,6 +2,13 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## v1.1.2 (2026-03-04)
+
+### docs: add GPL-3.0 license and project README
+- Added GNU GPL v3.0 license file
+- Replaced Vite template README with full project documentation: features, setup, architecture, entity tags, testing
+- Added README to CLAUDE.md documentation map and maintenance rules
+
 ## v1.1.1 (2026-03-04)
 
 ### fix: dismiss scene-type picker on Escape and prevent panel overlap

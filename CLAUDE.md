@@ -120,6 +120,7 @@ Claude operates as a self-directed developer on this project. The following beha
 - If a `docs/plans/` file exists for the current feature, read it and resume from where it left off.
 
 ### During Development
+- **New feature or user-facing change** → Update `README.md` (features list, commands, stack, test counts).
 - **New file/module** → Update `docs/architecture.md` if it adds a boundary or layer.
 - **Non-obvious decision** → Append to `docs/decisions-log.md` using the ADR format.
 - **New dependency** → Document WHY in `docs/dependencies.md`.
@@ -162,6 +163,8 @@ Claude MUST follow `docs/spec.md` as the source of truth for all feature design 
 ## Documentation Map
 
 ```
+README.md                  # Project overview, setup, features — update on user-facing changes
+LICENSE                    # GNU GPL v3.0
 docs/
 ├── spec.md                # Full project specification — source of truth for features
 ├── architecture.md        # Layer boundaries, component hierarchy, data flow

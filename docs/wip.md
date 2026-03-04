@@ -4,10 +4,18 @@
 
 ## Current Session
 
-**Date:** 2026-03-03
-**Goal:** Fix subnode crash, long-press behavior, context menu UX
+**Date:** 2026-03-04
+**Goal:** Fix scene-type picker dismiss and panel overlap
 
 ### Completed This Session
+
+- **Fix 16: Scene-type picker Escape dismiss** — added capture-phase keydown listener for Escape in SceneTypePicker; stopPropagation prevents global handler from also firing
+- **Fix 17: Panel mutual exclusivity** — all 7 side panels (Search, Templates, Structures, Dashboard, Entities, Help, Relationships) now close when another opens; `closedPanels` constant in ui-store resets all booleans; each toggle spreads it when opening
+- **GPL-3.0 license** — added LICENSE file via GitHub API
+- **README rewrite** — replaced Vite boilerplate with full project docs (features, setup, architecture, entity tags, testing, save format)
+- **CLAUDE.md update** — added README + LICENSE to documentation map, added README maintenance rule to "During Development"
+
+### Previous Session (2026-03-03)
 
 - **Previous batch:** dot visibility, subnode dismiss/opacity, help panel (4 fixes)
 - **Fix 5: Subnode crash (white screen)** — eliminated stale `radialNodeId` closures in `onSelectionChange` and `onNodeClick` (now read fresh via `useUIStore.getState()`); added `radialNodeExists` render guard; added `radialNodeId` cleanup to `deleteNode`, `deleteSelectedNodes`, and `deleteGroup` in graph-store
