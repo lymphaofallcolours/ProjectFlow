@@ -100,6 +100,44 @@ describe('useGraphStore', () => {
     })
   })
 
+  describe('moveNodes', () => {
+    it('updates multiple node positions atomically', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      const b = useGraphStore.getState().addNode('narration', { x: 100, y: 100 })
+      useGraphStore.getState().moveNodes({
+        [a]: { x: 50, y: 50 },
+        [b]: { x: 200, y: 200 },
+      })
+      expect(useGraphStore.getState().nodes[a].position).toEqual({ x: 50, y: 50 })
+      expect(useGraphStore.getState().nodes[b].position).toEqual({ x: 200, y: 200 })
+    })
+
+    it('moves group children when moving a group', () => {
+      const gid = useGraphStore.getState().createGroup('event', { x: 0, y: 0 })
+      const nid = useGraphStore.getState().addNode('narration', { x: 50, y: 100 })
+      useGraphStore.getState().addToGroup(gid, [nid])
+      useGraphStore.getState().moveNodes({ [gid]: { x: 100, y: 200 } })
+      expect(useGraphStore.getState().nodes[gid].position).toEqual({ x: 100, y: 200 })
+      expect(useGraphStore.getState().nodes[nid].position).toEqual({ x: 150, y: 300 })
+    })
+
+    it('skips non-existent node IDs', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().moveNodes({
+        [a]: { x: 50, y: 50 },
+        'nonexistent': { x: 999, y: 999 },
+      })
+      expect(useGraphStore.getState().nodes[a].position).toEqual({ x: 50, y: 50 })
+    })
+
+    it('does not save history automatically', () => {
+      const a = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useHistoryStore.getState().reset()
+      useGraphStore.getState().moveNodes({ [a]: { x: 100, y: 100 } })
+      expect(useHistoryStore.getState().past).toHaveLength(0)
+    })
+  })
+
   describe('renameNode', () => {
     it('updates the node label', () => {
       const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })

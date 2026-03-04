@@ -77,7 +77,7 @@ export function GraphCanvas() {
 function GraphCanvasInner() {
   const { flowNodes: storeNodes, flowEdges } = useFlowNodes()
   const { screenToFlowPosition } = useReactFlow()
-  const moveNode = useGraphStore((s) => s.moveNode)
+  const moveNodes = useGraphStore((s) => s.moveNodes)
   const pushHistory = useGraphStore((s) => s.pushHistory)
   const selectNodes = useGraphStore((s) => s.selectNodes)
   const clearSelection = useGraphStore((s) => s.clearSelection)
@@ -129,6 +129,9 @@ function GraphCanvasInner() {
         selectNodes(Array.from(current))
       }
 
+      // Collect drag-end positions for batch commit
+      const dragEndUpdates: Record<string, { x: number; y: number }> = {}
+
       for (const change of changes) {
         if (change.type === 'position' && change.position) {
           if (change.dragging) {
@@ -144,16 +147,19 @@ function GraphCanvasInner() {
               }
             }
           } else if (isDraggingRef.current) {
-            // Drag ended: persist to Zustand first, defer clearing overrides
-            // to avoid a blink frame where store hasn't updated yet.
-            isDraggingRef.current = false
-            moveNode(change.id, change.position)
-            requestAnimationFrame(() => setDragPositions({}))
+            dragEndUpdates[change.id] = change.position
           }
         }
       }
+
+      // Batch commit all drag-end positions in a single atomic store update
+      if (Object.keys(dragEndUpdates).length > 0) {
+        isDraggingRef.current = false
+        moveNodes(dragEndUpdates)
+        requestAnimationFrame(() => setDragPositions({}))
+      }
     },
-    [moveNode, pushHistory, selectNodes],
+    [moveNodes, pushHistory, selectNodes],
   )
 
   const onSelectionChange: OnSelectionChangeFunc = useCallback(

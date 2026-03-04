@@ -62,6 +62,7 @@ type GraphState = {
   connectNodes: (sourceId: string, targetId: string, label?: string) => string
   disconnectEdge: (edgeId: string) => void
   moveNode: (id: string, position: Position2D) => void
+  moveNodes: (updates: Record<string, Position2D>) => void
   renameNode: (id: string, label: string) => void
   changeSceneType: (id: string, sceneType: SceneType) => void
   updateField: (nodeId: string, fieldKey: FieldKey, value: NodeFields[FieldKey]) => void
@@ -188,6 +189,34 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         }
       }
 
+      return { nodes: updatedNodes }
+    })
+  },
+
+  // moveNodes does NOT save history — canvas calls pushHistory() on drag start
+  moveNodes: (updates) => {
+    set((state) => {
+      const updatedNodes = { ...state.nodes }
+      for (const [id, position] of Object.entries(updates)) {
+        const node = updatedNodes[id]
+        if (!node) continue
+        updatedNodes[id] = updateNodePosition(node, position)
+
+        if (node.isGroup) {
+          const dx = position.x - node.position.x
+          const dy = position.y - node.position.y
+          const childIds = getGroupChildIds(state.nodes, id)
+          for (const childId of childIds) {
+            const child = updatedNodes[childId]
+            if (child) {
+              updatedNodes[childId] = updateNodePosition(child, {
+                x: child.position.x + dx,
+                y: child.position.y + dy,
+              })
+            }
+          }
+        }
+      }
       return { nodes: updatedNodes }
     })
   },

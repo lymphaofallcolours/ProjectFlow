@@ -2,6 +2,14 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## v1.0.1 (2026-03-04)
+
+### fix: batch node movement to preserve relative positions
+- Added `moveNodes` batch action to graph store — updates all node positions in a single atomic `set()` call
+- Fixed `onNodesChange` drag-end handling: collects all position changes before committing, instead of committing one node and closing the gate
+- Group-child translation preserved in batch moves
+- 4 new unit tests for `moveNodes`
+
 ## v1.0.0 — Public Release (2026-03-04)
 
 ## Playthrough Notes, Light Mode, Subnode Polish (2026-03-03)
