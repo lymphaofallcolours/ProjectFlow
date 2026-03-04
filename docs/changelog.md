@@ -2,6 +2,13 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## v1.1.1 (2026-03-04)
+
+### fix: dismiss scene-type picker on Escape and prevent panel overlap
+- SceneTypePicker now closes on Escape key (capture-phase listener with stopPropagation)
+- Side panels (Search, Templates, Structures, Dashboard, Entities, Help, Relationships) are now mutually exclusive — opening one closes all others
+- Prevents buried/overlapping panels when opening multiple side windows
+
 ## v1.1.0 (2026-03-04)
 
 ### feat: add graph structure templates with built-in patterns

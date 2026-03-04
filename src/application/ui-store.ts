@@ -73,6 +73,16 @@ type UIState = {
   setAutoSaveStatus: (status: 'saving' | 'saved' | null) => void
 }
 
+const closedPanels = {
+  searchPanelOpen: false,
+  templateManagerOpen: false,
+  graphTemplatePanelOpen: false,
+  dashboardOpen: false,
+  entitySidebarOpen: false,
+  legendPanelOpen: false,
+  entityGraphOpen: false,
+} as const
+
 export const useUIStore = create<UIState>((set, get) => ({
   theme: 'dark',
   activeOverlay: null,
@@ -117,34 +127,59 @@ export const useUIStore = create<UIState>((set, get) => ({
   hideRadialSubnodes: () => set({ radialNodeId: null }),
 
   toggleEntitySidebar: () =>
-    set((state) => ({
-      entitySidebarOpen: !state.entitySidebarOpen,
-      selectedEntityId: state.entitySidebarOpen ? null : state.selectedEntityId,
-    })),
+    set((state) =>
+      state.entitySidebarOpen
+        ? { entitySidebarOpen: false, selectedEntityId: null }
+        : { ...closedPanels, entitySidebarOpen: true },
+    ),
 
-  openEntitySidebar: () => set({ entitySidebarOpen: true }),
+  openEntitySidebar: () => set({ ...closedPanels, entitySidebarOpen: true }),
 
   selectEntity: (id) => set({ selectedEntityId: id }),
 
   toggleLegendPanel: () =>
-    set((state) => ({ legendPanelOpen: !state.legendPanelOpen })),
+    set((state) =>
+      state.legendPanelOpen
+        ? { legendPanelOpen: false }
+        : { ...closedPanels, legendPanelOpen: true },
+    ),
 
   toggleSearchPanel: () =>
-    set((state) => ({ searchPanelOpen: !state.searchPanelOpen })),
+    set((state) =>
+      state.searchPanelOpen
+        ? { searchPanelOpen: false }
+        : { ...closedPanels, searchPanelOpen: true },
+    ),
 
   setEntityHighlightFilter: (filter) => set({ entityHighlightFilter: filter }),
 
   toggleTemplateManager: () =>
-    set((state) => ({ templateManagerOpen: !state.templateManagerOpen })),
+    set((state) =>
+      state.templateManagerOpen
+        ? { templateManagerOpen: false }
+        : { ...closedPanels, templateManagerOpen: true },
+    ),
 
   toggleEntityGraph: () =>
-    set((state) => ({ entityGraphOpen: !state.entityGraphOpen })),
+    set((state) =>
+      state.entityGraphOpen
+        ? { entityGraphOpen: false }
+        : { ...closedPanels, entityGraphOpen: true },
+    ),
 
   toggleGraphTemplatePanel: () =>
-    set((state) => ({ graphTemplatePanelOpen: !state.graphTemplatePanelOpen })),
+    set((state) =>
+      state.graphTemplatePanelOpen
+        ? { graphTemplatePanelOpen: false }
+        : { ...closedPanels, graphTemplatePanelOpen: true },
+    ),
 
   toggleDashboard: () =>
-    set((state) => ({ dashboardOpen: !state.dashboardOpen })),
+    set((state) =>
+      state.dashboardOpen
+        ? { dashboardOpen: false }
+        : { ...closedPanels, dashboardOpen: true },
+    ),
 
   cycleCanvasBackground: () =>
     set((state) => {
