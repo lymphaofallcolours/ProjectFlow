@@ -18,7 +18,8 @@ During live play, start a session and mark nodes as you go. The diff overlay sho
 - **Three-tier drill-down** — progressive disclosure from graph overview to field subnodes to full cockpit editor
 - **Entity tagging DSL** — inline `@Name` / `#Name` tags with type prefixes for NPCs, enemies, objects, locations, and secrets; rendered as colored chips with autocomplete
 - **Playthrough tracking** — session-based visit logging, diff overlays, and markdown export
-- **Subgraph grouping** — collapsible named groups with boundary edge remapping
+- **Nested groups** — collapsible groups that can contain other groups (unlimited depth), with double-border rectangle shape, depth badges, and ghost outlines when expanded
+- **Divider nodes** — ribbon-shaped separators for arcs, sessions, and scene breaks with 3 magnitude levels
 - **Graph structure templates** — built-in patterns (linear, branching, combat, social) and save-your-own custom templates
 - **Entity relationship graph** — visualize entity connections in a type-clustered layout
 - **Campaign dashboard** — stats, top connected entities, most tagged nodes
@@ -109,7 +110,7 @@ Append `+status` to any present tag to auto-log a status change: `@Alfa+wounded`
 
 ## Testing
 
-~720 tests across 47 test files:
+~735 tests across 47 test files:
 
 - **Unit** (~70%) — domain logic, entity parsing, graph operations, store actions
 - **Integration** (~20%) — store + component interactions, serialization roundtrips

@@ -15,9 +15,9 @@ export type ScrollDirection = 'horizontal' | 'vertical'
 
 // --- Scene Types & Shapes ---
 
-export type SceneType = 'event' | 'narration' | 'combat' | 'social' | 'investigation'
+export type SceneType = 'event' | 'narration' | 'combat' | 'social' | 'investigation' | 'divider'
 
-export type NodeShape = 'circle' | 'square' | 'triangle' | 'diamond' | 'hexagon'
+export type NodeShape = 'circle' | 'square' | 'triangle' | 'diamond' | 'hexagon' | 'group-rect' | 'banner'
 
 export type SceneTypeConfig = {
   shape: NodeShape
@@ -31,9 +31,10 @@ export const SCENE_TYPE_CONFIG: Record<SceneType, SceneTypeConfig> = {
   combat: { shape: 'triangle', label: 'Combat', color: 'node-combat' },
   social: { shape: 'diamond', label: 'Social/RP', color: 'node-social' },
   investigation: { shape: 'hexagon', label: 'Investigation', color: 'node-investigation' },
+  divider: { shape: 'banner', label: 'Divider', color: 'node-divider' },
 }
 
-export const SCENE_TYPES: SceneType[] = ['event', 'narration', 'combat', 'social', 'investigation']
+export const SCENE_TYPES: SceneType[] = ['event', 'narration', 'combat', 'social', 'investigation', 'divider']
 
 // --- Field System ---
 
@@ -159,10 +160,12 @@ export type StoryNode = {
   playthroughStatus?: PlaythroughStatus
   playthroughNotes?: string
   metadata: NodeMetadata
-  // Grouping (Phase 7)
+  // Grouping
   isGroup?: boolean
   groupId?: string
   collapsed?: boolean
+  // Divider magnitude (only for sceneType 'divider')
+  dividerMagnitude?: 1 | 2 | 3
 }
 
 // --- Story Edge ---

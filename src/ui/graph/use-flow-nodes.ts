@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import type { Node, Edge } from '@xyflow/react'
 import { useGraphStore } from '@/application/graph-store'
 import { SCENE_TYPE_CONFIG } from '@/domain/types'
+import { getAllDescendants } from '@/domain/group-operations'
 import { NODE_DIMENSIONS } from './node-shapes'
 import type { StoryNodeData } from './story-node'
 import type { StoryEdgeData } from './story-edge'
@@ -11,7 +12,7 @@ export function useFlowNodes() {
   const edges = useGraphStore((s) => s.edges)
   const selectedNodeIds = useGraphStore((s) => s.selectedNodeIds)
 
-  // Compute collapsed group info — maps children of collapsed groups to their group ID
+  // Compute collapsed group info — maps descendants of collapsed groups to the outermost collapsed ancestor
   const collapsedInfo = useMemo(() => {
     const collapsedGroupIds = new Set<string>()
     const childToGroup = new Map<string, string>()
@@ -22,9 +23,31 @@ export function useFlowNodes() {
       }
     }
 
-    for (const node of Object.values(nodes)) {
-      if (node.groupId && collapsedGroupIds.has(node.groupId)) {
-        childToGroup.set(node.id, node.groupId)
+    // Find top-level collapsed groups (no collapsed ancestor)
+    const topCollapsed: string[] = []
+    for (const gid of collapsedGroupIds) {
+      let current = nodes[gid]
+      let hasCollapsedAncestor = false
+      const visited = new Set<string>()
+      while (current?.groupId) {
+        if (visited.has(current.id)) break
+        visited.add(current.id)
+        if (collapsedGroupIds.has(current.groupId)) {
+          hasCollapsedAncestor = true
+          break
+        }
+        current = nodes[current.groupId]
+      }
+      if (!hasCollapsedAncestor) {
+        topCollapsed.push(gid)
+      }
+    }
+
+    // For each top-level collapsed group, map ALL descendants to it
+    for (const gid of topCollapsed) {
+      const descendants = getAllDescendants(nodes, gid)
+      for (const did of descendants) {
+        childToGroup.set(did, gid)
       }
     }
 
@@ -32,13 +55,14 @@ export function useFlowNodes() {
   }, [nodes])
 
   // Base node data — stable when only selection changes
-  // Filter out children of collapsed groups
+  // Filter out descendants of collapsed groups
   const baseFlowNodes = useMemo(
     () =>
       Object.values(nodes)
         .filter((node) => !collapsedInfo.childToGroup.has(node.id))
         .map((node) => {
-          const dim = NODE_DIMENSIONS[SCENE_TYPE_CONFIG[node.sceneType].shape]
+          const shape = node.isGroup ? 'group-rect' : SCENE_TYPE_CONFIG[node.sceneType].shape
+          const dim = NODE_DIMENSIONS[shape]
           return {
             id: node.id,
             type: 'story' as const,

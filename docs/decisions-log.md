@@ -4,6 +4,32 @@
 
 ---
 
+## 2026-03-04 — Unlimited nested groups replacing flat-only restriction
+
+**Status:** Accepted
+**Context:** Phase 7 prohibited nesting (groups containing groups). Users need hierarchical organization (arc > mission > scene). The flat restriction forced workarounds.
+**Decision:** Remove the `isGroup` throw in `addNodesToGroup`. Allow unlimited nesting depth. Add `isAncestorOf` cycle guard, `getAllDescendants` for recursive operations, and `getGroupDepth` for depth tracking. All traversal functions include visited-set guards against corrupted circular references.
+**Alternatives rejected:** Cap at 3 levels (arbitrary limit), separate hierarchy system (adds complexity).
+**Consequences:** `moveNodes`, `deleteGroupWithChildren`, `getGroupBoundaryEdges`, `getInternalEdges`, and collapse logic all use `getAllDescendants` instead of `getGroupChildIds`. Performance is O(n) per group for descendant computation.
+
+## 2026-03-04 — Double-border rectangle for group nodes with dedicated color
+
+**Status:** Accepted
+**Context:** Groups previously used their sceneType shape (circle, square, etc.), making them visually indistinguishable from content nodes. Groups often contain mixed scene types, so inheriting any one color was meaningless.
+**Decision:** New `group-rect` shape (160×80 rounded rectangle). Groups always render as group-rect regardless of sceneType. Dedicated cyan accent (`--color-node-group: #5ec4d4`). Double border (outer 2px, inner 1px scaled inward). Expanded groups render as ghost (15% opacity). Collapsed groups show depth-scaled stacked shadows + circled depth badge.
+**Alternatives rejected:** Folder tab (skeuomorphic), stadium/capsule (too similar to pill buttons), inherit sceneType color (meaningless for mixed groups).
+**Consequences:** `group-rect` exists in `NodeShape` but no `SceneType` maps to it. All dimension lookups for groups must use `group-rect`, not their sceneType's shape.
+
+## 2026-03-04 — Divider nodes as single SceneType with magnitude field
+
+**Status:** Accepted
+**Context:** Users need visual separators for arcs, sessions, and scene breaks. Could be 3 separate SceneTypes or 1 with a magnitude property.
+**Decision:** Single `divider` SceneType with `banner` shape (200×50, ribbon with tapered ends). `dividerMagnitude?: 1|2|3` field on StoryNode. Magnitude 1 = scene break (thin), 2 = session break (medium), 3 = arc break (bold). Neutral silver/gray color (`--color-node-divider: #8899aa`). Magnitude set via context menu.
+**Alternatives rejected:** 3 separate scene types (bloats SceneType picker, 3 colors to manage), shield/crest shape (too ornamental), horizontal rule (too minimal).
+**Consequences:** Divider nodes have 11 content fields like any other node (can hold notes about the arc/session). Magnitude only affects visual rendering (stroke width, font weight, opacity).
+
+---
+
 ## 2026-03-03 — Playthrough status requires active session
 
 **Status:** Accepted

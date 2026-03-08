@@ -14,6 +14,7 @@ import type { NodeShape } from '@/domain/types'
 export function getHandleInsets(shape: NodeShape): {
   left?: number; right?: number; top?: number; bottom?: number
 } {
+  if (shape === 'banner') return { left: 12, right: 12 }
   if (shape !== 'triangle') return {}
 
   // Right-pointing triangle: (4,4) → (w-4,h/2) → (4,h-4)
@@ -46,6 +47,8 @@ export const NODE_DIMENSIONS: Record<NodeShape, { width: number; height: number 
   triangle: { width: 144, height: 124 },
   diamond: { width: 132, height: 132 },
   hexagon: { width: 152, height: 120 },
+  'group-rect': { width: 160, height: 80 },
+  banner: { width: 200, height: 50 },
 }
 
 export function getShapePath(shape: NodeShape): string {
@@ -71,6 +74,15 @@ export function getShapePath(shape: NodeShape): string {
     case 'hexagon': {
       const inset = w * 0.21
       return `M ${inset},2 L ${w - inset},2 L ${w - 2},${h / 2} L ${w - inset},${h - 2} L ${inset},${h - 2} L 2,${h / 2} Z`
+    }
+    case 'group-rect': {
+      const r = 8
+      return `M ${r},0 L ${w - r},0 Q ${w},0 ${w},${r} L ${w},${h - r} Q ${w},${h} ${w - r},${h} L ${r},${h} Q 0,${h} 0,${h - r} L 0,${r} Q 0,0 ${r},0 Z`
+    }
+    case 'banner': {
+      // Ribbon/pennant with tapered pointed ends
+      const tip = 14
+      return `M ${tip},0 L ${w - tip},0 L ${w},${h / 2} L ${w - tip},${h} L ${tip},${h} L 0,${h / 2} Z`
     }
   }
 }

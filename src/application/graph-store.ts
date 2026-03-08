@@ -42,7 +42,7 @@ import {
   deleteGroupKeepChildren as deleteGroupKeepChildrenOp,
   deleteGroupWithChildren as deleteGroupWithChildrenOp,
   toggleGroupCollapsed as toggleGroupCollapsedOp,
-  getGroupChildIds,
+  getAllDescendants,
 } from '@/domain/group-operations'
 import { createSnapshot } from '@/domain/history-operations'
 import { useHistoryStore } from './history-store'
@@ -89,6 +89,7 @@ type GraphState = {
   removeFromGroup: (nodeIds: string[]) => void
   deleteGroup: (groupId: string, cascade: boolean) => void
   toggleGroupCollapsed: (groupId: string) => void
+  setDividerMagnitude: (nodeId: string, magnitude: 1 | 2 | 3) => void
   undo: () => void
   redo: () => void
   pushHistory: () => void
@@ -173,17 +174,17 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       if (!node) return state
       const updatedNodes = { ...state.nodes, [id]: updateNodePosition(node, position) }
 
-      // If moving a group, translate all children by the same delta
+      // If moving a group, translate all descendants by the same delta
       if (node.isGroup) {
         const dx = position.x - node.position.x
         const dy = position.y - node.position.y
-        const childIds = getGroupChildIds(state.nodes, id)
-        for (const childId of childIds) {
-          const child = updatedNodes[childId]
-          if (child) {
-            updatedNodes[childId] = updateNodePosition(child, {
-              x: child.position.x + dx,
-              y: child.position.y + dy,
+        const descendantIds = getAllDescendants(state.nodes, id)
+        for (const did of descendantIds) {
+          const desc = updatedNodes[did]
+          if (desc) {
+            updatedNodes[did] = updateNodePosition(desc, {
+              x: desc.position.x + dx,
+              y: desc.position.y + dy,
             })
           }
         }
@@ -205,13 +206,13 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         if (node.isGroup) {
           const dx = position.x - node.position.x
           const dy = position.y - node.position.y
-          const childIds = getGroupChildIds(state.nodes, id)
-          for (const childId of childIds) {
-            const child = updatedNodes[childId]
-            if (child) {
-              updatedNodes[childId] = updateNodePosition(child, {
-                x: child.position.x + dx,
-                y: child.position.y + dy,
+          const descendantIds = getAllDescendants(state.nodes, id)
+          for (const did of descendantIds) {
+            const desc = updatedNodes[did]
+            if (desc) {
+              updatedNodes[did] = updateNodePosition(desc, {
+                x: desc.position.x + dx,
+                y: desc.position.y + dy,
               })
             }
           }
@@ -443,8 +444,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       if (currentRadialId === groupId) {
         useUIStore.getState().hideRadialSubnodes()
       } else if (cascade) {
-        const childIds = getGroupChildIds(get().nodes, groupId)
-        if (childIds.includes(currentRadialId)) {
+        const descendantIds = getAllDescendants(get().nodes, groupId)
+        if (descendantIds.includes(currentRadialId)) {
           useUIStore.getState().hideRadialSubnodes()
         }
       }
@@ -461,6 +462,15 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     if (!node?.isGroup) return
     set((state) => ({
       nodes: { ...state.nodes, [groupId]: toggleGroupCollapsedOp(node) },
+    }))
+  },
+
+  setDividerMagnitude: (nodeId, magnitude) => {
+    const node = get().nodes[nodeId]
+    if (!node || node.sceneType !== 'divider') return
+    saveHistory()
+    set((state) => ({
+      nodes: { ...state.nodes, [nodeId]: { ...node, dividerMagnitude: magnitude } },
     }))
   },
 

@@ -13,7 +13,7 @@ import { useSessionStore } from '@/application/session-store'
 import { useLongPress } from '@/ui/hooks/use-long-press'
 import { buildDiffMap, PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
 import { HighlightContext } from './highlight-context'
-import { getGroupChildIds } from '@/domain/group-operations'
+import { getGroupChildIds, getGroupDepth } from '@/domain/group-operations'
 import { extractEntityTypesFromNodeFields } from '@/domain/entity-tag-parser'
 
 export type StoryNodeData = {
@@ -36,11 +36,20 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
   const allNodes = useGraphStore((s) => s.nodes)
   const { storyNode } = data
 
+  const isGroup = storyNode.isGroup
+  const isDivider = storyNode.sceneType === 'divider'
+
   // Group child count (only computed for group nodes)
   const childCount = useMemo(() => {
-    if (!storyNode.isGroup) return 0
+    if (!isGroup) return 0
     return getGroupChildIds(allNodes, storyNode.id).length
-  }, [storyNode.isGroup, storyNode.id, allNodes])
+  }, [isGroup, storyNode.id, allNodes])
+
+  // Group nesting depth
+  const groupDepth = useMemo(() => {
+    if (!isGroup) return 0
+    return getGroupDepth(allNodes, storyNode.id)
+  }, [isGroup, storyNode.id, allNodes])
 
   // Entity highlight: read from canvas-level context (O(1) per node)
   const highlightSet = useContext(HighlightContext)
@@ -74,14 +83,18 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
 
   const longPressRef = useLongPress(handleLongPress)
 
+  // Groups always render as group-rect, regardless of sceneType
   const config = SCENE_TYPE_CONFIG[storyNode.sceneType]
-  const dim = NODE_DIMENSIONS[config.shape]
-  const shapePath = getShapePath(config.shape)
-  const accentColor = `var(--color-${config.color})`
+  const shape = isGroup ? 'group-rect' : config.shape
+  const dim = NODE_DIMENSIONS[shape]
+  const shapePath = getShapePath(shape)
+  const accentColor = isGroup
+    ? 'var(--color-node-group)'
+    : `var(--color-${config.color})`
 
   const targetPos = scrollDirection === 'horizontal' ? Position.Left : Position.Top
   const sourcePos = scrollDirection === 'horizontal' ? Position.Right : Position.Bottom
-  const handleInsets = getHandleInsets(config.shape)
+  const handleInsets = getHandleInsets(shape)
 
   // Dim if entity filter is active and this node doesn't match
   const entityDimmed = isHighlighted === false
@@ -99,9 +112,13 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
     ? `var(--color-${PLAYTHROUGH_STATUS_CONFIG[storyNode.playthroughStatus].color})`
     : null
 
-  // Single-tone translucent fill — flat color, no gradient.
-  // --accent-mix is 40% in light mode, 25% in dark mode.
+  // Single-tone translucent fill
   const nodeFillColor = `color-mix(in srgb, ${accentColor} var(--accent-mix), var(--color-node-fill-base))`
+
+  // Expanded groups render as ghost (faint outline)
+  const isGhost = isGroup && !storyNode.collapsed
+  // Divider magnitude
+  const magnitude = isDivider ? (storyNode.dividerMagnitude ?? 1) : 0
 
   return (
     <div
@@ -113,12 +130,12 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
         opacity: dimmed ? 0.3 : 1,
       }}
     >
-      {/* Stacked shadow layers — visible when group is collapsed */}
-      {storyNode.isGroup && storyNode.collapsed && (
-        <GroupStackedShadow dim={dim} shapePath={shapePath} />
+      {/* Stacked shadow layers — depth-scaled for collapsed groups */}
+      {isGroup && storyNode.collapsed && (
+        <GroupStackedShadow dim={dim} shapePath={shapePath} depth={groupDepth} />
       )}
 
-      {/* SVG shape with glass effect — uses shared defs */}
+      {/* SVG shape with glass effect */}
       <svg
         width={dim.width}
         height={dim.height}
@@ -126,19 +143,31 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
         overflow="visible"
         className="absolute inset-0"
       >
-        {/* Group dashed border ring */}
-        {storyNode.isGroup && (
+        {/* Group: double border (outer ring) */}
+        {isGroup && (
           <path
             d={shapePath}
             fill="none"
             stroke={accentColor}
-            strokeWidth="1.5"
-            strokeDasharray="4 3"
-            opacity="0.5"
+            strokeWidth="2"
+            opacity={isGhost ? 0.15 : 0.6}
           />
         )}
 
-        {/* Diff overlay ring — shown behind glass fill when diff is active */}
+        {/* Group: inner border (scaled inward) */}
+        {isGroup && (
+          <g transform={`translate(4,4) scale(${(dim.width - 8) / dim.width}, ${(dim.height - 8) / dim.height})`}>
+            <path
+              d={shapePath}
+              fill="none"
+              stroke={accentColor}
+              strokeWidth="1"
+              opacity={isGhost ? 0.1 : 0.4}
+            />
+          </g>
+        )}
+
+        {/* Diff overlay ring */}
         {diffRingColor && (
           <path
             d={shapePath}
@@ -162,29 +191,35 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
           />
         )}
 
-        {/* Solid tinted fill */}
+        {/* Solid tinted fill — ghost groups get very low opacity */}
         <path
           d={shapePath}
           fill={nodeFillColor}
           stroke={diffRingColor ?? (selected ? accentColor : 'var(--color-surface-glass-border)')}
-          strokeWidth={diffRingColor ? 2 : selected ? 2 : 1}
+          strokeWidth={isDivider ? magnitudeStrokeWidth(magnitude) : diffRingColor ? 2 : selected ? 2 : 1}
+          opacity={isGhost ? 0.15 : 1}
           className="transition-all duration-150"
         />
 
-        {/* Top highlight — glass reflection */}
-        <path
-          d={shapePath}
-          fill="url(#highlight-sheen)"
-          opacity="0.12"
-        />
+        {/* Top highlight — glass reflection (not on ghost groups) */}
+        {!isGhost && (
+          <path
+            d={shapePath}
+            fill="url(#highlight-sheen)"
+            opacity="0.12"
+          />
+        )}
       </svg>
 
-      {/* Label + arc label — triangle text shifted left toward wide base */}
+      {/* Label + arc label */}
       <div
         className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-3"
-        style={config.shape === 'triangle' ? { paddingLeft: 8, paddingRight: 50 } : undefined}
+        style={{
+          ...(config.shape === 'triangle' ? { paddingLeft: 8, paddingRight: 50 } : undefined),
+          ...(shape === 'banner' ? { paddingLeft: 20, paddingRight: 20 } : undefined),
+        }}
       >
-        {storyNode.arcLabel && (
+        {storyNode.arcLabel && !isDivider && (
           <span
             className="text-[9px] font-medium tracking-widest uppercase mb-0.5 opacity-60"
             style={{ color: accentColor }}
@@ -193,20 +228,24 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
           </span>
         )}
         <span
-          className="text-xs font-semibold text-text-primary text-center leading-tight line-clamp-2"
+          className={`text-text-primary text-center leading-tight line-clamp-2 ${
+            isDivider
+              ? magnitudeLabelClass(magnitude)
+              : 'text-xs font-semibold'
+          }`}
           style={{ fontFamily: 'var(--font-display)' }}
         >
           {storyNode.label}
         </span>
-        <span
-          className="text-[9px] mt-0.5 font-medium text-text-secondary"
-        >
-          {storyNode.isGroup ? `${childCount} node${childCount !== 1 ? 's' : ''}` : config.label}
-        </span>
+        {!isDivider && (
+          <span className="text-[9px] mt-0.5 font-medium text-text-secondary">
+            {isGroup ? `${childCount} node${childCount !== 1 ? 's' : ''}` : config.label}
+          </span>
+        )}
       </div>
 
       {/* Group collapse/expand chevron — top right */}
-      {storyNode.isGroup && (
+      {isGroup && (
         <button
           onClick={handleCollapseToggle}
           className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-surface-glass
@@ -224,12 +263,17 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
         </button>
       )}
 
-      {/* Entity type summary icons — bottom center */}
-      {!storyNode.isGroup && (
+      {/* Group depth badge — top left, only for nested groups */}
+      {isGroup && groupDepth > 0 && (
+        <GroupDepthBadge depth={groupDepth} />
+      )}
+
+      {/* Entity type summary icons — bottom center (not on groups or dividers) */}
+      {!isGroup && !isDivider && (
         <EntityTypeSummary storyNode={storyNode} />
       )}
 
-      {/* Tag indicator — bottom left, visible when node has tags */}
+      {/* Tag indicator */}
       {storyNode.metadata.tags.length > 0 && (
         <div
           className="absolute -bottom-0.5 -left-0.5 pointer-events-none"
@@ -239,7 +283,7 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
         </div>
       )}
 
-      {/* Status dot — bottom right, always visible when status is set */}
+      {/* Status dot */}
       {statusDotColor && (
         <div
           className="absolute -bottom-0.5 -right-0.5 w-[7px] h-[7px] rounded-full border border-surface-glass"
@@ -250,7 +294,7 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
         />
       )}
 
-      {/* Handles — inset for shapes that don't fill the bounding box (triangle) */}
+      {/* Handles */}
       <Handle
         type="target"
         position={targetPos}
@@ -274,6 +318,20 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
     </div>
   )
 })
+
+// --- Divider magnitude helpers ---
+
+function magnitudeStrokeWidth(magnitude: number): number {
+  return magnitude === 3 ? 3 : magnitude === 2 ? 2 : 1
+}
+
+function magnitudeLabelClass(magnitude: number): string {
+  if (magnitude === 3) return 'text-sm font-bold tracking-wide uppercase'
+  if (magnitude === 2) return 'text-xs font-semibold tracking-wide'
+  return 'text-[10px] font-medium'
+}
+
+// --- Sub-components ---
 
 const ENTITY_ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>> = {
   Shield, User, Skull, Package, MapPin, EyeOff,
@@ -312,28 +370,51 @@ const EntityTypeSummary = memo(function EntityTypeSummary({ storyNode }: { story
   )
 })
 
-/** Stacked shadow layers behind collapsed group nodes */
-function GroupStackedShadow({ dim, shapePath }: { dim: { width: number; height: number }; shapePath: string }) {
+/** Circled number badge showing group nesting depth */
+function GroupDepthBadge({ depth }: { depth: number }) {
+  return (
+    <div
+      className="absolute -top-2 -left-2 w-4 h-4 rounded-full bg-surface-glass
+        border border-surface-glass-border flex items-center justify-center
+        pointer-events-none z-10"
+      title={`Nesting depth: ${depth}`}
+    >
+      <span className="text-[8px] font-bold text-text-secondary">{depth}</span>
+    </div>
+  )
+}
+
+/** Stacked shadow layers behind collapsed group nodes — count scales with depth */
+function GroupStackedShadow({
+  dim,
+  shapePath,
+  depth,
+}: {
+  dim: { width: number; height: number }
+  shapePath: string
+  depth: number
+}) {
+  const layerCount = Math.min(depth + 1, 5)
+  const layers = Array.from({ length: layerCount }, (_, i) => i)
+
   return (
     <>
-      <svg
-        width={dim.width}
-        height={dim.height}
-        viewBox={`0 0 ${dim.width} ${dim.height}`}
-        className="absolute"
-        style={{ top: 6, left: 4, opacity: 0.15 }}
-      >
-        <path d={shapePath} fill="var(--color-surface-glass-border)" stroke="none" />
-      </svg>
-      <svg
-        width={dim.width}
-        height={dim.height}
-        viewBox={`0 0 ${dim.width} ${dim.height}`}
-        className="absolute"
-        style={{ top: 3, left: 2, opacity: 0.25 }}
-      >
-        <path d={shapePath} fill="var(--color-surface-glass-border)" stroke="none" />
-      </svg>
+      {layers.map((i) => (
+        <svg
+          key={i}
+          width={dim.width}
+          height={dim.height}
+          viewBox={`0 0 ${dim.width} ${dim.height}`}
+          className="absolute"
+          style={{
+            top: 3 * (layerCount - i),
+            left: 2 * (layerCount - i),
+            opacity: 0.1 + 0.05 * i,
+          }}
+        >
+          <path d={shapePath} fill="var(--color-surface-glass-border)" stroke="none" />
+        </svg>
+      ))}
     </>
   )
 }

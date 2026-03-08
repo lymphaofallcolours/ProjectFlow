@@ -17,11 +17,18 @@ describe('getHandleInsets', () => {
     expect(insets.top).toBe(insets.bottom)
   })
 
-  it('returns empty object for non-triangle shapes', () => {
+  it('returns left/right insets for banner shape', () => {
+    const insets = getHandleInsets('banner')
+    expect(insets.left).toBe(12)
+    expect(insets.right).toBe(12)
+  })
+
+  it('returns empty object for non-triangle/non-banner shapes', () => {
     expect(getHandleInsets('circle')).toEqual({})
     expect(getHandleInsets('square')).toEqual({})
     expect(getHandleInsets('diamond')).toEqual({})
     expect(getHandleInsets('hexagon')).toEqual({})
+    expect(getHandleInsets('group-rect')).toEqual({})
   })
 })
 

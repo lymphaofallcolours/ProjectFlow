@@ -9,6 +9,7 @@ const SHAPE_ICONS: Record<SceneType, string> = {
   combat: '△',
   social: '◇',
   investigation: '⬡',
+  divider: '▬',
 }
 
 export function SceneTypePicker({ onClose }: { onClose: () => void }) {
@@ -54,23 +55,25 @@ export function SceneTypePicker({ onClose }: { onClose: () => void }) {
       {SCENE_TYPES.map((type) => {
         const config = SCENE_TYPE_CONFIG[type]
         return (
-          <button
-            key={type}
-            onClick={() => handleSelect(type)}
-            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-left
-              text-text-secondary hover:text-text-primary hover:bg-surface-glass
-              transition-colors duration-100 cursor-pointer"
-          >
-            <span
-              className="text-base font-light w-5 text-center"
-              style={{ color: `var(--color-${config.color})` }}
+          <div key={type}>
+            {type === 'divider' && <div className="h-px bg-border my-1 mx-2" />}
+            <button
+              onClick={() => handleSelect(type)}
+              className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-left
+                text-text-secondary hover:text-text-primary hover:bg-surface-glass
+                transition-colors duration-100 cursor-pointer"
             >
-              {SHAPE_ICONS[type]}
-            </span>
-            <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-display)' }}>
-              {config.label}
-            </span>
-          </button>
+              <span
+                className="text-base font-light w-5 text-center"
+                style={{ color: `var(--color-${config.color})` }}
+              >
+                {SHAPE_ICONS[type]}
+              </span>
+              <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-display)' }}>
+                {config.label}
+              </span>
+            </button>
+          </div>
         )
       })}
     </div>

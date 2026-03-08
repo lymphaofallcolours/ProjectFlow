@@ -6,6 +6,9 @@ import {
   toggleGroupCollapsed,
   getGroupChildren,
   getGroupChildIds,
+  getAllDescendants,
+  getGroupDepth,
+  isAncestorOf,
   isNodeInGroup,
   deleteGroupKeepChildren,
   deleteGroupWithChildren,
@@ -72,12 +75,21 @@ describe('addNodesToGroup', () => {
     expect(() => addNodesToGroup(nodes, 'n1', ['c1'])).toThrow('not a group')
   })
 
-  it('throws when trying to nest a group inside another group', () => {
+  it('allows nesting a group inside another group', () => {
     const g1 = createTestGroupNode({ id: 'g1' })
     const g2 = createTestGroupNode({ id: 'g2' })
     const nodes = { g1, g2 }
 
-    expect(() => addNodesToGroup(nodes, 'g1', ['g2'])).toThrow('Cannot nest group')
+    const result = addNodesToGroup(nodes, 'g1', ['g2'])
+    expect(result['g2'].groupId).toBe('g1')
+  })
+
+  it('throws when nesting would create a cycle', () => {
+    const g1 = createTestGroupNode({ id: 'g1', groupId: 'g2' })
+    const g2 = createTestGroupNode({ id: 'g2' })
+    const nodes = { g1, g2 }
+
+    expect(() => addNodesToGroup(nodes, 'g1', ['g2'])).toThrow('descendant')
   })
 
   it('throws when node already belongs to a different group', () => {
@@ -176,6 +188,100 @@ describe('getGroupChildIds', () => {
   })
 })
 
+describe('isAncestorOf', () => {
+  it('returns true when nodeId is a descendant of ancestorId', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const nodes = { g1, g2 }
+
+    expect(isAncestorOf(nodes, 'g1', 'g2')).toBe(true)
+  })
+
+  it('returns false when no ancestor relationship', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2' })
+    const nodes = { g1, g2 }
+
+    expect(isAncestorOf(nodes, 'g1', 'g2')).toBe(false)
+  })
+
+  it('detects multi-level ancestry', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const g3 = createTestGroupNode({ id: 'g3', groupId: 'g2' })
+    const nodes = { g1, g2, g3 }
+
+    expect(isAncestorOf(nodes, 'g1', 'g3')).toBe(true)
+  })
+})
+
+describe('getAllDescendants', () => {
+  it('returns direct children', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g1' })
+    const c2 = createTestNode({ id: 'c2', groupId: 'g1' })
+    const nodes = { g1, c1, c2 }
+
+    const result = getAllDescendants(nodes, 'g1')
+    expect(result.sort()).toEqual(['c1', 'c2'])
+  })
+
+  it('returns nested descendants recursively', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g2' })
+    const c2 = createTestNode({ id: 'c2', groupId: 'g1' })
+    const nodes = { g1, g2, c1, c2 }
+
+    const result = getAllDescendants(nodes, 'g1')
+    expect(result.sort()).toEqual(['c1', 'c2', 'g2'])
+  })
+
+  it('handles 3+ levels of nesting', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const g3 = createTestGroupNode({ id: 'g3', groupId: 'g2' })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g3' })
+    const nodes = { g1, g2, g3, c1 }
+
+    const result = getAllDescendants(nodes, 'g1')
+    expect(result.sort()).toEqual(['c1', 'g2', 'g3'])
+  })
+
+  it('returns empty for group with no children', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const nodes = { g1 }
+
+    expect(getAllDescendants(nodes, 'g1')).toEqual([])
+  })
+})
+
+describe('getGroupDepth', () => {
+  it('returns 0 for a top-level group', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const nodes = { g1 }
+
+    expect(getGroupDepth(nodes, 'g1')).toBe(0)
+  })
+
+  it('returns 1 for a group inside another group', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const nodes = { g1, g2 }
+
+    expect(getGroupDepth(nodes, 'g2')).toBe(1)
+  })
+
+  it('returns 2 for a doubly nested group', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const g3 = createTestGroupNode({ id: 'g3', groupId: 'g2' })
+    const nodes = { g1, g2, g3 }
+
+    expect(getGroupDepth(nodes, 'g3')).toBe(2)
+  })
+})
+
 describe('isNodeInGroup', () => {
   it('returns true when node has groupId', () => {
     const node = createTestNode({ id: 'c1', groupId: 'g1' })
@@ -203,6 +309,17 @@ describe('deleteGroupKeepChildren', () => {
     expect(result.nodes['c2'].groupId).toBeUndefined()
   })
 
+  it('re-parents children to the parent group when nested', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g2' })
+    const nodes = { g1, g2, c1 }
+
+    const result = deleteGroupKeepChildren(nodes, {}, 'g2')
+    expect(result.nodes['g2']).toBeUndefined()
+    expect(result.nodes['c1'].groupId).toBe('g1')
+  })
+
   it('removes edges connected to the group node', () => {
     const group = createTestGroupNode({ id: 'g1' })
     const c1 = createTestNode({ id: 'c1', groupId: 'g1' })
@@ -225,6 +342,17 @@ describe('deleteGroupWithChildren', () => {
     const c2 = createTestNode({ id: 'c2', groupId: 'g1' })
     const other = createTestNode({ id: 'n1' })
     const nodes = { g1: group, c1, c2, n1: other }
+
+    const result = deleteGroupWithChildren(nodes, {}, 'g1')
+    expect(Object.keys(result.nodes)).toEqual(['n1'])
+  })
+
+  it('removes nested groups and their children recursively', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g2' })
+    const other = createTestNode({ id: 'n1' })
+    const nodes = { g1, g2, c1, n1: other }
 
     const result = deleteGroupWithChildren(nodes, {}, 'g1')
     expect(Object.keys(result.nodes)).toEqual(['n1'])

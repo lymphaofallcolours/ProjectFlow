@@ -2,6 +2,21 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## v1.2.0 (2026-03-04)
+
+### feat: add nested groups, group/divider shapes, and depth visualization
+- **Nested groups**: groups can now contain other groups (unlimited depth); circular nesting prevented
+- **Group shape**: all group nodes render as double-border rectangles with dedicated cyan accent, regardless of sceneType
+- **Expanded ghost**: expanded groups render at 15% opacity (faint outline, doesn't compete with children)
+- **Depth visualization**: stacked shadows scale with nesting depth + circled depth badge on nested groups
+- **Divider nodes**: new `divider` SceneType with banner/ribbon shape (~200×50, tapered ends)
+- **Divider magnitude**: 3 levels (Scene Break / Session Break / Arc Break) via context menu
+- New domain functions: `getAllDescendants`, `getGroupDepth`, `isAncestorOf` with cycle guards
+- Recursive collapse: parent hides all descendants without mutating child collapse state
+- Group movement moves all descendants (recursive)
+- Context menu: groups can be nested via "Group Selected", grouped groups show "Remove from Group"
+- 14 new tests (group nesting, depth, descendants, divider, banner insets)
+
 ## v1.1.2 (2026-03-04)
 
 ### docs: add GPL-3.0 license and project README

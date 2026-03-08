@@ -29,6 +29,7 @@ const SHAPE_ICONS: Record<SceneType, string> = {
   combat: '△',
   social: '◇',
   investigation: '⬡',
+  divider: '▬',
 }
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
@@ -65,6 +66,9 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
   const nodeGroupId = useGraphStore((s) => s.nodes[nodeId]?.groupId)
   const nodeCollapsed = useGraphStore((s) => s.nodes[nodeId]?.collapsed)
   const nodePosition = useGraphStore((s) => s.nodes[nodeId]?.position)
+  const isDivider = currentType === 'divider'
+  const currentMagnitude = useGraphStore((s) => s.nodes[nodeId]?.dividerMagnitude ?? 1)
+  const setDividerMagnitude = useGraphStore((s) => s.setDividerMagnitude)
   const ref = useRef<HTMLDivElement>(null)
 
   useEscapeKey(onClose)
@@ -132,7 +136,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
     const groupId = createGroup(currentType ?? 'narration', { x: pos.x - 30, y: pos.y - 60 }, 'Group')
     const ids = Array.from(selectedNodeIds).filter((id) => {
       const n = useGraphStore.getState().nodes[id]
-      return n && !n.isGroup
+      return !!n
     })
     if (ids.length > 0) addToGroup(groupId, ids)
     onClose()
@@ -283,6 +287,25 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
             )
           })}
 
+          {/* Divider magnitude — only for divider nodes */}
+          {isDivider && (
+            <>
+              <div className="h-px bg-border my-1 mx-2" />
+              <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-text-muted font-medium">
+                Magnitude
+              </div>
+              {([1, 2, 3] as const).map((mag) => (
+                <MenuItem
+                  key={mag}
+                  icon={<span className="text-sm w-4 text-center text-text-muted">{mag === 3 ? '━' : mag === 2 ? '═' : '─'}</span>}
+                  label={mag === 3 ? 'Arc Break' : mag === 2 ? 'Session Break' : 'Scene Break'}
+                  active={mag === currentMagnitude}
+                  onClick={() => { setDividerMagnitude(nodeId, mag); onClose() }}
+                />
+              ))}
+            </>
+          )}
+
           <div className="h-px bg-border my-1 mx-2" />
 
           {/* Arc label section */}
@@ -389,8 +412,8 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
             </>
           )}
 
-          {/* Remove from group — shown for grouped child nodes */}
-          {nodeGroupId && !nodeIsGroup && (
+          {/* Remove from group — shown for any node inside a group */}
+          {nodeGroupId && (
             <>
               <div className="h-px bg-border my-1 mx-2" />
               <MenuItem

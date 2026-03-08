@@ -11,6 +11,26 @@ export function createGroupNode(
   return { ...node, isGroup: true }
 }
 
+/**
+ * Checks if `ancestorId` is an ancestor of `nodeId` by walking up the groupId chain.
+ * Prevents circular nesting (A inside B inside A).
+ */
+export function isAncestorOf(
+  nodes: Record<string, StoryNode>,
+  ancestorId: string,
+  nodeId: string,
+): boolean {
+  const visited = new Set<string>()
+  let current = nodes[nodeId]
+  while (current?.groupId) {
+    if (visited.has(current.id)) return false // cycle guard
+    visited.add(current.id)
+    if (current.groupId === ancestorId) return true
+    current = nodes[current.groupId]
+  }
+  return false
+}
+
 export function addNodesToGroup(
   nodes: Record<string, StoryNode>,
   groupId: string,
@@ -25,8 +45,8 @@ export function addNodesToGroup(
   for (const id of nodeIds) {
     const node = updated[id]
     if (!node) continue
-    if (node.isGroup) {
-      throw new Error(`Cannot nest group ${id} inside another group`)
+    if (node.isGroup && isAncestorOf(updated, id, groupId)) {
+      throw new Error(`Cannot nest group ${groupId} inside its own descendant ${id}`)
     }
     if (node.groupId && node.groupId !== groupId) {
       throw new Error(`Node ${id} already belongs to group ${node.groupId}`)
@@ -70,6 +90,60 @@ export function getGroupChildIds(
     .map((n) => n.id)
 }
 
+/**
+ * Returns ALL descendant node IDs recursively (children, grandchildren, etc.).
+ * Includes visited-set guard against corrupted circular references.
+ */
+export function getAllDescendants(
+  nodes: Record<string, StoryNode>,
+  groupId: string,
+): string[] {
+  const result: string[] = []
+  const visited = new Set<string>()
+  const queue = [groupId]
+
+  while (queue.length > 0) {
+    const current = queue.shift()!
+    if (visited.has(current)) continue
+    visited.add(current)
+
+    const children = getGroupChildIds(nodes, current)
+    for (const childId of children) {
+      result.push(childId)
+      // If child is a group, recurse into it
+      if (nodes[childId]?.isGroup) {
+        queue.push(childId)
+      }
+    }
+  }
+
+  return result
+}
+
+/**
+ * Returns the nesting depth of a group (0 for top-level, 1 for a group inside a group, etc.).
+ */
+export function getGroupDepth(
+  nodes: Record<string, StoryNode>,
+  groupId: string,
+): number {
+  let depth = 0
+  const visited = new Set<string>()
+  let current = nodes[groupId]
+
+  while (current?.groupId) {
+    if (visited.has(current.id)) break // cycle guard
+    visited.add(current.id)
+    const parent = nodes[current.groupId]
+    if (parent?.isGroup) {
+      depth++
+    }
+    current = parent
+  }
+
+  return depth
+}
+
 export function isNodeInGroup(node: StoryNode): boolean {
   return node.groupId !== undefined
 }
@@ -80,11 +154,13 @@ export function deleteGroupKeepChildren(
   groupId: string,
 ): { nodes: Record<string, StoryNode>; edges: Record<string, StoryEdge> } {
   const updated = { ...nodes }
+  const group = updated[groupId]
+  const parentGroupId = group?.groupId
 
-  // Ungroup all children
+  // Re-parent direct children to the deleted group's parent (if any)
   for (const [id, node] of Object.entries(updated)) {
     if (node.groupId === groupId) {
-      updated[id] = { ...node, groupId: undefined }
+      updated[id] = { ...node, groupId: parentGroupId }
     }
   }
 
@@ -106,8 +182,8 @@ export function deleteGroupWithChildren(
   edges: Record<string, StoryEdge>,
   groupId: string,
 ): { nodes: Record<string, StoryNode>; edges: Record<string, StoryEdge> } {
-  const childIds = getGroupChildIds(nodes, groupId)
-  const removeSet = new Set([groupId, ...childIds])
+  const descendantIds = getAllDescendants(nodes, groupId)
+  const removeSet = new Set([groupId, ...descendantIds])
 
   const remainingNodes = Object.fromEntries(
     Object.entries(nodes).filter(([id]) => !removeSet.has(id)),
@@ -126,12 +202,12 @@ export function getGroupBoundaryEdges(
   edges: Record<string, StoryEdge>,
   groupId: string,
 ): StoryEdge[] {
-  const childIds = new Set(getGroupChildIds(nodes, groupId))
-  childIds.add(groupId)
+  const descendantIds = getAllDescendants(nodes, groupId)
+  const memberIds = new Set([groupId, ...descendantIds])
 
   return Object.values(edges).filter((edge) => {
-    const sourceInGroup = childIds.has(edge.source)
-    const targetInGroup = childIds.has(edge.target)
+    const sourceInGroup = memberIds.has(edge.source)
+    const targetInGroup = memberIds.has(edge.target)
     return sourceInGroup !== targetInGroup
   })
 }
@@ -141,9 +217,10 @@ export function getInternalEdges(
   edges: Record<string, StoryEdge>,
   groupId: string,
 ): StoryEdge[] {
-  const childIds = new Set(getGroupChildIds(nodes, groupId))
+  const descendantIds = getAllDescendants(nodes, groupId)
+  const memberIds = new Set([groupId, ...descendantIds])
 
   return Object.values(edges).filter(
-    (edge) => childIds.has(edge.source) && childIds.has(edge.target),
+    (edge) => memberIds.has(edge.source) && memberIds.has(edge.target),
   )
 }
