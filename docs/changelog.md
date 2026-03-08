@@ -2,6 +2,14 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## v1.2.3 (2026-03-08)
+
+### fix: depth badge shows descendant depth only, not ancestor+descendant
+- Badge now shows how many nesting levels are *contained inside* the group (descendant depth only)
+- Previously badge showed `ancestorDepth + descendantDepth`, causing all groups in a hierarchy to display the same total
+- Ancestor depth still used for stacked shadow layers (visual depth cue behind collapsed groups)
+- 4 new tests: per-level descendant depth, independence from ancestor depth, non-group children, circular reference guard
+
 ## v1.2.2 (2026-03-08)
 
 ### fix: divider icon, delete crash, depth badge, arc labels on dividers

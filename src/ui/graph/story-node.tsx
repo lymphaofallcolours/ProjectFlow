@@ -269,8 +269,8 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
       )}
 
       {/* Group depth badge — top left, shows nesting levels contained within */}
-      {isGroup && (groupDepth > 0 || descendantDepth > 0) && (
-        <GroupDepthBadge depth={groupDepth + descendantDepth} />
+      {isGroup && descendantDepth > 0 && (
+        <GroupDepthBadge depth={descendantDepth} />
       )}
 
       {/* Entity type summary icons — bottom center (not on groups or dividers) */}

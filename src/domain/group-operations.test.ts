@@ -319,6 +319,60 @@ describe('getMaxDescendantDepth', () => {
     // g1 → g2 (depth 1), g1 → g3 → g4 (depth 2)
     expect(getMaxDescendantDepth(nodes, 'g1')).toBe(2)
   })
+
+  it('each group in a 3-level hierarchy reports correct descendant depth', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const g3 = createTestGroupNode({ id: 'g3', groupId: 'g2' })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g3' })
+    const nodes = { g1, g2, g3, c1 }
+
+    // g1 contains g2 contains g3 contains c1
+    expect(getMaxDescendantDepth(nodes, 'g1')).toBe(2) // g1 → g2 → g3
+    expect(getMaxDescendantDepth(nodes, 'g2')).toBe(1) // g2 → g3
+    expect(getMaxDescendantDepth(nodes, 'g3')).toBe(0) // g3 has no sub-groups
+  })
+
+  it('descendant depth is independent of ancestor depth', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const g3 = createTestGroupNode({ id: 'g3', groupId: 'g2' })
+    const g4 = createTestGroupNode({ id: 'g4', groupId: 'g3' })
+    const nodes = { g1, g2, g3, g4 }
+
+    // g1 → g2 → g3 → g4 (4 levels total)
+    // Each group's descendant depth should NOT include ancestors
+    expect(getMaxDescendantDepth(nodes, 'g1')).toBe(3) // g2, g3, g4 below
+    expect(getMaxDescendantDepth(nodes, 'g2')).toBe(2) // g3, g4 below
+    expect(getMaxDescendantDepth(nodes, 'g3')).toBe(1) // g4 below
+    expect(getMaxDescendantDepth(nodes, 'g4')).toBe(0) // nothing below
+
+    // Meanwhile ancestor depth (getGroupDepth) measures upward
+    expect(getGroupDepth(nodes, 'g1')).toBe(0)
+    expect(getGroupDepth(nodes, 'g2')).toBe(1)
+    expect(getGroupDepth(nodes, 'g3')).toBe(2)
+    expect(getGroupDepth(nodes, 'g4')).toBe(3)
+  })
+
+  it('handles non-group children without counting them as depth', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const n1 = createTestNode({ id: 'n1', groupId: 'g1' })
+    const n2 = createTestNode({ id: 'n2', groupId: 'g1' })
+    const nodes = { g1, n1, n2 }
+
+    // Non-group children don't add descendant depth
+    expect(getMaxDescendantDepth(nodes, 'g1')).toBe(0)
+  })
+
+  it('handles circular references without infinite loop', () => {
+    // Simulate corrupted data: g1 → g2 → g1
+    const g1 = createTestGroupNode({ id: 'g1', groupId: 'g2' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const nodes = { g1, g2 }
+
+    // Should terminate without error due to visited-set guard
+    expect(getMaxDescendantDepth(nodes, 'g1')).toBeDefined()
+  })
 })
 
 describe('isNodeInGroup', () => {
