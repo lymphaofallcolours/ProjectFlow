@@ -288,13 +288,20 @@ export function extractSubgraph(
 ): { nodes: StoryNode[]; edges: StoryEdge[] } {
   const idSet = new Set(nodeIds)
 
-  // Auto-include children of selected groups
+  // Auto-include all descendants of selected groups (recursive BFS)
   for (const id of nodeIds) {
     const node = nodes[id]
     if (node?.isGroup) {
-      for (const [childId, child] of Object.entries(nodes)) {
-        if (child.groupId === id) {
-          idSet.add(childId)
+      const queue = [id]
+      const visited = new Set<string>([id])
+      while (queue.length > 0) {
+        const gid = queue.shift()!
+        for (const [childId, child] of Object.entries(nodes)) {
+          if (child.groupId === gid && !visited.has(childId)) {
+            visited.add(childId)
+            idSet.add(childId)
+            if (child.isGroup) queue.push(childId)
+          }
         }
       }
     }

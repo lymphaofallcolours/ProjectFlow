@@ -13,7 +13,7 @@ import { useSessionStore } from '@/application/session-store'
 import { useLongPress } from '@/ui/hooks/use-long-press'
 import { buildDiffMap, PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
 import { HighlightContext } from './highlight-context'
-import { getGroupChildIds, getGroupDepth } from '@/domain/group-operations'
+import { getAllDescendants, getGroupDepth } from '@/domain/group-operations'
 import { extractEntityTypesFromNodeFields } from '@/domain/entity-tag-parser'
 
 export type StoryNodeData = {
@@ -39,10 +39,10 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
   const isGroup = storyNode.isGroup
   const isDivider = storyNode.sceneType === 'divider'
 
-  // Group child count (only computed for group nodes)
+  // Group child count — all descendants for nested groups
   const childCount = useMemo(() => {
     if (!isGroup) return 0
-    return getGroupChildIds(allNodes, storyNode.id).length
+    return getAllDescendants(allNodes, storyNode.id).length
   }, [isGroup, storyNode.id, allNodes])
 
   // Group nesting depth

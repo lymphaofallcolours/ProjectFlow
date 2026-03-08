@@ -257,6 +257,23 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     if (!node) return null
     saveHistory()
     const offset = 50
+    // Groups: duplicate with all descendants and internal edges
+    if (node.isGroup) {
+      const state = get()
+      const descendants = getAllDescendants(state.nodes, id)
+      const allIds = [id, ...descendants]
+      const { nodes: newNodes, edges: newEdges, idMap } = duplicateNodesOp(
+        state.nodes,
+        state.edges,
+        allIds,
+        { x: offset, y: offset },
+      )
+      set((s) => ({
+        nodes: { ...s.nodes, ...newNodes },
+        edges: { ...s.edges, ...newEdges },
+      }))
+      return idMap[id] ?? null
+    }
     const copy = duplicateNode(node, {
       x: node.position.x + offset,
       y: node.position.y + offset,

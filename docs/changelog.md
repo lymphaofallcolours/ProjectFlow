@@ -2,6 +2,14 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## v1.2.1 (2026-03-08)
+
+### fix: group duplication, nested descendant handling, and divider icon
+- **Group duplication**: duplicating a group now duplicates all descendants and internal edges
+- **Subgraph extract**: copy/paste of nested groups now includes all descendants recursively (not just direct children)
+- **Child count**: group node badge shows total descendant count (recursive) instead of direct children only
+- **Divider icon**: replaced invisible Unicode `▬` with inline SVG banner shape in scene-type picker and context menu
+
 ## v1.2.0 (2026-03-04)
 
 ### feat: add nested groups, group/divider shapes, and depth visualization

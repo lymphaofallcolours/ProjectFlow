@@ -1,15 +1,24 @@
+import type { ReactNode } from 'react'
 import { useCallback, useEffect, useRef } from 'react'
 import type { SceneType } from '@/domain/types'
 import { SCENE_TYPES, SCENE_TYPE_CONFIG } from '@/domain/types'
 import { useGraphStore } from '@/application/graph-store'
 
-const SHAPE_ICONS: Record<SceneType, string> = {
+function BannerIcon({ color }: { color: string }) {
+  return (
+    <svg width="16" height="10" viewBox="0 0 16 10" className="inline-block">
+      <path d="M2,0 L14,0 L16,5 L14,10 L2,10 L0,5 Z" fill={color} opacity="0.8" />
+    </svg>
+  )
+}
+
+const SHAPE_ICONS: Record<SceneType, ReactNode> = {
   event: '○',
   narration: '□',
   combat: '△',
   social: '◇',
   investigation: '⬡',
-  divider: '▬',
+  divider: null, // rendered via BannerIcon
 }
 
 export function SceneTypePicker({ onClose }: { onClose: () => void }) {
@@ -54,6 +63,7 @@ export function SceneTypePicker({ onClose }: { onClose: () => void }) {
     >
       {SCENE_TYPES.map((type) => {
         const config = SCENE_TYPE_CONFIG[type]
+        const accentColor = `var(--color-${config.color})`
         return (
           <div key={type}>
             {type === 'divider' && <div className="h-px bg-border my-1 mx-2" />}
@@ -65,9 +75,9 @@ export function SceneTypePicker({ onClose }: { onClose: () => void }) {
             >
               <span
                 className="text-base font-light w-5 text-center"
-                style={{ color: `var(--color-${config.color})` }}
+                style={{ color: accentColor }}
               >
-                {SHAPE_ICONS[type]}
+                {type === 'divider' ? <BannerIcon color={accentColor} /> : SHAPE_ICONS[type]}
               </span>
               <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-display)' }}>
                 {config.label}

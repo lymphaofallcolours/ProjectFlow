@@ -23,13 +23,21 @@ type ContextMenuProps = {
 
 export { MenuItem }
 
-const SHAPE_ICONS: Record<SceneType, string> = {
+function BannerIcon({ color }: { color: string }) {
+  return (
+    <svg width="14" height="9" viewBox="0 0 14 9" className="inline-block">
+      <path d="M2,0 L12,0 L14,4.5 L12,9 L2,9 L0,4.5 Z" fill={color} opacity="0.8" />
+    </svg>
+  )
+}
+
+const SHAPE_ICONS: Record<SceneType, string | null> = {
   event: '○',
   narration: '□',
   combat: '△',
   social: '◇',
   investigation: '⬡',
-  divider: '▬',
+  divider: null,
 }
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
@@ -269,15 +277,16 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
           {SCENE_TYPES.map((type) => {
             const config = SCENE_TYPE_CONFIG[type]
             const isActive = type === currentType
+            const accentColor = `var(--color-${config.color})`
             return (
               <MenuItem
                 key={type}
                 icon={
                   <span
                     className="text-sm w-4 text-center"
-                    style={{ color: `var(--color-${config.color})` }}
+                    style={{ color: accentColor }}
                   >
-                    {SHAPE_ICONS[type]}
+                    {type === 'divider' ? <BannerIcon color={accentColor} /> : SHAPE_ICONS[type]}
                   </span>
                 }
                 label={config.label}
