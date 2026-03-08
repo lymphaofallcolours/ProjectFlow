@@ -144,6 +144,35 @@ export function getGroupDepth(
   return depth
 }
 
+/**
+ * Returns the maximum nesting depth of groups contained within this group.
+ * A group with no sub-groups returns 0, a group containing a group returns 1, etc.
+ */
+export function getMaxDescendantDepth(
+  nodes: Record<string, StoryNode>,
+  groupId: string,
+): number {
+  let maxDepth = 0
+  const queue: Array<{ id: string; depth: number }> = [{ id: groupId, depth: 0 }]
+  const visited = new Set<string>()
+
+  while (queue.length > 0) {
+    const { id, depth } = queue.shift()!
+    if (visited.has(id)) continue
+    visited.add(id)
+
+    for (const child of Object.values(nodes)) {
+      if (child.groupId === id && child.isGroup && !visited.has(child.id)) {
+        const childDepth = depth + 1
+        if (childDepth > maxDepth) maxDepth = childDepth
+        queue.push({ id: child.id, depth: childDepth })
+      }
+    }
+  }
+
+  return maxDepth
+}
+
 export function isNodeInGroup(node: StoryNode): boolean {
   return node.groupId !== undefined
 }

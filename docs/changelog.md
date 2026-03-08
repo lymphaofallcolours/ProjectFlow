@@ -2,6 +2,15 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## v1.2.2 (2026-03-08)
+
+### fix: divider icon, delete crash, depth badge, arc labels on dividers
+- **Divider icon**: added inline SVG banner icon to canvas context menu (was missing entirely)
+- **Divider delete crash**: context menu now guards against deleted node during re-render
+- **Depth badge**: shows total nesting depth (ancestor + descendant) so outermost groups display their contained depth; added `getMaxDescendantDepth` function
+- **Arc label on dividers**: removed `!isDivider` guard so divider nodes display arc labels like other node types
+- 9 new tests: `getMaxDescendantDepth` (4), group duplication with children (2), nested group duplication (1), divider magnitude (2), nested `extractSubgraph` (1)
+
 ## v1.2.1 (2026-03-08)
 
 ### fix: group duplication, nested descendant handling, and divider icon

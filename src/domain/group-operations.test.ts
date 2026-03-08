@@ -8,6 +8,7 @@ import {
   getGroupChildIds,
   getAllDescendants,
   getGroupDepth,
+  getMaxDescendantDepth,
   isAncestorOf,
   isNodeInGroup,
   deleteGroupKeepChildren,
@@ -279,6 +280,44 @@ describe('getGroupDepth', () => {
     const nodes = { g1, g2, g3 }
 
     expect(getGroupDepth(nodes, 'g3')).toBe(2)
+  })
+})
+
+describe('getMaxDescendantDepth', () => {
+  it('returns 0 for a group with no sub-groups', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g1' })
+    const nodes = { g1, c1 }
+
+    expect(getMaxDescendantDepth(nodes, 'g1')).toBe(0)
+  })
+
+  it('returns 1 for a group containing one sub-group', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const nodes = { g1, g2 }
+
+    expect(getMaxDescendantDepth(nodes, 'g1')).toBe(1)
+  })
+
+  it('returns 2 for a group containing nested sub-groups', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const g3 = createTestGroupNode({ id: 'g3', groupId: 'g2' })
+    const nodes = { g1, g2, g3 }
+
+    expect(getMaxDescendantDepth(nodes, 'g1')).toBe(2)
+  })
+
+  it('returns max depth across multiple branches', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const g3 = createTestGroupNode({ id: 'g3', groupId: 'g1' })
+    const g4 = createTestGroupNode({ id: 'g4', groupId: 'g3' })
+    const nodes = { g1, g2, g3, g4 }
+
+    // g1 → g2 (depth 1), g1 → g3 → g4 (depth 2)
+    expect(getMaxDescendantDepth(nodes, 'g1')).toBe(2)
   })
 })
 

@@ -13,7 +13,7 @@ import { useSessionStore } from '@/application/session-store'
 import { useLongPress } from '@/ui/hooks/use-long-press'
 import { buildDiffMap, PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
 import { HighlightContext } from './highlight-context'
-import { getAllDescendants, getGroupDepth } from '@/domain/group-operations'
+import { getAllDescendants, getGroupDepth, getMaxDescendantDepth } from '@/domain/group-operations'
 import { extractEntityTypesFromNodeFields } from '@/domain/entity-tag-parser'
 
 export type StoryNodeData = {
@@ -45,10 +45,15 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
     return getAllDescendants(allNodes, storyNode.id).length
   }, [isGroup, storyNode.id, allNodes])
 
-  // Group nesting depth
+  // Group nesting depth: ancestor depth for shadow layers, descendant depth for badge
   const groupDepth = useMemo(() => {
     if (!isGroup) return 0
     return getGroupDepth(allNodes, storyNode.id)
+  }, [isGroup, storyNode.id, allNodes])
+
+  const descendantDepth = useMemo(() => {
+    if (!isGroup) return 0
+    return getMaxDescendantDepth(allNodes, storyNode.id)
   }, [isGroup, storyNode.id, allNodes])
 
   // Entity highlight: read from canvas-level context (O(1) per node)
@@ -219,7 +224,7 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
           ...(shape === 'banner' ? { paddingLeft: 20, paddingRight: 20 } : undefined),
         }}
       >
-        {storyNode.arcLabel && !isDivider && (
+        {storyNode.arcLabel && (
           <span
             className="text-[9px] font-medium tracking-widest uppercase mb-0.5 opacity-60"
             style={{ color: accentColor }}
@@ -263,9 +268,9 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
         </button>
       )}
 
-      {/* Group depth badge — top left, only for nested groups */}
-      {isGroup && groupDepth > 0 && (
-        <GroupDepthBadge depth={groupDepth} />
+      {/* Group depth badge — top left, shows nesting levels contained within */}
+      {isGroup && (groupDepth > 0 || descendantDepth > 0) && (
+        <GroupDepthBadge depth={groupDepth + descendantDepth} />
       )}
 
       {/* Entity type summary icons — bottom center (not on groups or dividers) */}

@@ -74,6 +74,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
   const nodeGroupId = useGraphStore((s) => s.nodes[nodeId]?.groupId)
   const nodeCollapsed = useGraphStore((s) => s.nodes[nodeId]?.collapsed)
   const nodePosition = useGraphStore((s) => s.nodes[nodeId]?.position)
+  const nodeExists = useGraphStore((s) => !!s.nodes[nodeId])
   const isDivider = currentType === 'divider'
   const currentMagnitude = useGraphStore((s) => s.nodes[nodeId]?.dividerMagnitude ?? 1)
   const setDividerMagnitude = useGraphStore((s) => s.setDividerMagnitude)
@@ -211,6 +212,9 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [onClose])
+
+  // Guard: node was deleted while context menu was open
+  if (!nodeExists) return null
 
   return (
     <div

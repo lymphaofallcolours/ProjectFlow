@@ -21,12 +21,19 @@
 - **Scene-type picker** — added divider entry with visual separator
 - **13 new domain tests** — `isAncestorOf`, `getAllDescendants`, `getGroupDepth`, cycle detection, re-parenting, recursive cascade delete
 - **2 new shape tests** — banner handle insets, group-rect empty insets
+- **Fix: group duplication** — `duplicateNode` now auto-includes all descendants and internal edges for group nodes
+- **Fix: extractSubgraph** — copy/paste of nested groups now includes all descendants recursively
+- **Fix: divider icon** — replaced Unicode `▬` with inline SVG banner in all 3 menus (picker, node context, canvas context)
+- **Fix: divider delete crash** — context menu guards against deleted node during re-render
+- **Fix: depth badge** — shows total nesting depth (ancestor + descendant) via new `getMaxDescendantDepth`; outermost groups now display contained depth
+- **Fix: arc label on dividers** — removed `!isDivider` guard so divider nodes display arc labels
+- **9 new tests** — `getMaxDescendantDepth` (4), group duplication with children (2+1), divider magnitude (2), nested extractSubgraph (1)
 
 ### Test Coverage
 
-- ~735 tests across 47 test files
-- Domain: ~250 (added 15 group/shape tests)
-- Application: ~195
+- ~744 tests across 47 test files
+- Domain: ~254 (added 5 getMaxDescendantDepth + extractSubgraph tests)
+- Application: ~200 (added 5 group duplication + divider magnitude tests)
 - Infrastructure: 13
 - UI: 66
 - Integration: ~104

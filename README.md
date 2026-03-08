@@ -110,7 +110,7 @@ Append `+status` to any present tag to auto-log a status change: `@Alfa+wounded`
 
 ## Testing
 
-~735 tests across 47 test files:
+~744 tests across 47 test files:
 
 - **Unit** (~70%) — domain logic, entity parsing, graph operations, store actions
 - **Integration** (~20%) — store + component interactions, serialization roundtrips

@@ -177,6 +177,71 @@ describe('useGraphStore', () => {
       const result = useGraphStore.getState().duplicateNode('fake-id')
       expect(result).toBeNull()
     })
+
+    it('duplicates a group with all its children', () => {
+      const store = useGraphStore.getState()
+      const groupId = store.createGroup('event', { x: 0, y: 0 }, 'TestGroup')
+      const childId = store.addNode('combat', { x: 10, y: 10 }, 'Child')
+      store.addToGroup(groupId, [childId])
+
+      const copyGroupId = store.duplicateNode(groupId)
+      expect(copyGroupId).not.toBeNull()
+
+      const nodes = useGraphStore.getState().nodes
+      // Should have 4 nodes: original group, original child, copy group, copy child
+      expect(Object.keys(nodes)).toHaveLength(4)
+
+      // Find the copied child (not the original)
+      const copiedChildren = Object.values(nodes).filter(
+        (n) => n.groupId === copyGroupId && n.id !== childId,
+      )
+      expect(copiedChildren).toHaveLength(1)
+      expect(copiedChildren[0].label).toBe('Child (copy)')
+    })
+
+    it('duplicates nested groups recursively', () => {
+      const store = useGraphStore.getState()
+      const outerGroupId = store.createGroup('event', { x: 0, y: 0 }, 'Outer')
+      const innerGroupId = store.createGroup('event', { x: 20, y: 20 }, 'Inner')
+      const leafId = store.addNode('combat', { x: 30, y: 30 }, 'Leaf')
+      store.addToGroup(outerGroupId, [innerGroupId])
+      store.addToGroup(innerGroupId, [leafId])
+
+      const copyOuterId = store.duplicateNode(outerGroupId)
+      expect(copyOuterId).not.toBeNull()
+
+      const nodes = useGraphStore.getState().nodes
+      // 6 nodes: outer, inner, leaf + copies of each
+      expect(Object.keys(nodes)).toHaveLength(6)
+
+      // Verify the copied inner group is inside the copied outer group
+      const copiedInner = Object.values(nodes).find(
+        (n) => n.isGroup && n.groupId === copyOuterId,
+      )
+      expect(copiedInner).toBeDefined()
+      expect(copiedInner!.label).toBe('Inner (copy)')
+
+      // Verify the copied leaf is inside the copied inner group
+      const copiedLeaf = Object.values(nodes).find(
+        (n) => !n.isGroup && n.groupId === copiedInner!.id,
+      )
+      expect(copiedLeaf).toBeDefined()
+      expect(copiedLeaf!.label).toBe('Leaf (copy)')
+    })
+  })
+
+  describe('setDividerMagnitude', () => {
+    it('sets magnitude on a divider node', () => {
+      const id = useGraphStore.getState().addNode('divider', { x: 0, y: 0 }, 'Break')
+      useGraphStore.getState().setDividerMagnitude(id, 3)
+      expect(useGraphStore.getState().nodes[id].dividerMagnitude).toBe(3)
+    })
+
+    it('does nothing for non-divider nodes', () => {
+      const id = useGraphStore.getState().addNode('event', { x: 0, y: 0 })
+      useGraphStore.getState().setDividerMagnitude(id, 2)
+      expect(useGraphStore.getState().nodes[id].dividerMagnitude).toBeUndefined()
+    })
   })
 
   describe('selection', () => {

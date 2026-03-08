@@ -476,6 +476,26 @@ describe('extractSubgraph', () => {
     expect(result.nodes).toHaveLength(3) // group + 2 children
     expect(result.edges).toHaveLength(1) // internal edge included
   })
+
+  it('auto-includes nested descendants when extracting a group with sub-groups', () => {
+    const g1 = createTestGroupNode({ id: 'g1' })
+    const g2 = createTestGroupNode({ id: 'g2', groupId: 'g1' })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g2' })
+    const c2 = createTestNode({ id: 'c2', groupId: 'g1' })
+    const other = createTestNode({ id: 'n1' })
+    const nodes = { g1, g2, c1, c2, n1: other }
+    const edges = {
+      e1: createTestEdge({ id: 'e1', source: 'c1', target: 'c2' }),
+    }
+
+    const result = extractSubgraph(nodes, edges, ['g1'])
+    expect(result.nodes).toHaveLength(4) // g1 + g2 + c1 + c2
+    const ids = result.nodes.map((n) => n.id)
+    expect(ids).toContain('g2')
+    expect(ids).toContain('c1')
+    expect(ids).not.toContain('n1')
+    expect(result.edges).toHaveLength(1)
+  })
 })
 
 describe('pasteSubgraph', () => {

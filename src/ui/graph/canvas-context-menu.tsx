@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useCallback, useEffect, useRef } from 'react'
 import type { SceneType } from '@/domain/types'
 import { SCENE_TYPES, SCENE_TYPE_CONFIG } from '@/domain/types'
@@ -11,12 +12,21 @@ type CanvasContextMenuProps = {
   onClose: () => void
 }
 
-const SHAPE_ICONS: Record<SceneType, string> = {
+function BannerIcon({ color }: { color: string }) {
+  return (
+    <svg width="14" height="9" viewBox="0 0 14 9" className="inline-block">
+      <path d="M2,0 L12,0 L14,4.5 L12,9 L2,9 L0,4.5 Z" fill={color} opacity="0.8" />
+    </svg>
+  )
+}
+
+const SHAPE_ICONS: Record<SceneType, ReactNode> = {
   event: '○',
   narration: '□',
   combat: '△',
   social: '◇',
   investigation: '⬡',
+  divider: null,
 }
 
 export function CanvasContextMenu({ position, flowPosition, onClose }: CanvasContextMenuProps) {
@@ -57,23 +67,26 @@ export function CanvasContextMenu({ position, flowPosition, onClose }: CanvasCon
       </div>
       {SCENE_TYPES.map((type) => {
         const config = SCENE_TYPE_CONFIG[type]
+        const accentColor = `var(--color-${config.color})`
         return (
-          <button
-            key={type}
-            onClick={() => handleCreate(type)}
-            className="flex items-center gap-2.5 w-full px-3 py-1.5 rounded-lg text-left text-xs
-              text-text-secondary hover:text-text-primary hover:bg-surface-glass
-              transition-colors duration-100 cursor-pointer"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            <span
-              className="text-sm w-4 text-center"
-              style={{ color: `var(--color-${config.color})` }}
+          <div key={type}>
+            {type === 'divider' && <div className="h-px bg-border my-1 mx-2" />}
+            <button
+              onClick={() => handleCreate(type)}
+              className="flex items-center gap-2.5 w-full px-3 py-1.5 rounded-lg text-left text-xs
+                text-text-secondary hover:text-text-primary hover:bg-surface-glass
+                transition-colors duration-100 cursor-pointer"
+              style={{ fontFamily: 'var(--font-display)' }}
             >
-              {SHAPE_ICONS[type]}
-            </span>
-            {config.label}
-          </button>
+              <span
+                className="text-sm w-4 text-center"
+                style={{ color: accentColor }}
+              >
+                {type === 'divider' ? <BannerIcon color={accentColor} /> : SHAPE_ICONS[type]}
+              </span>
+              {config.label}
+            </button>
+          </div>
         )
       })}
     </div>
