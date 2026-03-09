@@ -2,6 +2,20 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## v1.3.0 (2026-03-09)
+
+### feat: add auto-arrange, align/distribute, snap-to-grid, and animated transitions
+- **Auto-arrange** — dagre-based layout algorithm (LR/TB based on scroll direction); available via multi-select context menu, canvas context menu (with confirmation), and Ctrl+Shift+L shortcut
+- **Align** — align selected nodes (left/center/right/top/middle/bottom) via multi-select context menu
+- **Distribute** — distribute selected nodes evenly (horizontal/vertical) via multi-select context menu; requires 3+ selected
+- **Snap-to-grid** — 40px grid, toggleable via toolbar button; background gap syncs with grid when active
+- **Animated transitions** — smooth 300ms CSS transitions when layout operations reposition nodes
+- **Confirm dialog** — reusable glass-panel confirmation modal for "Auto-Arrange All" on canvas
+- Collapsed groups treated as single nodes in layout; edges remapped through group boundaries
+- All layout operations integrate with undo/redo (saveHistory before applying)
+- NODE_DIMENSIONS extracted from ui/ to domain/ for clean layer separation
+- 15 new domain tests (7 graph-layout, 8 align-distribute); 763 total tests
+
 ## v1.2.3 (2026-03-08)
 
 ### fix: depth badge shows descendant depth only, not ancestor+descendant

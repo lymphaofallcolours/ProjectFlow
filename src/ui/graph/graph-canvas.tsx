@@ -87,6 +87,8 @@ function GraphCanvasInner() {
   const showRadialSubnodes = useUIStore((s) => s.showRadialSubnodes)
   const radialNodeId = useUIStore((s) => s.radialNodeId)
   const canvasBackground = useUIStore((s) => s.canvasBackground)
+  const snapToGrid = useUIStore((s) => s.snapToGrid)
+  const isLayoutAnimating = useUIStore((s) => s.isLayoutAnimating)
   const openCockpit = useUIStore((s) => s.openCockpit)
   const radialNodeExists = useGraphStore((s) => radialNodeId ? !!s.nodes[radialNodeId] : false)
 
@@ -140,6 +142,9 @@ function GraphCanvasInner() {
             if (!isDraggingRef.current) {
               isDraggingRef.current = true
               pushHistory()
+              if (useUIStore.getState().isLayoutAnimating) {
+                useUIStore.setState({ isLayoutAnimating: false })
+              }
               // Dismiss radial subnodes if dragging their target node
               const currentRadialId = useUIStore.getState().radialNodeId
               if (currentRadialId && changes.some((c) => c.type === 'position' && c.id === currentRadialId)) {
@@ -283,6 +288,8 @@ function GraphCanvasInner() {
         multiSelectionKeyCode="Control"
         selectionOnDrag
         selectionMode={SelectionMode.Partial}
+        snapToGrid={snapToGrid}
+        snapGrid={[40, 40]}
         panOnScroll
         deleteKeyCode={null}
         fitView
@@ -291,12 +298,12 @@ function GraphCanvasInner() {
           type: 'story',
           markerEnd: { type: 'arrowclosed' as const, color: 'var(--color-border)' },
         }}
-        className="bg-canvas"
+        className={`bg-canvas ${isLayoutAnimating ? 'layout-animating' : ''}`}
       >
         {canvasBackground !== 'none' && (
           <Background
             variant={canvasBackground === 'grid' ? BackgroundVariant.Lines : BackgroundVariant.Dots}
-            gap={24}
+            gap={snapToGrid ? 40 : 24}
             size={canvasBackground === 'grid' ? 1 : 2.5}
             color="var(--color-text-muted)"
           />

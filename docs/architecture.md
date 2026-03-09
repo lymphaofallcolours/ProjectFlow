@@ -18,6 +18,9 @@ src/
 │   ├── entity-graph-layout.ts  # Pure layout computation for entity relationship graph (type-clustered circular layout)
 │   ├── search.ts               # Full-text and entity-aware node search across all fields
 │   ├── graph-operations.ts     # Pure functions: createNode, removeNode, updateField, updateNodeTags, duplicate, clipboard, rewire, transposeNodePositions, etc. (group-aware)
+│   ├── graph-layout.ts         # Dagre-based auto-arrange layout (pure algorithm, group-aware, selection-aware)
+│   ├── align-distribute.ts     # Align (left/center/right/top/middle/bottom) and distribute (horizontal/vertical) layout functions
+│   ├── node-dimensions.ts      # NODE_DIMENSIONS record — width/height per NodeShape, shared by domain + UI layers
 │   ├── group-operations.ts     # Pure group CRUD: create, add/remove children, collapse, delete (keep/cascade), boundary/internal edges
 │   ├── attachment-operations.ts # Pure attachment CRUD: create, validate size, add/remove from RichContent, campaign size estimation
 │   ├── subgraph-operations.ts  # Subgraph file format (.pfsg.json), serialize/deserialize/validate for cross-campaign export/import
@@ -33,7 +36,7 @@ src/
 │   ├── campaign-store.ts       # useCampaignStore — campaign metadata + custom field template CRUD + graph template CRUD
 │   ├── entity-store.ts         # useEntityStore — entity CRUD, registry, status tracking, portrait, relationships
 │   ├── session-store.ts        # useSessionStore — playthrough sessions, diff overlay, timeline toggle
-│   ├── ui-store.ts             # useUIStore — theme, overlay state, radial node, sidebar/panel toggles, template manager, graph template picker, entity graph, dashboard, auto-save state
+│   ├── ui-store.ts             # useUIStore — theme, overlay state, radial node, sidebar/panel toggles, template manager, graph template picker, entity graph, dashboard, auto-save state, snap-to-grid, layout animation
 │   └── campaign-actions.ts     # assemble/hydrate/save/load/auto-save campaign orchestration (incl. entity + session + history)
 │
 ├── infrastructure/             # Browser APIs, serialization, file I/O

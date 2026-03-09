@@ -4,36 +4,28 @@
 
 ## Current Session
 
-**Date:** 2026-03-08
-**Goal:** Nested groups, group/divider shapes, depth visualization
+**Date:** 2026-03-09
+**Goal:** Auto-arrange, snap-to-grid, align/distribute, animated transitions
 
 ### Completed This Session
 
-- **Nested groups** — removed nesting restriction from `addNodesToGroup`; added `isAncestorOf` cycle guard, `getAllDescendants` (BFS), `getGroupDepth`; updated all group operations to be recursive (delete, boundary edges, internal edges, move)
-- **Group-rect shape** — new 160×80 rounded rectangle SVG path for collapsed groups; double-border rendering (outer 2px, inner scaled inward)
-- **Ghost expanded groups** — expanded groups render at 15% opacity with faint dashed stroke
-- **Depth visualization** — stacked shadows scaled by depth (capped at 5 layers) + circled numeric depth badge in top-left
-- **Divider nodes** — new `divider` SceneType with `banner` shape (200×50 ribbon with tapered ends); `dividerMagnitude` field (1/2/3) for Scene Break / Session Break / Arc Break
-- **Group color** — dedicated cyan accent (`--color-node-group`) overrides sceneType color for all group nodes
-- **Divider color** — neutral silver/gray (`--color-node-divider`)
-- **Recursive collapse** — ancestor-wins rule in `useFlowNodes`; collapsing parent hides all descendants without mutating child `collapsed` state
-- **Context menu updates** — nested group support (groups can be grouped), divider magnitude submenu, removed `!isGroup` guards
-- **Scene-type picker** — added divider entry with visual separator
-- **13 new domain tests** — `isAncestorOf`, `getAllDescendants`, `getGroupDepth`, cycle detection, re-parenting, recursive cascade delete
-- **2 new shape tests** — banner handle insets, group-rect empty insets
-- **Fix: group duplication** — `duplicateNode` now auto-includes all descendants and internal edges for group nodes
-- **Fix: extractSubgraph** — copy/paste of nested groups now includes all descendants recursively
-- **Fix: divider icon** — replaced Unicode `▬` with inline SVG banner in all 3 menus (picker, node context, canvas context)
-- **Fix: divider delete crash** — context menu guards against deleted node during re-render
-- **Fix: depth badge** — shows total nesting depth (ancestor + descendant) via new `getMaxDescendantDepth`; outermost groups now display contained depth
-- **Fix: arc label on dividers** — removed `!isDivider` guard so divider nodes display arc labels
-- **9 new tests** — `getMaxDescendantDepth` (4), group duplication with children (2+1), divider magnitude (2), nested extractSubgraph (1)
+- **Auto-arrange** — dagre-based layout algorithm in `domain/graph-layout.ts`; group-aware (collapsed → single node), selection-aware, respects scroll direction (LR/TB)
+- **Align/distribute** — `domain/align-distribute.ts` with 6 alignment directions + 2 distribute directions; dimension-aware via NODE_DIMENSIONS
+- **NODE_DIMENSIONS extraction** — moved from `ui/graph/node-shapes.ts` to `domain/node-dimensions.ts` for clean layer boundaries; re-exported from original location
+- **Store actions** — `autoArrange`, `alignSelected`, `distributeSelected` in graph-store; `snapToGrid`, `isLayoutAnimating`, `startLayoutAnimation` in ui-store
+- **Multi-select context menu** — Layout section with Auto-Arrange, Align (6 options), Distribute (2 options, shown if 3+ selected)
+- **Canvas context menu** — "Auto-Arrange All" with confirmation dialog
+- **Confirm dialog** — reusable glass-panel modal at `ui/components/confirm-dialog.tsx`
+- **Snap-to-grid** — 40px grid, toggleable via toolbar Magnet button; background gap syncs to 40px when active
+- **Animated transitions** — CSS transition on `.react-flow__node` gated by `.layout-animating` class; 300ms cubic-bezier; cleared on drag start
+- **Keyboard shortcut** — Ctrl+Shift+L for auto-arrange (selected or all)
+- **15 new tests** — 7 graph-layout (chain, TB, selection, collapsed groups, disconnected, empty, shapes), 8 align-distribute (left/right/center/top, distribute H/V, edge cases)
 
 ### Test Coverage
 
-- ~744 tests across 47 test files
-- Domain: ~254 (added 5 getMaxDescendantDepth + extractSubgraph tests)
-- Application: ~200 (added 5 group duplication + divider magnitude tests)
+- ~763 tests across 49 test files
+- Domain: ~269 (added 15 layout + align/distribute tests)
+- Application: ~200
 - Infrastructure: 13
 - UI: 66
 - Integration: ~104
@@ -57,6 +49,10 @@
 ---
 
 ## Previous Sessions
+
+### Phase 11 — Nested Groups, Group/Divider Shapes, Depth Visualization (2026-03-08)
+- 3 commits
+- Nested groups (unlimited depth), group-rect shape, ghost expanded groups, depth badges, divider nodes (banner shape, magnitude), recursive collapse, 24 new tests (744 total)
 
 ### Phase 10 — Fixes, License, README (2026-03-04)
 - 2 commits

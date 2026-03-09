@@ -23,6 +23,7 @@ import {
   Grip,
   Grid3X3,
   Square,
+  Magnet,
 } from 'lucide-react'
 import { useUIStore } from '@/application/ui-store'
 import { useGraphStore } from '@/application/graph-store'
@@ -57,6 +58,8 @@ export function Toolbar() {
   const redo = useGraphStore((s) => s.redo)
   const canvasBackground = useUIStore((s) => s.canvasBackground)
   const cycleCanvasBackground = useUIStore((s) => s.cycleCanvasBackground)
+  const snapToGrid = useUIStore((s) => s.snapToGrid)
+  const toggleSnapToGrid = useUIStore((s) => s.toggleSnapToGrid)
   const autoSaveEnabled = useUIStore((s) => s.autoSaveEnabled)
   const toggleAutoSave = useUIStore((s) => s.toggleAutoSave)
   const importSubgraph = useGraphStore((s) => s.importSubgraph)
@@ -165,6 +168,13 @@ export function Toolbar() {
             : <ArrowUpDown size={16} />}
           label={scrollDirection === 'horizontal' ? 'Horizontal' : 'Vertical'}
           onClick={handleScrollToggle}
+        />
+
+        <ToolbarButton
+          icon={<Magnet size={16} />}
+          label={snapToGrid ? 'Snap On' : 'Snap to Grid'}
+          onClick={toggleSnapToGrid}
+          active={snapToGrid}
         />
 
         <ToolbarButton

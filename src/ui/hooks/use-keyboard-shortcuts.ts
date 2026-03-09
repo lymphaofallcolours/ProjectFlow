@@ -104,6 +104,19 @@ export function useKeyboardShortcuts() {
         return
       }
 
+      // Ctrl+Shift+L → auto-arrange selected (or all)
+      if (ctrl && e.shiftKey && e.key === 'L') {
+        e.preventDefault()
+        const graph = useGraphStore.getState()
+        const ids = Array.from(graph.selectedNodeIds)
+        if (ids.length > 0) {
+          graph.autoArrange(ids)
+        } else {
+          graph.autoArrange()
+        }
+        return
+      }
+
       // Ctrl+Shift+R → toggle entity relationship graph
       if (ctrl && e.shiftKey && e.key === 'R') {
         e.preventDefault()

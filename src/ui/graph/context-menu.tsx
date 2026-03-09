@@ -12,6 +12,7 @@ import { createCustomTemplate } from '@/domain/graph-templates'
 import { useCampaignStore } from '@/application/campaign-store'
 import { PlaythroughNotesInput } from './playthrough-notes-input'
 import { EdgeLabelInput } from './edge-label-input'
+import { LayoutMenuSection } from './layout-menu-section'
 import { useEscapeKey } from '@/ui/hooks/use-escape-key'
 import { useMenuPosition } from '@/ui/hooks/use-menu-position'
 
@@ -78,6 +79,9 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
   const isDivider = currentType === 'divider'
   const currentMagnitude = useGraphStore((s) => s.nodes[nodeId]?.dividerMagnitude ?? 1)
   const setDividerMagnitude = useGraphStore((s) => s.setDividerMagnitude)
+  const autoArrange = useGraphStore((s) => s.autoArrange)
+  const alignSelected = useGraphStore((s) => s.alignSelected)
+  const distributeSelected = useGraphStore((s) => s.distributeSelected)
   const ref = useRef<HTMLDivElement>(null)
 
   useEscapeKey(onClose)
@@ -261,6 +265,16 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
             icon={<FolderClosed size={14} className="text-text-muted" />}
             label="Group Selected"
             onClick={handleGroupSelected}
+          />
+
+          <div className="h-px bg-border my-1 mx-2" />
+
+          <LayoutMenuSection
+            selectedCount={selCount}
+            onAutoArrange={() => autoArrange(Array.from(selectedNodeIds))}
+            onAlign={alignSelected}
+            onDistribute={distributeSelected}
+            onClose={onClose}
           />
 
           <div className="h-px bg-border my-1 mx-2" />

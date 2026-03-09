@@ -20,6 +20,7 @@ During live play, start a session and mark nodes as you go. The diff overlay sho
 - **Playthrough tracking** — session-based visit logging, diff overlays, and markdown export
 - **Nested groups** — collapsible groups that can contain other groups (unlimited depth), with double-border rectangle shape, depth badges, and ghost outlines when expanded
 - **Divider nodes** — ribbon-shaped separators for arcs, sessions, and scene breaks with 3 magnitude levels
+- **Auto-arrange & layout tools** — dagre-based auto-arrange, align (6 directions), distribute (horizontal/vertical), snap-to-grid (40px), with smooth animated transitions
 - **Graph structure templates** — built-in patterns (linear, branching, combat, social) and save-your-own custom templates
 - **Entity relationship graph** — visualize entity connections in a type-clustered layout
 - **Campaign dashboard** — stats, top connected entities, most tagged nodes

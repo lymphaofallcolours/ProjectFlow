@@ -45,6 +45,12 @@ type UIState = {
   // Canvas background
   canvasBackground: 'none' | 'dots' | 'grid'
 
+  // Snap-to-grid
+  snapToGrid: boolean
+
+  // Layout animation
+  isLayoutAnimating: boolean
+
   // Auto-save
   autoSaveEnabled: boolean
   autoSaveIntervalMs: number
@@ -68,6 +74,8 @@ type UIState = {
   toggleGraphTemplatePanel: () => void
   toggleDashboard: () => void
   cycleCanvasBackground: () => void
+  toggleSnapToGrid: () => void
+  startLayoutAnimation: () => void
   toggleAutoSave: () => void
   setAutoSaveIntervalMs: (ms: number) => void
   setAutoSaveStatus: (status: 'saving' | 'saved' | null) => void
@@ -97,6 +105,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   graphTemplatePanelOpen: false,
   dashboardOpen: false,
   canvasBackground: 'dots' as const,
+  snapToGrid: false,
+  isLayoutAnimating: false,
   autoSaveEnabled: false,
   autoSaveIntervalMs: 60_000,
   autoSaveStatus: null,
@@ -187,6 +197,14 @@ export const useUIStore = create<UIState>((set, get) => ({
       const idx = order.indexOf(state.canvasBackground)
       return { canvasBackground: order[(idx + 1) % order.length] }
     }),
+
+  toggleSnapToGrid: () =>
+    set((state) => ({ snapToGrid: !state.snapToGrid })),
+
+  startLayoutAnimation: () => {
+    set({ isLayoutAnimating: true })
+    setTimeout(() => set({ isLayoutAnimating: false }), 300)
+  },
 
   toggleAutoSave: () =>
     set((state) => ({ autoSaveEnabled: !state.autoSaveEnabled })),

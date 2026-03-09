@@ -4,6 +4,38 @@
 
 ---
 
+## 2026-03-09 — Dagre library in domain/ layer for auto-arrange
+
+**Status:** Accepted
+**Context:** Auto-arrange requires a directed graph layout algorithm. Dagre is a pure algorithm library (~15KB, synchronous, zero framework imports) that computes node positions given a graph structure.
+**Decision:** Import dagre in `domain/graph-layout.ts`. Dagre is a pure algorithm (like a sort function) — it takes data in, returns data out, with no side effects or framework coupling. This is consistent with how `domain/` contains other pure computation (search, entity graph layout, etc.).
+**Alternatives rejected:** d3-force (physics-based, non-deterministic), elkjs (heavier, async), custom layout (reinvents the wheel for a solved problem).
+**Consequences:** Domain layer gains one dependency. The function is pure: `(nodes, edges, options) → positions`. No framework or UI imports.
+
+## 2026-03-09 — 40px snap-to-grid size
+
+**Status:** Accepted
+**Context:** Snap-to-grid needs a grid size. Common values: 10 (too fine), 20 (reasonable), 40 (coarser, matches typical node spacing), 50 (too coarse for smaller nodes).
+**Decision:** 40px grid. Matches well with node dimensions (smallest node is 120×120, banner is 200×50). Background grid/dots gap syncs to 40px when snap is active.
+**Alternatives rejected:** 20px (too fine-grained, nodes barely snap), 10px (essentially free-form), configurable (over-engineering for v1).
+**Consequences:** Fixed grid size. Can be made configurable later if needed.
+
+## 2026-03-09 — CSS transition for layout animation instead of requestAnimationFrame loop
+
+**Status:** Accepted
+**Context:** When auto-arrange/align/distribute repositions nodes, they should animate smoothly rather than teleport.
+**Decision:** Transient CSS class `.layout-animating` on the ReactFlow container adds `transition: transform 300ms` to `.react-flow__node`. Class is set by `startLayoutAnimation()` and auto-cleared after 300ms via setTimeout. Cleared early on drag start to prevent conflict.
+**Alternatives rejected:** requestAnimationFrame loop (complex, manual interpolation), React Spring (adds dependency), FLIP technique (unnecessary complexity for CSS transform transitions).
+**Consequences:** Zero-dependency animation. Works because React Flow positions nodes via CSS transform. The 300ms timeout provides a natural guardrail against animation during drag.
+
+## 2026-03-09 — NODE_DIMENSIONS extracted to domain/ layer
+
+**Status:** Accepted
+**Context:** `NODE_DIMENSIONS` was defined in `ui/graph/node-shapes.ts`. The new `domain/graph-layout.ts` and `domain/align-distribute.ts` need node dimensions for layout computation. Importing from `ui/` would violate the domain layer boundary.
+**Decision:** Extract `NODE_DIMENSIONS` to `domain/node-dimensions.ts`. Re-export from `node-shapes.ts` for backward compatibility. All existing consumers continue to work unchanged.
+**Alternatives rejected:** Duplicate the data (sync issues), pass dimensions as parameters (clutters API, callers all need the same data).
+**Consequences:** Clean domain boundary. Both domain (layout) and UI (rendering) import from the same source of truth.
+
 ## 2026-03-04 — Unlimited nested groups replacing flat-only restriction
 
 **Status:** Accepted

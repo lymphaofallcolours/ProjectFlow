@@ -31,6 +31,9 @@ import {
   rewireEdge as rewireEdgeOp,
   transposeNodePositions,
 } from '@/domain/graph-operations'
+import { computeAutoLayout } from '@/domain/graph-layout'
+import { alignNodes, distributeNodes } from '@/domain/align-distribute'
+import type { Alignment, DistributeDirection } from '@/domain/align-distribute'
 import {
   setNodePlaythroughStatus as setPlaythroughOp,
   clearNodePlaythroughStatus as clearPlaythroughOp,
@@ -90,6 +93,9 @@ type GraphState = {
   deleteGroup: (groupId: string, cascade: boolean) => void
   toggleGroupCollapsed: (groupId: string) => void
   setDividerMagnitude: (nodeId: string, magnitude: 1 | 2 | 3) => void
+  autoArrange: (nodeIds?: string[]) => void
+  alignSelected: (alignment: Alignment) => void
+  distributeSelected: (direction: DistributeDirection) => void
   undo: () => void
   redo: () => void
   pushHistory: () => void
@@ -489,6 +495,57 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     set((state) => ({
       nodes: { ...state.nodes, [nodeId]: { ...node, dividerMagnitude: magnitude } },
     }))
+  },
+
+  autoArrange: (nodeIds) => {
+    saveHistory()
+    const { nodes, edges, scrollDirection } = get()
+    const rankdir = scrollDirection === 'horizontal' ? 'LR' : 'TB'
+    const selectedNodeIds = nodeIds ? new Set(nodeIds) : undefined
+    const positions = computeAutoLayout(nodes, edges, { rankdir, selectedNodeIds })
+    useUIStore.getState().startLayoutAnimation()
+    set((state) => {
+      const updatedNodes = { ...state.nodes }
+      for (const [id, pos] of Object.entries(positions)) {
+        const node = updatedNodes[id]
+        if (node) updatedNodes[id] = { ...node, position: pos }
+      }
+      return { nodes: updatedNodes }
+    })
+  },
+
+  alignSelected: (alignment) => {
+    const ids = Array.from(get().selectedNodeIds)
+    if (ids.length < 2) return
+    saveHistory()
+    const positions = alignNodes(get().nodes, ids, alignment)
+    if (Object.keys(positions).length === 0) return
+    useUIStore.getState().startLayoutAnimation()
+    set((state) => {
+      const updatedNodes = { ...state.nodes }
+      for (const [id, pos] of Object.entries(positions)) {
+        const node = updatedNodes[id]
+        if (node) updatedNodes[id] = { ...node, position: pos }
+      }
+      return { nodes: updatedNodes }
+    })
+  },
+
+  distributeSelected: (direction) => {
+    const ids = Array.from(get().selectedNodeIds)
+    if (ids.length < 3) return
+    saveHistory()
+    const positions = distributeNodes(get().nodes, ids, direction)
+    if (Object.keys(positions).length === 0) return
+    useUIStore.getState().startLayoutAnimation()
+    set((state) => {
+      const updatedNodes = { ...state.nodes }
+      for (const [id, pos] of Object.entries(positions)) {
+        const node = updatedNodes[id]
+        if (node) updatedNodes[id] = { ...node, position: pos }
+      }
+      return { nodes: updatedNodes }
+    })
   },
 
   undo: () => {

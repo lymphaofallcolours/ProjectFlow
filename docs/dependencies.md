@@ -40,6 +40,12 @@
 **Removal risk:** Low — isolated extension, only affects link rendering in text fields.
 **Added:** Phase 8, Commit 4.
 
+### @dagrejs/dagre (2.0.4)
+**Purpose:** Directed graph layout algorithm — computes optimal node positions for auto-arrange. Used as a pure algorithm in domain/ (no framework coupling). Synchronous, ~15KB.
+**Chosen over:** d3-force (physics-based, non-deterministic), custom layout (reinvents the wheel), elkjs (heavier, async, more features than needed).
+**Removal risk:** Low — isolated to `domain/graph-layout.ts`, no UI coupling.
+**Added:** Layout features (2026-03-09).
+
 ### tailwindcss (^4.2.1)
 **Purpose:** Utility-first CSS — fast styling, custom theme via `@theme` blocks and CSS custom properties. Aeroglass theme with frosted translucent surfaces.
 **Chosen over:** CSS Modules (more verbose), Styled Components (runtime overhead), vanilla CSS (slower dev).
