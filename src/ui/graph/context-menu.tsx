@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Trash2, Copy, Scissors, Clipboard, CheckCircle, Edit3, XCircle, Circle, Tag, Download, Blocks, FolderOpen, FolderClosed, Ungroup, FolderX, Minus, X } from 'lucide-react'
+import { Trash2, Copy, Scissors, Clipboard, CheckCircle, Edit3, XCircle, Circle, Tag, Download, Blocks, FolderOpen, FolderClosed, Ungroup, FolderX, Minus, X, LayoutGrid } from 'lucide-react'
 import type { SceneType, PlaythroughStatus } from '@/domain/types'
 import { SCENE_TYPES, SCENE_TYPE_CONFIG } from '@/domain/types'
 import { PLAYTHROUGH_STATUSES, PLAYTHROUGH_STATUS_CONFIG } from '@/domain/playthrough-operations'
@@ -22,7 +22,7 @@ type ContextMenuProps = {
   onClose: () => void
 }
 
-export { MenuItem }
+export { MenuItem, SubMenuItem }
 
 function BannerIcon({ color }: { color: string }) {
   return (
@@ -39,6 +39,7 @@ const SHAPE_ICONS: Record<SceneType, string | null> = {
   social: '◇',
   investigation: '⬡',
   divider: null,
+  group: null,
 }
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
@@ -66,8 +67,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
   const duplicateSelectedNodes = useGraphStore((s) => s.duplicateSelectedNodes)
   const copySelectedNodes = useGraphStore((s) => s.copySelectedNodes)
   const cutSelectedNodes = useGraphStore((s) => s.cutSelectedNodes)
-  const createGroup = useGraphStore((s) => s.createGroup)
-  const addToGroup = useGraphStore((s) => s.addToGroup)
+  const createGroupWithChildren = useGraphStore((s) => s.createGroupWithChildren)
   const removeFromGroup = useGraphStore((s) => s.removeFromGroup)
   const deleteGroup = useGraphStore((s) => s.deleteGroup)
   const toggleGroupCollapsed = useGraphStore((s) => s.toggleGroupCollapsed)
@@ -146,14 +146,15 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
 
   const handleGroupSelected = useCallback(() => {
     const pos = nodePosition ?? { x: 0, y: 0 }
-    const groupId = createGroup(currentType ?? 'narration', { x: pos.x - 30, y: pos.y - 60 }, 'Group')
     const ids = Array.from(selectedNodeIds).filter((id) => {
       const n = useGraphStore.getState().nodes[id]
       return !!n
     })
-    if (ids.length > 0) addToGroup(groupId, ids)
+    if (ids.length > 0) {
+      createGroupWithChildren({ x: pos.x - 30, y: pos.y - 60 }, ids)
+    }
     onClose()
-  }, [nodePosition, createGroup, currentType, selectedNodeIds, addToGroup, onClose])
+  }, [nodePosition, selectedNodeIds, createGroupWithChildren, onClose])
 
   const handleUngroup = useCallback(() => {
     deleteGroup(nodeId, false)
@@ -426,6 +427,11 @@ export function NodeContextMenu({ nodeId, position, onClose }: ContextMenuProps)
                 onClick={handleToggleCollapse}
               />
               <MenuItem
+                icon={<LayoutGrid size={14} className="text-text-muted" />}
+                label="Re-arrange"
+                onClick={() => { autoArrange(); onClose() }}
+              />
+              <MenuItem
                 icon={<Ungroup size={14} className="text-text-muted" />}
                 label="Ungroup"
                 onClick={handleUngroup}
@@ -562,5 +568,41 @@ function MenuItem({
       {icon}
       {label}
     </button>
+  )
+}
+
+function SubMenuItem({
+  icon,
+  label,
+  children,
+}: {
+  icon: React.ReactNode
+  label: string
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2.5 w-full px-3 py-1.5 rounded-lg text-left text-xs
+          transition-colors duration-100 cursor-pointer
+          text-text-secondary hover:text-text-primary hover:bg-surface-glass"
+        style={{ fontFamily: 'var(--font-display)' }}
+      >
+        {icon}
+        <span className="flex-1">{label}</span>
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 10 10"
+          fill="currentColor"
+          className={`transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
+        >
+          <path d="M3 1.5 L7.5 5 L3 8.5Z" />
+        </svg>
+      </button>
+      {open && <div className="pl-2">{children}</div>}
+    </>
   )
 }

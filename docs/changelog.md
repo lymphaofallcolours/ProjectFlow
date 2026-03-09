@@ -2,6 +2,18 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## v1.4.0 (2026-03-09)
+
+### feat: layout submenu, group child indicators, toolbar divider, collapse/expand layout fix
+- **Layout accordion submenu** — multi-select context menu layout items (auto-arrange, align, distribute) now collapse into an expandable "Layout" submenu via new `SubMenuItem` component
+- **Group child indicators** — expanded group children show a dashed cyan ring and a group name chip above the node for visual membership clarity
+- **Toolbar dividers** — Help button separated from panels by divider; Save separated from Help by divider (three clear groups: panels | help | file ops | canvas settings)
+- **Collapse/expand position fix** — collapsing a group stores each child's position as a relative offset; expanding restores children relative to the group's current position, then auto-arranges all visible nodes to prevent overlap with neighbours
+- **Re-arrange option** — group context menu now includes "Re-arrange" to run auto-arrange on the full graph
+- `toggleGroupCollapsed` in domain/ now takes full graph and returns updated graph (signature change from single-node)
+- `childOffsets` optional field added to `StoryNode` type for collapse/expand position tracking
+- 4 new tests (collapse offsets, expand reposition, move+expand, nested groups); 766 total tests
+
 ## v1.3.0 (2026-03-09)
 
 ### feat: add auto-arrange, align/distribute, snap-to-grid, and animated transitions

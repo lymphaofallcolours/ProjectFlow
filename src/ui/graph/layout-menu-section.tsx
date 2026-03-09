@@ -10,7 +10,7 @@ import {
   GripVertical,
 } from 'lucide-react'
 import type { Alignment, DistributeDirection } from '@/domain/align-distribute'
-import { MenuItem } from './context-menu'
+import { MenuItem, SubMenuItem } from './context-menu'
 
 type LayoutMenuSectionProps = {
   selectedCount: number
@@ -28,10 +28,10 @@ export function LayoutMenuSection({
   onClose,
 }: LayoutMenuSectionProps) {
   return (
-    <>
-      <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-text-muted font-medium">
-        Layout
-      </div>
+    <SubMenuItem
+      icon={<LayoutGrid size={14} className="text-text-muted" />}
+      label="Layout"
+    >
       <MenuItem
         icon={<LayoutGrid size={14} className="text-text-muted" />}
         label="Auto-Arrange"
@@ -83,6 +83,6 @@ export function LayoutMenuSection({
           />
         </>
       )}
-    </>
+    </SubMenuItem>
   )
 }

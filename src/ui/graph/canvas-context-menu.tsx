@@ -29,6 +29,7 @@ const SHAPE_ICONS: Record<SceneType, ReactNode> = {
   social: '◇',
   investigation: '⬡',
   divider: null,
+  group: null,
 }
 
 export function CanvasContextMenu({ position, flowPosition, onClose }: CanvasContextMenuProps) {

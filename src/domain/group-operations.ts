@@ -69,9 +69,51 @@ export function removeNodesFromGroup(
   return updated
 }
 
-export function toggleGroupCollapsed(node: StoryNode): StoryNode {
-  if (!node.isGroup) return node
-  return { ...node, collapsed: !node.collapsed }
+/**
+ * Toggle collapsed state for a group node, managing child position offsets.
+ * On collapse: stores relative offsets from group position for each direct child.
+ * On expand: restores children relative to the group's current position, then clears offsets.
+ */
+export function toggleGroupCollapsed(
+  nodes: Record<string, StoryNode>,
+  groupId: string,
+): Record<string, StoryNode> {
+  const group = nodes[groupId]
+  if (!group?.isGroup) return nodes
+
+  const updated = { ...nodes }
+
+  if (!group.collapsed) {
+    // Collapsing: store offsets for direct children
+    const children = getGroupChildren(nodes, groupId)
+    const offsets: Record<string, { dx: number; dy: number }> = {}
+    for (const child of children) {
+      offsets[child.id] = {
+        dx: child.position.x - group.position.x,
+        dy: child.position.y - group.position.y,
+      }
+    }
+    updated[groupId] = { ...group, collapsed: true, childOffsets: offsets }
+  } else {
+    // Expanding: reposition children relative to group's current position
+    if (group.childOffsets) {
+      for (const [childId, offset] of Object.entries(group.childOffsets)) {
+        const child = updated[childId]
+        if (child) {
+          updated[childId] = {
+            ...child,
+            position: {
+              x: group.position.x + offset.dx,
+              y: group.position.y + offset.dy,
+            },
+          }
+        }
+      }
+    }
+    updated[groupId] = { ...group, collapsed: false, childOffsets: undefined }
+  }
+
+  return updated
 }
 
 export function getGroupChildren(

@@ -139,22 +139,93 @@ describe('removeNodesFromGroup', () => {
 })
 
 describe('toggleGroupCollapsed', () => {
-  it('toggles collapsed from undefined to true', () => {
-    const group = createTestGroupNode({ id: 'g1' })
-    const result = toggleGroupCollapsed(group)
-    expect(result.collapsed).toBe(true)
+  it('collapses group and stores child offsets', () => {
+    const group = createTestGroupNode({ id: 'g1', position: { x: 100, y: 100 } })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g1', position: { x: 150, y: 200 } })
+    const c2 = createTestNode({ id: 'c2', groupId: 'g1', position: { x: 250, y: 300 } })
+    const nodes = { g1: group, c1, c2 }
+
+    const result = toggleGroupCollapsed(nodes, 'g1')
+    expect(result['g1'].collapsed).toBe(true)
+    expect(result['g1'].childOffsets).toEqual({
+      c1: { dx: 50, dy: 100 },
+      c2: { dx: 150, dy: 200 },
+    })
   })
 
-  it('toggles collapsed from true to false', () => {
-    const group = createTestGroupNode({ id: 'g1', collapsed: true })
-    const result = toggleGroupCollapsed(group)
-    expect(result.collapsed).toBe(false)
+  it('expands group and repositions children near current group position', () => {
+    const group = createTestGroupNode({
+      id: 'g1',
+      collapsed: true,
+      position: { x: 200, y: 200 },
+      childOffsets: { c1: { dx: 50, dy: 100 }, c2: { dx: 150, dy: 200 } },
+    })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g1', position: { x: 0, y: 0 } })
+    const c2 = createTestNode({ id: 'c2', groupId: 'g1', position: { x: 0, y: 0 } })
+    const nodes = { g1: group, c1, c2 }
+
+    const result = toggleGroupCollapsed(nodes, 'g1')
+    expect(result['g1'].collapsed).toBe(false)
+    expect(result['g1'].childOffsets).toBeUndefined()
+    expect(result['c1'].position).toEqual({ x: 250, y: 300 })
+    expect(result['c2'].position).toEqual({ x: 350, y: 400 })
   })
 
-  it('returns the same node if not a group', () => {
+  it('collapse then move group then expand repositions children relative to new position', () => {
+    const group = createTestGroupNode({ id: 'g1', position: { x: 100, y: 100 } })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g1', position: { x: 200, y: 300 } })
+    const nodes = { g1: group, c1 }
+
+    // Collapse
+    const collapsed = toggleGroupCollapsed(nodes, 'g1')
+    expect(collapsed['g1'].childOffsets).toEqual({ c1: { dx: 100, dy: 200 } })
+
+    // Simulate moving the group to a new position
+    const movedNodes = {
+      ...collapsed,
+      g1: { ...collapsed['g1'], position: { x: 500, y: 500 } },
+    }
+
+    // Expand
+    const expanded = toggleGroupCollapsed(movedNodes, 'g1')
+    expect(expanded['c1'].position).toEqual({ x: 600, y: 700 })
+  })
+
+  it('expands group with no stored offsets (legacy data) — children stay at stored positions', () => {
+    const group = createTestGroupNode({
+      id: 'g1',
+      collapsed: true,
+      position: { x: 200, y: 200 },
+    })
+    const c1 = createTestNode({ id: 'c1', groupId: 'g1', position: { x: 50, y: 50 } })
+    const nodes = { g1: group, c1 }
+
+    const result = toggleGroupCollapsed(nodes, 'g1')
+    expect(result['g1'].collapsed).toBe(false)
+    expect(result['c1'].position).toEqual({ x: 50, y: 50 })
+  })
+
+  it('only stores offsets for direct children, not nested sub-group children', () => {
+    const parent = createTestGroupNode({ id: 'g1', position: { x: 100, y: 100 } })
+    const subGroup = createTestGroupNode({ id: 'g2', groupId: 'g1', position: { x: 200, y: 200 } })
+    const nestedChild = createTestNode({ id: 'c1', groupId: 'g2', position: { x: 300, y: 300 } })
+    const directChild = createTestNode({ id: 'c2', groupId: 'g1', position: { x: 150, y: 150 } })
+    const nodes = { g1: parent, g2: subGroup, c1: nestedChild, c2: directChild }
+
+    const result = toggleGroupCollapsed(nodes, 'g1')
+    expect(result['g1'].childOffsets).toEqual({
+      g2: { dx: 100, dy: 100 },
+      c2: { dx: 50, dy: 50 },
+    })
+    // Nested child (c1) should NOT be in parent's offsets
+    expect(result['g1'].childOffsets!['c1']).toBeUndefined()
+  })
+
+  it('returns nodes unchanged if groupId is not a group', () => {
     const node = createTestNode({ id: 'n1' })
-    const result = toggleGroupCollapsed(node)
-    expect(result).toBe(node)
+    const nodes = { n1: node }
+    const result = toggleGroupCollapsed(nodes, 'n1')
+    expect(result).toBe(nodes)
   })
 })
 

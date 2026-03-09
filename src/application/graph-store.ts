@@ -88,6 +88,7 @@ type GraphState = {
   rewireEdge: (edgeId: string, newSource?: string, newTarget?: string) => void
   importSubgraph: (nodes: StoryNode[], edges: StoryEdge[]) => void
   createGroup: (sceneType: SceneType, position: Position2D, label?: string) => string
+  createGroupWithChildren: (position: Position2D, childIds: string[], label?: string) => string
   addToGroup: (groupId: string, nodeIds: string[]) => void
   removeFromGroup: (nodeIds: string[]) => void
   deleteGroup: (groupId: string, cascade: boolean) => void
@@ -449,6 +450,24 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     return group.id
   },
 
+  createGroupWithChildren: (position, childIds, label) => {
+    saveHistory()
+    const group = createGroupNodeOp('group', position, label ?? 'Group')
+    set((state) => {
+      const withGroup = { ...state.nodes, [group.id]: group }
+      // Clear stale groupId on children before adding to new group
+      const cleaned = { ...withGroup }
+      for (const id of childIds) {
+        const node = cleaned[id]
+        if (node?.groupId && !cleaned[node.groupId]) {
+          cleaned[id] = { ...node, groupId: undefined }
+        }
+      }
+      return { nodes: addNodesToGroupOp(cleaned, group.id, childIds) }
+    })
+    return group.id
+  },
+
   addToGroup: (groupId, nodeIds) => {
     saveHistory()
     set((state) => ({ nodes: addNodesToGroupOp(state.nodes, groupId, nodeIds) }))
@@ -474,18 +493,44 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       }
     }
     if (cascade) {
-      set((state) => deleteGroupWithChildrenOp(state.nodes, state.edges, groupId))
+      const descendantIds = getAllDescendants(get().nodes, groupId)
+      const removeSet = new Set([groupId, ...descendantIds])
+      set((state) => {
+        const result = deleteGroupWithChildrenOp(state.nodes, state.edges, groupId)
+        const nextSelected = new Set(state.selectedNodeIds)
+        for (const id of removeSet) nextSelected.delete(id)
+        return { ...result, selectedNodeIds: nextSelected }
+      })
     } else {
-      set((state) => deleteGroupKeepChildrenOp(state.nodes, state.edges, groupId))
+      set((state) => {
+        const result = deleteGroupKeepChildrenOp(state.nodes, state.edges, groupId)
+        const nextSelected = new Set(state.selectedNodeIds)
+        nextSelected.delete(groupId)
+        return { ...result, selectedNodeIds: nextSelected }
+      })
     }
   },
 
   toggleGroupCollapsed: (groupId) => {
     const node = get().nodes[groupId]
     if (!node?.isGroup) return
+    saveHistory()
     set((state) => ({
-      nodes: { ...state.nodes, [groupId]: toggleGroupCollapsedOp(node) },
+      nodes: toggleGroupCollapsedOp(state.nodes, groupId),
     }))
+    // Re-arrange all visible nodes so layout stays clean after collapse/expand
+    const { nodes, edges, scrollDirection } = get()
+    const rankdir = scrollDirection === 'horizontal' ? 'LR' : 'TB'
+    const positions = computeAutoLayout(nodes, edges, { rankdir })
+    useUIStore.getState().startLayoutAnimation()
+    set((state) => {
+      const updatedNodes = { ...state.nodes }
+      for (const [id, pos] of Object.entries(positions)) {
+        const n = updatedNodes[id]
+        if (n) updatedNodes[id] = { ...n, position: pos }
+      }
+      return { nodes: updatedNodes }
+    })
   },
 
   setDividerMagnitude: (nodeId, magnitude) => {

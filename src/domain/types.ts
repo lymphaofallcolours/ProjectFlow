@@ -15,7 +15,7 @@ export type ScrollDirection = 'horizontal' | 'vertical'
 
 // --- Scene Types & Shapes ---
 
-export type SceneType = 'event' | 'narration' | 'combat' | 'social' | 'investigation' | 'divider'
+export type SceneType = 'event' | 'narration' | 'combat' | 'social' | 'investigation' | 'divider' | 'group'
 
 export type NodeShape = 'circle' | 'square' | 'triangle' | 'diamond' | 'hexagon' | 'group-rect' | 'banner'
 
@@ -32,6 +32,7 @@ export const SCENE_TYPE_CONFIG: Record<SceneType, SceneTypeConfig> = {
   social: { shape: 'diamond', label: 'Social/RP', color: 'node-social' },
   investigation: { shape: 'hexagon', label: 'Investigation', color: 'node-investigation' },
   divider: { shape: 'banner', label: 'Divider', color: 'node-divider' },
+  group: { shape: 'group-rect', label: 'Group', color: 'node-group' },
 }
 
 export const SCENE_TYPES: SceneType[] = ['event', 'narration', 'combat', 'social', 'investigation', 'divider']
@@ -164,6 +165,7 @@ export type StoryNode = {
   isGroup?: boolean
   groupId?: string
   collapsed?: boolean
+  childOffsets?: Record<string, { dx: number; dy: number }>
   // Divider magnitude (only for sceneType 'divider')
   dividerMagnitude?: 1 | 2 | 3
 }

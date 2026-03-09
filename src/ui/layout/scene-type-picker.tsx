@@ -19,6 +19,7 @@ const SHAPE_ICONS: Record<SceneType, ReactNode> = {
   social: '◇',
   investigation: '⬡',
   divider: null, // rendered via BannerIcon
+  group: null,
 }
 
 export function SceneTypePicker({ onClose }: { onClose: () => void }) {

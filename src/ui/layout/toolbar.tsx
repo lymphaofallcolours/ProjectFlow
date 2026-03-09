@@ -94,7 +94,7 @@ export function Toolbar() {
   }, [importSubgraph])
 
   return (
-    <div className="relative z-10 flex items-center gap-1 px-3 py-2 glass-panel border-b border-border">
+    <div className="relative z-10 flex items-center gap-1 px-3 py-2 glass-panel border-b border-border overflow-x-auto">
       {/* Left group: graph actions + session */}
       <div className="flex items-center gap-1">
         <div className="relative">
@@ -108,7 +108,7 @@ export function Toolbar() {
           )}
         </div>
 
-        <div className="w-px h-5 bg-border mx-1" />
+        <ToolbarDivider />
 
         <SessionSelector />
         <ToolbarButton
@@ -119,7 +119,7 @@ export function Toolbar() {
           disabled={!activeSessionId}
         />
 
-        <div className="w-px h-5 bg-border mx-1" />
+        <ToolbarDivider />
 
         <ToolbarButton
           icon={<Undo2 size={16} />}
@@ -146,10 +146,10 @@ export function Toolbar() {
         <ToolbarButton icon={<Blocks size={16} />} label="Structures" onClick={toggleGraphTemplatePanel} />
         <ToolbarButton icon={<BarChart3 size={16} />} label="Dashboard" onClick={toggleDashboard} />
         <ToolbarButton icon={<LayoutTemplate size={16} />} label="Templates" onClick={toggleTemplateManager} />
+
+        <ToolbarDivider />
+
         <ToolbarButton icon={<HelpCircle size={16} />} label="Help" onClick={toggleLegendPanel} />
-
-        <div className="w-px h-5 bg-border mx-1" />
-
         <ToolbarButton icon={<Save size={16} />} label="Save" onClick={handleSave} />
         <ToolbarButton icon={<FolderOpen size={16} />} label="Load" onClick={handleLoad} />
         <ToolbarButton icon={<Upload size={16} />} label="Import" onClick={handleImportSubgraph} />
@@ -160,7 +160,7 @@ export function Toolbar() {
           active={autoSaveEnabled}
         />
 
-        <div className="w-px h-5 bg-border mx-1" />
+        <ToolbarDivider />
 
         <ToolbarButton
           icon={scrollDirection === 'horizontal'
@@ -194,6 +194,15 @@ export function Toolbar() {
         />
       </div>
     </div>
+  )
+}
+
+function ToolbarDivider() {
+  return (
+    <div
+      className="shrink-0 w-[2px] h-5 mx-1 rounded-full"
+      style={{ background: 'var(--color-surface-glass-border)' }}
+    />
   )
 }
 

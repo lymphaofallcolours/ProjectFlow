@@ -5,26 +5,21 @@
 ## Current Session
 
 **Date:** 2026-03-09
-**Goal:** Auto-arrange, snap-to-grid, align/distribute, animated transitions
+**Goal:** Layout submenu, group child indicators, toolbar divider, collapse/expand layout fix
 
 ### Completed This Session
 
-- **Auto-arrange** — dagre-based layout algorithm in `domain/graph-layout.ts`; group-aware (collapsed → single node), selection-aware, respects scroll direction (LR/TB)
-- **Align/distribute** — `domain/align-distribute.ts` with 6 alignment directions + 2 distribute directions; dimension-aware via NODE_DIMENSIONS
-- **NODE_DIMENSIONS extraction** — moved from `ui/graph/node-shapes.ts` to `domain/node-dimensions.ts` for clean layer boundaries; re-exported from original location
-- **Store actions** — `autoArrange`, `alignSelected`, `distributeSelected` in graph-store; `snapToGrid`, `isLayoutAnimating`, `startLayoutAnimation` in ui-store
-- **Multi-select context menu** — Layout section with Auto-Arrange, Align (6 options), Distribute (2 options, shown if 3+ selected)
-- **Canvas context menu** — "Auto-Arrange All" with confirmation dialog
-- **Confirm dialog** — reusable glass-panel modal at `ui/components/confirm-dialog.tsx`
-- **Snap-to-grid** — 40px grid, toggleable via toolbar Magnet button; background gap syncs to 40px when active
-- **Animated transitions** — CSS transition on `.react-flow__node` gated by `.layout-animating` class; 300ms cubic-bezier; cleared on drag start
-- **Keyboard shortcut** — Ctrl+Shift+L for auto-arrange (selected or all)
-- **15 new tests** — 7 graph-layout (chain, TB, selection, collapsed groups, disconnected, empty, shapes), 8 align-distribute (left/right/center/top, distribute H/V, edge cases)
+- **Layout accordion submenu** — `SubMenuItem` component in `context-menu.tsx`; `layout-menu-section.tsx` wraps all items in collapsible submenu
+- **Group child indicators** — dashed cyan ring + group name chip above children of expanded groups in `story-node.tsx`
+- **Toolbar divider** — Help button moved to utility/file ops section in `toolbar.tsx`
+- **Collapse/expand position fix** — `toggleGroupCollapsed` rewritten to take full graph; stores child offsets on collapse, restores relative positions on expand; `childOffsets` field added to `StoryNode`
+- **Re-arrange option** — group context menu includes "Re-arrange" to run `autoArrange()` on full graph
+- **4 new tests** — collapse offsets, expand reposition, move+expand, nested groups offset isolation
 
 ### Test Coverage
 
-- ~763 tests across 49 test files
-- Domain: ~269 (added 15 layout + align/distribute tests)
+- ~766 tests across 49 test files
+- Domain: ~273 (added 4 collapse/expand offset tests)
 - Application: ~200
 - Infrastructure: 13
 - UI: 66
@@ -49,6 +44,10 @@
 ---
 
 ## Previous Sessions
+
+### Phase 13 — Auto-arrange, Snap-to-grid, Align/Distribute, Animated Transitions (2026-03-09)
+- 1 commit (v1.3.0)
+- dagre-based auto-arrange, 6 alignment + 2 distribute directions, snap-to-grid, animated CSS transitions, confirm dialog, Ctrl+Shift+L shortcut, 15 new tests (763 total)
 
 ### Phase 11 — Nested Groups, Group/Divider Shapes, Depth Visualization (2026-03-08)
 - 3 commits

@@ -120,6 +120,10 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
   // Single-tone translucent fill
   const nodeFillColor = `color-mix(in srgb, ${accentColor} var(--accent-mix), var(--color-node-fill-base))`
 
+  // Group membership indicator: show when parent group is expanded
+  const parentGroup = storyNode.groupId ? allNodes[storyNode.groupId] : undefined
+  const showGroupIndicator = !!parentGroup && !parentGroup.collapsed
+
   // Expanded groups render as ghost (faint outline)
   const isGhost = isGroup && !storyNode.collapsed
   // Divider magnitude
@@ -170,6 +174,18 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
               opacity={isGhost ? 0.1 : 0.4}
             />
           </g>
+        )}
+
+        {/* Group membership dashed ring */}
+        {showGroupIndicator && (
+          <path
+            d={shapePath}
+            fill="none"
+            stroke="var(--color-node-group)"
+            strokeWidth="2"
+            strokeDasharray="4 2"
+            opacity="0.4"
+          />
         )}
 
         {/* Diff overlay ring */}
@@ -248,6 +264,19 @@ export const StoryNodeComponent = memo(function StoryNodeComponent({
           </span>
         )}
       </div>
+
+      {/* Group membership chip — top right corner */}
+      {showGroupIndicator && parentGroup && (
+        <div className="absolute -right-2.5 pointer-events-none z-10" style={{ top: '-18px' }}>
+          <span
+            className="text-[7px] font-medium px-1.5 py-0.5 rounded-full
+              bg-node-group/20 text-node-group whitespace-nowrap max-w-[80px] truncate block"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            {parentGroup.label}
+          </span>
+        </div>
+      )}
 
       {/* Group collapse/expand chevron — top right */}
       {isGroup && (
