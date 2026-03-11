@@ -117,6 +117,13 @@ export function useKeyboardShortcuts() {
         return
       }
 
+      // Ctrl+Shift+P → toggle peripheral view
+      if (ctrl && e.shiftKey && e.key === 'P') {
+        e.preventDefault()
+        useUIStore.getState().togglePeripheralView()
+        return
+      }
+
       // Ctrl+Shift+R → toggle entity relationship graph
       if (ctrl && e.shiftKey && e.key === 'R') {
         e.preventDefault()
@@ -147,7 +154,12 @@ export function useKeyboardShortcuts() {
         const session = useSessionStore.getState()
         const graph = useGraphStore.getState()
 
-        // 1. Close active overlay (field panel or cockpit)
+        // 1. Exit peripheral editing mode
+        if (ui.peripheralEditingField) {
+          ui.setPeripheralEditingField(null)
+          return
+        }
+        // 2. Close active overlay (field panel or cockpit)
         if (ui.activeOverlay) {
           ui.closeOverlay()
           return

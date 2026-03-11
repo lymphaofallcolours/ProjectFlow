@@ -20,6 +20,7 @@ src/
 │   ├── graph-operations.ts     # Pure functions: createNode, removeNode, updateField, updateNodeTags, duplicate, clipboard, rewire, transposeNodePositions, etc. (group-aware)
 │   ├── graph-layout.ts         # Dagre-based auto-arrange layout (pure algorithm, group-aware, selection-aware)
 │   ├── align-distribute.ts     # Align (left/center/right/top/middle/bottom) and distribute (horizontal/vertical) layout functions
+│   ├── peripheral-layout.ts    # Pure layout algorithm for peripheral view: maps populated fields to screen edges
 │   ├── node-dimensions.ts      # NODE_DIMENSIONS record — width/height per NodeShape, shared by domain + UI layers
 │   ├── group-operations.ts     # Pure group CRUD: create, add/remove children, collapse, delete (keep/cascade), boundary/internal edges
 │   ├── attachment-operations.ts # Pure attachment CRUD: create, validate size, add/remove from RichContent, campaign size estimation
@@ -36,7 +37,7 @@ src/
 │   ├── campaign-store.ts       # useCampaignStore — campaign metadata + custom field template CRUD + graph template CRUD
 │   ├── entity-store.ts         # useEntityStore — entity CRUD, registry, status tracking, portrait, relationships
 │   ├── session-store.ts        # useSessionStore — playthrough sessions, diff overlay, timeline toggle
-│   ├── ui-store.ts             # useUIStore — theme, overlay state, radial node, sidebar/panel toggles, template manager, graph template picker, entity graph, dashboard, auto-save state, snap-to-grid, layout animation
+│   ├── ui-store.ts             # useUIStore — theme, overlay state, radial node, sidebar/panel toggles, template manager, graph template picker, entity graph, dashboard, auto-save state, snap-to-grid, layout animation, peripheral view
 │   └── campaign-actions.ts     # assemble/hydrate/save/load/auto-save campaign orchestration (incl. entity + session + history)
 │
 ├── infrastructure/             # Browser APIs, serialization, file I/O
@@ -76,6 +77,10 @@ src/
 │   │   ├── field-icon.tsx      # Maps field icon names to Lucide components
 │   │   ├── cockpit-overlay.tsx # Full-screen grid of all 11 field panels
 │   │   ├── cockpit-field-panel.tsx # Individual collapsible field panel in cockpit
+│   │   ├── peripheral-view.tsx  # Root peripheral view — subscribes to selection, computes layout, renders edges
+│   │   ├── peripheral-edge.tsx  # Container for one screen edge with fixed positioning
+│   │   ├── peripheral-field-card.tsx # Glass card with read/edit toggle, staggered animation
+│   │   ├── field-read-view.tsx  # Read-only renderer for all field types (no TipTap)
 │   │   └── field-editors/      # Per-type editors
 │   │       ├── field-editor.tsx         # Dispatcher: routes fieldKey to correct editor
 │   │       ├── rich-content-editor.tsx  # TipTap editor for RichContent fields with entity autocomplete + attachment gallery

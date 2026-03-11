@@ -8,7 +8,7 @@ A narrative graph editor and session runner for tabletop RPG game mastering. Bui
 
 ProjectFlow replaces spreadsheet-based campaign scripting with a visual node-and-edge graph. Each node is a story stage — a scene, encounter, or decision point — and edges are the transitions between them. Five node shapes map to narrative types: circles for events, squares for narration, triangles for combat, diamonds for social encounters, hexagons for investigation.
 
-Every node holds 11 content fields (script, dialogue, GM notes, vibe, soundtrack, combat, characters, dice rolls, secrets, events, custom fields) accessible through a three-tier drill-down: click to select, Shift+click for radial field subnodes, double-click for a full cockpit editor.
+Every node holds 11 content fields (script, dialogue, GM notes, vibe, soundtrack, combat, characters, dice rolls, secrets, events, custom fields) accessible through a three-tier drill-down: click to select, Shift+click for radial field subnodes, double-click for a full cockpit editor. Toggle **Peripheral View** (Ctrl+Shift+P) to see all populated fields at once as floating glass panels around the screen edges.
 
 During live play, start a session and mark nodes as you go. The diff overlay shows visited vs. skipped vs. modified nodes at a glance. After the session, export a markdown log of what actually happened.
 
@@ -16,6 +16,7 @@ During live play, start a session and mark nodes as you go. The diff overlay sho
 
 - **Shaped narrative nodes** — 5 scene types with distinct glass-surfaced shapes and accent colors
 - **Three-tier drill-down** — progressive disclosure from graph overview to field subnodes to full cockpit editor
+- **Peripheral view** — toggle mode that displays all populated fields as floating glass panels around the screen edges while keeping the graph visible (Ctrl+Shift+P)
 - **Entity tagging DSL** — inline `@Name` / `#Name` tags with type prefixes for NPCs, enemies, objects, locations, and secrets; rendered as colored chips with autocomplete
 - **Playthrough tracking** — session-based visit logging, diff overlays, and markdown export
 - **Nested groups** — collapsible groups that can contain other groups (unlimited depth), with double-border rectangle shape, depth badges, and ghost outlines when expanded

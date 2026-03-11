@@ -24,6 +24,7 @@ import {
   Grid3X3,
   Square,
   Magnet,
+  PanelLeftOpen,
 } from 'lucide-react'
 import { useUIStore } from '@/application/ui-store'
 import { useGraphStore } from '@/application/graph-store'
@@ -60,6 +61,8 @@ export function Toolbar() {
   const cycleCanvasBackground = useUIStore((s) => s.cycleCanvasBackground)
   const snapToGrid = useUIStore((s) => s.snapToGrid)
   const toggleSnapToGrid = useUIStore((s) => s.toggleSnapToGrid)
+  const peripheralViewEnabled = useUIStore((s) => s.peripheralViewEnabled)
+  const togglePeripheralView = useUIStore((s) => s.togglePeripheralView)
   const autoSaveEnabled = useUIStore((s) => s.autoSaveEnabled)
   const toggleAutoSave = useUIStore((s) => s.toggleAutoSave)
   const importSubgraph = useGraphStore((s) => s.importSubgraph)
@@ -146,6 +149,12 @@ export function Toolbar() {
         <ToolbarButton icon={<Blocks size={16} />} label="Structures" onClick={toggleGraphTemplatePanel} />
         <ToolbarButton icon={<BarChart3 size={16} />} label="Dashboard" onClick={toggleDashboard} />
         <ToolbarButton icon={<LayoutTemplate size={16} />} label="Templates" onClick={toggleTemplateManager} />
+        <ToolbarButton
+          icon={<PanelLeftOpen size={16} />}
+          label="Peripheral"
+          onClick={togglePeripheralView}
+          active={peripheralViewEnabled}
+        />
 
         <ToolbarDivider />
 

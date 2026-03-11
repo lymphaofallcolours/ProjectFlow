@@ -2,6 +2,20 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## v1.5.0 (2026-03-11)
+
+### feat: peripheral view — floating glass panels for at-a-glance field reading
+- **Peripheral view mode** — toggle via toolbar button or Ctrl+Shift+P to display all populated fields as floating glass panels around the screen edges (left/right/top/bottom) while keeping the graph canvas visible in the center
+- **Smart auto-layout** — distributes fields across 1–4 screen edges based on populated field count, with field-type affinity mapping (script/GM notes/vibe → left, characters/combat/secrets → right, dialogue/events → top, soundtrack/dice/custom → bottom)
+- **Read-first, click-to-edit** — panels render content read-only by default; click the pencil icon to switch to the full field editor in-place
+- **Cross-fade animation** — staggered card entrance animation with per-card delay when selecting a node; smooth fade when switching between nodes
+- **Sidebar collision handling** — left edge panels suppress when entity sidebar or search panel is open
+- **Overlay suppression** — peripheral panels automatically hide when cockpit or field panel overlay is active
+- **Escape chain integration** — Escape exits peripheral edit mode before closing overlays
+- New domain module `peripheral-layout.ts` with pure layout algorithm
+- New `field-read-view.tsx` read-only renderer (dialogue script styling, dice roll chips, soundtrack bullets)
+- 15 new domain tests for layout algorithm; 781 total tests
+
 ## v1.4.0 (2026-03-09)
 
 ### feat: layout submenu, group child indicators, toolbar divider, collapse/expand layout fix

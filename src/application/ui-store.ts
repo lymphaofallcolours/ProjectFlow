@@ -56,6 +56,10 @@ type UIState = {
   autoSaveIntervalMs: number
   autoSaveStatus: 'saving' | 'saved' | null
 
+  // Peripheral view
+  peripheralViewEnabled: boolean
+  peripheralEditingField: FieldKey | null
+
   setTheme: (theme: 'light' | 'dark') => void
   toggleTheme: () => void
   openFieldPanel: (nodeId: string, fieldKey: FieldKey) => void
@@ -79,6 +83,8 @@ type UIState = {
   toggleAutoSave: () => void
   setAutoSaveIntervalMs: (ms: number) => void
   setAutoSaveStatus: (status: 'saving' | 'saved' | null) => void
+  togglePeripheralView: () => void
+  setPeripheralEditingField: (fieldKey: FieldKey | null) => void
 }
 
 const closedPanels = {
@@ -110,6 +116,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   autoSaveEnabled: false,
   autoSaveIntervalMs: 60_000,
   autoSaveStatus: null,
+  peripheralViewEnabled: false,
+  peripheralEditingField: null,
 
   setTheme: (theme) => set({ theme }),
   toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
@@ -212,4 +220,12 @@ export const useUIStore = create<UIState>((set, get) => ({
   setAutoSaveIntervalMs: (ms) => set({ autoSaveIntervalMs: ms }),
 
   setAutoSaveStatus: (status) => set({ autoSaveStatus: status }),
+
+  togglePeripheralView: () =>
+    set((state) => ({
+      peripheralViewEnabled: !state.peripheralViewEnabled,
+      peripheralEditingField: state.peripheralViewEnabled ? null : state.peripheralEditingField,
+    })),
+
+  setPeripheralEditingField: (fieldKey) => set({ peripheralEditingField: fieldKey }),
 }))

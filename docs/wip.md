@@ -4,22 +4,23 @@
 
 ## Current Session
 
-**Date:** 2026-03-09
-**Goal:** Layout submenu, group child indicators, toolbar divider, collapse/expand layout fix
+**Date:** 2026-03-11
+**Goal:** Peripheral view — floating glass panels for at-a-glance field reading
 
 ### Completed This Session
 
-- **Layout accordion submenu** — `SubMenuItem` component in `context-menu.tsx`; `layout-menu-section.tsx` wraps all items in collapsible submenu
-- **Group child indicators** — dashed cyan ring + group name chip above children of expanded groups in `story-node.tsx`
-- **Toolbar divider** — Help button moved to utility/file ops section in `toolbar.tsx`
-- **Collapse/expand position fix** — `toggleGroupCollapsed` rewritten to take full graph; stores child offsets on collapse, restores relative positions on expand; `childOffsets` field added to `StoryNode`
-- **Re-arrange option** — group context menu includes "Re-arrange" to run `autoArrange()` on full graph
-- **4 new tests** — collapse offsets, expand reposition, move+expand, nested groups offset isolation
+- **Peripheral view feature** — new toggleable mode (Ctrl+Shift+P / toolbar button) that displays populated node fields as floating glass panels around screen edges
+- **Smart auto-layout algorithm** — `peripheral-layout.ts` in domain/; distributes fields across 1–4 edges based on count with field-type affinity mapping
+- **Read-first, click-to-edit** — `field-read-view.tsx` renders content read-only; pencil button switches to full FieldEditor in-place
+- **Styled read views** — dialogue entries with entity ref badges, dice rolls as inline chips, soundtrack with bullet indicators, custom fields with labeled sections
+- **Cross-fade animation** — staggered card entrance per edge, CSS `peripheral-card-slide` keyframe
+- **Integration** — toolbar button, Ctrl+Shift+P shortcut, Escape chain (exits edit mode first), sidebar collision suppression, overlay suppression
+- **15 new domain tests** — layout threshold, affinity, fallback, suppression, ordering
 
 ### Test Coverage
 
-- ~766 tests across 49 test files
-- Domain: ~273 (added 4 collapse/expand offset tests)
+- ~781 tests across 50 test files
+- Domain: ~288 (added 15 peripheral layout tests)
 - Application: ~200
 - Infrastructure: 13
 - UI: 66
@@ -44,6 +45,10 @@
 ---
 
 ## Previous Sessions
+
+### Phase 14 — Layout Submenu, Group Indicators, Toolbar Dividers, Collapse/Expand Fix (2026-03-09)
+- 1 commit (v1.4.0)
+- Layout accordion submenu, group child indicators, toolbar dividers, collapse/expand position fix, re-arrange option, 4 new tests (766 total)
 
 ### Phase 13 — Auto-arrange, Snap-to-grid, Align/Distribute, Animated Transitions (2026-03-09)
 - 1 commit (v1.3.0)

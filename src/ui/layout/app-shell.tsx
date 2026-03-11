@@ -2,6 +2,7 @@ import { Toolbar } from './toolbar'
 import { StatusBar } from './status-bar'
 import { GraphCanvas } from '@/ui/graph/graph-canvas'
 import { OverlayRoot } from '@/ui/overlays/overlay-root'
+import { PeripheralView } from '@/ui/overlays/peripheral-view'
 import { EntitySidebar } from '@/ui/entities/entity-sidebar'
 import { HelpPanel } from '@/ui/components/help-panel'
 import { SearchPanel } from '@/ui/components/search-panel'
@@ -24,6 +25,7 @@ export function AppShell() {
       <main className="flex-1 relative overflow-hidden">
         <GraphCanvas />
         <OverlayRoot />
+        <PeripheralView />
         <SearchPanel />
         <EntitySidebar />
         <TemplateManager />
