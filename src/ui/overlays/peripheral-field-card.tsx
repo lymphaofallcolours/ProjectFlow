@@ -32,7 +32,7 @@ export const PeripheralFieldCard = React.memo(function PeripheralFieldCard({
   return (
     <div
       className="glass-panel rounded-xl overflow-hidden pointer-events-auto
-        peripheral-card-enter"
+        peripheral-card-enter h-full flex flex-col"
       style={{
         // Colored left accent — the bookmark ribbon
         borderLeft: `2px solid ${fieldDef.color}`,
@@ -71,8 +71,8 @@ export const PeripheralFieldCard = React.memo(function PeripheralFieldCard({
       </div>
 
       {/* Content body */}
-      <div className="px-3 pb-3">
-        <div className="pt-2 max-h-[280px] overflow-y-auto peripheral-scrollbar">
+      <div className="px-3 pb-3 min-h-0 flex-1 overflow-hidden">
+        <div className="pt-2 overflow-y-auto peripheral-scrollbar h-full">
           {isEditing ? (
             <FieldEditor node={node} fieldKey={fieldDef.key} />
           ) : (

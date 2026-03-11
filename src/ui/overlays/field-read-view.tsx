@@ -84,22 +84,26 @@ function DialogueReadView({ value }: { value: DialogueEntry[] }) {
 
 function SoundtrackReadView({ value }: { value: SoundtrackCue[] }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {value.map((cue, i) => (
-        <div key={i} className="flex items-center gap-2">
+        <div key={i} className="flex gap-2 items-start">
           <span
-            className="w-1 h-1 rounded-full shrink-0"
+            className="w-1 h-1 rounded-full shrink-0 mt-[7px]"
             style={{ background: 'var(--color-text-muted)' }}
           />
-          <span
-            className="text-[13px] text-text-primary font-medium"
-            style={{ fontFamily: 'var(--font-body)' }}
-          >
-            {cue.trackName}
-          </span>
-          {cue.note && (
-            <span className="text-[11px] text-text-muted truncate">{cue.note}</span>
-          )}
+          <div className="min-w-0">
+            <div
+              className="text-[13px] text-text-primary font-medium"
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              {cue.trackName}
+            </div>
+            {cue.note && (
+              <div className="text-[11px] text-text-muted leading-snug mt-0.5">
+                {cue.note}
+              </div>
+            )}
+          </div>
         </div>
       ))}
     </div>

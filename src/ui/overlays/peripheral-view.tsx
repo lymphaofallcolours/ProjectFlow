@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useGraphStore } from '@/application/graph-store'
 import { useUIStore } from '@/application/ui-store'
+import { useSessionStore } from '@/application/session-store'
 import { FIELD_DEFINITIONS } from '@/domain/types'
 import { isFieldPopulated } from '@/domain/graph-operations'
 import { computePeripheralLayout } from '@/domain/peripheral-layout'
@@ -10,8 +11,26 @@ import { PeripheralEdge } from './peripheral-edge'
 export function PeripheralView() {
   const peripheralViewEnabled = useUIStore((s) => s.peripheralViewEnabled)
   const activeOverlay = useUIStore((s) => s.activeOverlay)
+
+  // Subscribe to all panel states — hide peripheral view when any is open
   const entitySidebarOpen = useUIStore((s) => s.entitySidebarOpen)
   const searchPanelOpen = useUIStore((s) => s.searchPanelOpen)
+  const dashboardOpen = useUIStore((s) => s.dashboardOpen)
+  const templateManagerOpen = useUIStore((s) => s.templateManagerOpen)
+  const graphTemplatePanelOpen = useUIStore((s) => s.graphTemplatePanelOpen)
+  const entityGraphOpen = useUIStore((s) => s.entityGraphOpen)
+  const legendPanelOpen = useUIStore((s) => s.legendPanelOpen)
+  const sessionTimelineOpen = useSessionStore((s) => s.sessionTimelineOpen)
+
+  const anyPanelOpen =
+    entitySidebarOpen ||
+    searchPanelOpen ||
+    dashboardOpen ||
+    templateManagerOpen ||
+    graphTemplatePanelOpen ||
+    entityGraphOpen ||
+    legendPanelOpen ||
+    sessionTimelineOpen
 
   const selectedNodeIds = useGraphStore((s) => s.selectedNodeIds)
   const nodes = useGraphStore((s) => s.nodes)
@@ -28,24 +47,18 @@ export function PeripheralView() {
     useUIStore.getState().setPeripheralEditingField(null)
   }
 
-  // Determine suppressed edges
-  const suppressedEdges = useMemo<EdgePosition[]>(() => {
-    const suppressed: EdgePosition[] = []
-    if (entitySidebarOpen || searchPanelOpen) suppressed.push('left')
-    return suppressed
-  }, [entitySidebarOpen, searchPanelOpen])
-
   // Compute layout
   const layout = useMemo(() => {
     if (!node) return []
     const populated = FIELD_DEFINITIONS.filter((fd) =>
       isFieldPopulated(node.fields, fd.key),
     )
-    return computePeripheralLayout(populated, suppressedEdges)
-  }, [node, suppressedEdges])
+    return computePeripheralLayout(populated)
+  }, [node])
 
-  // Don't render when disabled, no node selected, or overlay is active
-  const shouldShow = peripheralViewEnabled && node && !activeOverlay && layout.length > 0
+  // Don't render when disabled, no node selected, overlay active, or any panel open
+  const shouldShow =
+    peripheralViewEnabled && node && !activeOverlay && !anyPanelOpen && layout.length > 0
   if (!shouldShow) return null
 
   // Group assignments by edge

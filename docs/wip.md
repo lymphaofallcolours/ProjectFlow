@@ -5,22 +5,22 @@
 ## Current Session
 
 **Date:** 2026-03-11
-**Goal:** Peripheral view — floating glass panels for at-a-glance field reading
+**Goal:** Peripheral view v2 — layout overhaul
 
 ### Completed This Session
 
-- **Peripheral view feature** — new toggleable mode (Ctrl+Shift+P / toolbar button) that displays populated node fields as floating glass panels around screen edges
-- **Smart auto-layout algorithm** — `peripheral-layout.ts` in domain/; distributes fields across 1–4 edges based on count with field-type affinity mapping
-- **Read-first, click-to-edit** — `field-read-view.tsx` renders content read-only; pencil button switches to full FieldEditor in-place
-- **Styled read views** — dialogue entries with entity ref badges, dice rolls as inline chips, soundtrack with bullet indicators, custom fields with labeled sections
-- **Cross-fade animation** — staggered card entrance per edge, CSS `peripheral-card-slide` keyframe
-- **Integration** — toolbar button, Ctrl+Shift+P shortcut, Escape chain (exits edit mode first), sidebar collision suppression, overlay suppression
-- **15 new domain tests** — layout threshold, affinity, fallback, suppression, ordering
+- **Peripheral view v2 layout overhaul** — fixed field-to-edge mapping (Script/Dialogue→left, Combat/Events→right, Soundtrack/Dice/Vibe→top, Characters/Secrets/GM Notes/Custom→bottom)
+- **Proportional horizontal sizing** — top/bottom cards use flex-1 equal distribution with min/max bounds; single card fills full width, 2 cards split evenly
+- **Content-proportional height** — cards grow with content up to 25vh cap; per-card scroll containment (no more sibling scroll propagation)
+- **Soundtrack two-line layout** — track name + note on separate lines
+- **Full panel suppression** — peripheral view hides entirely when any toolbar panel is open
+- Removed `getActiveEdges()`, `suppressedEdges`, fallback logic — simplified domain module
+- Rewrote domain tests for fixed mapping
 
 ### Test Coverage
 
-- ~781 tests across 50 test files
-- Domain: ~288 (added 15 peripheral layout tests)
+- 775 tests across 50 test files
+- Domain: ~282 (rewrote 9 peripheral layout tests)
 - Application: ~200
 - Infrastructure: 13
 - UI: 66

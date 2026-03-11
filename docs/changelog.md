@@ -2,6 +2,18 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## v1.6.0 (2026-03-11)
+
+### feat: peripheral view v2 — layout overhaul, proportional sizing, panel suppression
+- **New field-to-edge mapping** — user-specified fixed layout: Script/Dialogue → left, Combat/Events → right, Soundtrack/Dice Rolls/Vibe → top, Characters/Secrets/GM Notes/Custom → bottom
+- **Proportional horizontal cards** — top/bottom cards distribute equally across available width (flex-1 with min/max bounds); single card stretches full width, 2 cards split evenly
+- **Content-proportional height** — cards size to content up to 25vh cap; tall content scrolls within individual cards without moving siblings
+- **Scroll containment fix** — each card scrolls independently; scrolling no longer moves the entire edge container
+- **Soundtrack two-line layout** — track name on first line, note on second line (no more truncation)
+- **Full panel suppression** — peripheral view hides entirely when any toolbar panel is open (Entities, Search, Dashboard, Templates, Graph Templates, Entity Graph, Legend, Session Timeline)
+- Removed `getActiveEdges()` and `suppressedEdges` — all edges always active, view-level hide replaces edge-level suppression
+- Rewrote domain tests for fixed mapping; 775 total tests
+
 ## v1.5.0 (2026-03-11)
 
 ### feat: peripheral view — floating glass panels for at-a-glance field reading

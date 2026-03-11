@@ -11,10 +11,10 @@ type PeripheralEdgeProps = {
 }
 
 const EDGE_STYLES: Record<EdgePosition, string> = {
-  left: 'left-0 top-[theme(spacing.12)] bottom-[theme(spacing.8)] w-[300px] flex-col',
-  right: 'right-0 top-[theme(spacing.12)] bottom-[theme(spacing.8)] w-[300px] flex-col',
-  top: 'top-[theme(spacing.12)] max-h-[180px] flex-row',
-  bottom: 'bottom-[theme(spacing.8)] max-h-[180px] flex-row',
+  left: 'left-0 top-[theme(spacing.12)] bottom-[theme(spacing.8)] w-[300px] flex-col justify-center',
+  right: 'right-0 top-[theme(spacing.12)] bottom-[theme(spacing.8)] w-[300px] flex-col justify-center',
+  top: 'top-[theme(spacing.12)] flex-row',
+  bottom: 'bottom-[theme(spacing.8)] flex-row',
 }
 
 export const PeripheralEdge = React.memo(function PeripheralEdge({
@@ -42,10 +42,12 @@ export const PeripheralEdge = React.memo(function PeripheralEdge({
 
   const isHorizontal = edge === 'top' || edge === 'bottom'
 
+  const cardCount = sorted.length
+
   return (
     <div
-      className={`fixed flex gap-2.5 p-2.5 pointer-events-none peripheral-scrollbar ${EDGE_STYLES[edge]} ${
-        isHorizontal ? 'overflow-x-auto' : 'overflow-y-auto'
+      className={`fixed flex gap-2.5 p-2.5 pointer-events-none ${EDGE_STYLES[edge]} ${
+        isHorizontal ? 'overflow-hidden' : ''
       }`}
       style={{
         ...(horizontalInset ? { left: horizontalInset } : {}),
@@ -55,7 +57,12 @@ export const PeripheralEdge = React.memo(function PeripheralEdge({
       {sorted.map((assignment) => (
         <div
           key={assignment.fieldKey}
-          className={isHorizontal ? 'min-w-[260px] max-w-[320px] flex-shrink-0' : ''}
+          className={
+            isHorizontal
+              ? `min-w-[200px] flex-1 overflow-hidden ${cardCount > 2 ? 'max-w-[520px]' : ''}`
+              : 'flex-1 min-h-0 overflow-y-auto'
+          }
+          style={isHorizontal ? { maxHeight: '25vh' } : undefined}
         >
           <PeripheralFieldCard
             node={node}
