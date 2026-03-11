@@ -485,8 +485,8 @@ describe('useGraphStore', () => {
 
   describe('setScrollDirection', () => {
     it('changes scroll direction', () => {
-      useGraphStore.getState().setScrollDirection('vertical')
-      expect(useGraphStore.getState().scrollDirection).toBe('vertical')
+      useGraphStore.getState().setScrollDirection('horizontal')
+      expect(useGraphStore.getState().scrollDirection).toBe('horizontal')
     })
 
     it('transposes node positions when direction changes', () => {
@@ -496,7 +496,7 @@ describe('useGraphStore', () => {
       const nodesBefore = Object.values(useGraphStore.getState().nodes)
       expect(nodesBefore).toHaveLength(2)
 
-      store.setScrollDirection('vertical')
+      store.setScrollDirection('horizontal')
       const nodesAfter = Object.values(useGraphStore.getState().nodes)
 
       // Positions should have changed (X/Y swapped relative to centroid)
@@ -510,7 +510,7 @@ describe('useGraphStore', () => {
       store.addNode('event', { x: 50, y: 80 })
       const posBefore = Object.values(useGraphStore.getState().nodes)[0].position
 
-      store.setScrollDirection('horizontal') // same as default
+      store.setScrollDirection('vertical') // same as default
       const posAfter = Object.values(useGraphStore.getState().nodes)[0].position
 
       expect(posAfter).toEqual(posBefore)
@@ -519,7 +519,7 @@ describe('useGraphStore', () => {
     it('pushes history before transposing', () => {
       const store = useGraphStore.getState()
       store.addNode('event', { x: 0, y: 0 })
-      store.setScrollDirection('vertical')
+      store.setScrollDirection('horizontal')
 
       // Should be able to undo the transpose
       const { past } = useHistoryStore.getState()

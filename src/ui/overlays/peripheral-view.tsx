@@ -20,6 +20,7 @@ export function PeripheralView() {
   const graphTemplatePanelOpen = useUIStore((s) => s.graphTemplatePanelOpen)
   const entityGraphOpen = useUIStore((s) => s.entityGraphOpen)
   const legendPanelOpen = useUIStore((s) => s.legendPanelOpen)
+  const toolbarDropdownOpen = useUIStore((s) => s.toolbarDropdownOpen)
   const sessionTimelineOpen = useSessionStore((s) => s.sessionTimelineOpen)
 
   const anyPanelOpen =
@@ -30,6 +31,7 @@ export function PeripheralView() {
     graphTemplatePanelOpen ||
     entityGraphOpen ||
     legendPanelOpen ||
+    toolbarDropdownOpen ||
     sessionTimelineOpen
 
   const selectedNodeIds = useGraphStore((s) => s.selectedNodeIds)

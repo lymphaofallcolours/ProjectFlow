@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type {
   StoryNode,
   FieldKey,
@@ -5,8 +6,12 @@ import type {
   DialogueEntry,
   SoundtrackCue,
   DiceRollEntry,
+  ConditionEntry,
   CustomField,
 } from '@/domain/types'
+import { FIELD_DEFINITIONS } from '@/domain/types'
+import { useGraphStore } from '@/application/graph-store'
+import { FieldIcon } from './field-icon'
 
 type FieldReadViewProps = {
   node: StoryNode
@@ -30,9 +35,55 @@ export function FieldReadView({ node, fieldKey }: FieldReadViewProps) {
       return <SoundtrackReadView value={node.fields.soundtrack} />
     case 'diceRolls':
       return <DiceRollReadView value={node.fields.diceRolls} />
+    case 'conditions':
+      return <ConditionsReadView value={node.fields.conditions} nodeId={node.id} />
     case 'custom':
       return <CustomFieldReadView value={node.fields.custom} />
   }
+}
+
+const FIELD_LINK_REGEX = /\/\?([A-Za-z][A-Za-z ]*)/g
+
+function renderFieldLinks(text: string): ReactNode[] {
+  const parts: ReactNode[] = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+  const regex = new RegExp(FIELD_LINK_REGEX.source, FIELD_LINK_REGEX.flags)
+
+  while ((match = regex.exec(text)) !== null) {
+    const label = match[1].trim()
+    const fieldDef = FIELD_DEFINITIONS.find(
+      (f) => f.label.toLowerCase() === label.toLowerCase(),
+    )
+    if (!fieldDef) continue
+
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index))
+    }
+    parts.push(
+      <span
+        key={match.index}
+        className="inline-flex items-center gap-0.5 px-1 py-0 rounded"
+        style={{
+          background: `color-mix(in srgb, ${fieldDef.color} 15%, transparent)`,
+          color: fieldDef.color,
+          fontSize: '11px',
+          fontFamily: 'var(--font-mono)',
+          fontWeight: 600,
+          verticalAlign: 'baseline',
+        }}
+      >
+        <FieldIcon name={fieldDef.icon} size={10} />
+        {fieldDef.label}
+      </span>,
+    )
+    lastIndex = match.index + match[0].length
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex))
+  }
+  return parts.length > 0 ? parts : [text]
 }
 
 function RichContentReadView({ value }: { value: RichContent }) {
@@ -45,7 +96,7 @@ function RichContentReadView({ value }: { value: RichContent }) {
       className="text-[13px] leading-[1.65] text-text-primary whitespace-pre-wrap break-words"
       style={{ fontFamily: 'var(--font-body)' }}
     >
-      {value.markdown}
+      {renderFieldLinks(value.markdown)}
     </div>
   )
 }
@@ -138,6 +189,61 @@ function DiceRollReadView({ value }: { value: DiceRollEntry[] }) {
           )}
         </div>
       ))}
+    </div>
+  )
+}
+
+function ConditionsReadView({ value, nodeId }: { value: ConditionEntry[]; nodeId: string }) {
+  const edges = useGraphStore((s) => s.edges)
+  const nodes = useGraphStore((s) => s.nodes)
+
+  return (
+    <div className="space-y-1.5">
+      {value.map((cond, i) => {
+        const targetEdge = cond.targetEdgeId ? edges[cond.targetEdgeId] : undefined
+        const targetNode = targetEdge ? nodes[targetEdge.target === nodeId ? targetEdge.source : targetEdge.target] : undefined
+
+        return (
+          <div key={i}>
+            <div className="flex items-center gap-2">
+              <span
+                className="text-[13px] shrink-0"
+                title={cond.status}
+              >
+                {cond.status === 'met' ? '●' : cond.status === 'unmet' ? '○' : '?'}
+              </span>
+              <span
+                className="text-[13px] text-text-primary"
+                style={{
+                  color: cond.status === 'met'
+                    ? 'var(--color-status-played)'
+                    : cond.status === 'unknown'
+                      ? '#d97706'
+                      : undefined,
+                }}
+              >
+                {cond.description}
+              </span>
+              {targetNode && (
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded-md shrink-0"
+                  style={{
+                    color: 'var(--color-text-secondary)',
+                    background: 'color-mix(in srgb, var(--color-border) 40%, transparent)',
+                  }}
+                >
+                  → {targetNode.label}
+                </span>
+              )}
+            </div>
+            {cond.notes && (
+              <div className="text-[11px] text-text-muted leading-snug mt-0.5 ml-5">
+                {cond.notes}
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

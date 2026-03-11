@@ -56,6 +56,9 @@ type UIState = {
   autoSaveIntervalMs: number
   autoSaveStatus: 'saving' | 'saved' | null
 
+  // Toolbar
+  toolbarDropdownOpen: boolean
+
   // Peripheral view
   peripheralViewEnabled: boolean
   peripheralEditingField: FieldKey | null
@@ -83,6 +86,7 @@ type UIState = {
   toggleAutoSave: () => void
   setAutoSaveIntervalMs: (ms: number) => void
   setAutoSaveStatus: (status: 'saving' | 'saved' | null) => void
+  setToolbarDropdownOpen: (open: boolean) => void
   togglePeripheralView: () => void
   setPeripheralEditingField: (fieldKey: FieldKey | null) => void
 }
@@ -116,6 +120,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   autoSaveEnabled: false,
   autoSaveIntervalMs: 60_000,
   autoSaveStatus: null,
+  toolbarDropdownOpen: false,
   peripheralViewEnabled: false,
   peripheralEditingField: null,
 
@@ -220,6 +225,14 @@ export const useUIStore = create<UIState>((set, get) => ({
   setAutoSaveIntervalMs: (ms) => set({ autoSaveIntervalMs: ms }),
 
   setAutoSaveStatus: (status) => set({ autoSaveStatus: status }),
+
+  setToolbarDropdownOpen: (open) => {
+    if (open) {
+      set({ toolbarDropdownOpen: true, ...closedPanels })
+    } else {
+      set({ toolbarDropdownOpen: false })
+    }
+  },
 
   togglePeripheralView: () =>
     set((state) => ({

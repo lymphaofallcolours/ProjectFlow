@@ -87,6 +87,7 @@ src/
 │   │       ├── dialogue-list-editor.tsx # Entity ref + line list editor
 │   │       ├── soundtrack-list-editor.tsx # Track name + note list editor
 │   │       ├── dice-roll-list-editor.tsx  # Description + formula list editor
+│   │       ├── conditions-list-editor.tsx # Condition entries: status cycling, description, edge picker, notes
 │   │       └── custom-field-editor.tsx    # Label + content list editor with template picker (TipTap for content) + attachment gallery
 │   │
 │   ├── hooks/                  # Shared React hooks
@@ -116,7 +117,9 @@ src/
 │   │   ├── entity-chip.tsx     # Inline entity chip rendering (colored by type)
 │   │   ├── entity-chip-node-view.tsx    # TipTap NodeView bridge: clickable chips (open sidebar), hover tooltip
 │   │   ├── entity-tooltip.tsx  # Portal-based tooltip: entity name, type, description preview, status
-│   │   └── entity-suggestion.tsx        # Autocomplete dropdown for entity tag insertion
+│   │   ├── entity-suggestion.tsx        # Autocomplete dropdown for entity tag insertion
+│   │   ├── field-link-extension.ts     # Custom TipTap Node + ProseMirror plugin for /? cross-field links
+│   │   └── field-link-node-view.tsx    # TipTap NodeView: inline field chip with hover preview tooltip + click-to-open
 │   │
 │   └── layout/                 # App shell and chrome
 │       ├── app-shell.tsx       # Main layout: Toolbar / Canvas+Overlays / StatusBar + panels + entity graph + dashboard + shortcuts + PWA prompt

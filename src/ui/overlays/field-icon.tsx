@@ -22,6 +22,7 @@ import {
   Scroll,
   Flame,
   LayoutTemplate,
+  GitBranch,
 } from 'lucide-react'
 
 const ICON_MAP: Record<string, React.ComponentType<LucideProps>> = {
@@ -47,6 +48,7 @@ const ICON_MAP: Record<string, React.ComponentType<LucideProps>> = {
   Scroll,
   Flame,
   LayoutTemplate,
+  GitBranch,
 }
 
 export function FieldIcon({ name, ...props }: { name: string } & LucideProps) {

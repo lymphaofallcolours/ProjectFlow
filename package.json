@@ -1,7 +1,7 @@
 {
   "name": "project-flow",
   "private": true,
-  "version": "1.6.0",
+  "version": "1.7.0",
   "type": "module",
   "packageManager": "pnpm@10.30.3",
   "scripts": {
@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@dagrejs/dagre": "^2.0.4",
+    "@tiptap/core": "^3.20.1",
     "@tiptap/extension-link": "^3.20.0",
     "@tiptap/extension-mention": "^3.20.0",
     "@tiptap/extension-placeholder": "^3.20.0",

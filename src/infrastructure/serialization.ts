@@ -1,4 +1,4 @@
-import type { Campaign } from '@/domain/types'
+import type { Campaign, StoryNode } from '@/domain/types'
 import { CURRENT_SCHEMA_VERSION } from '@/domain/campaign-operations'
 
 export function serializeCampaign(campaign: Campaign): string {
@@ -14,6 +14,17 @@ export function deserializeCampaign(json: string): Campaign {
 
   if (!validateCampaignSchema(data)) {
     throw new Error('Invalid campaign file: missing required fields')
+  }
+
+  // Migrate v1 → v2: add missing conditions field to nodes
+  if (data.schemaVersion < 2) {
+    const nodes = data.graph.nodes as Record<string, StoryNode>
+    for (const node of Object.values(nodes)) {
+      if (!node.fields.conditions) {
+        node.fields.conditions = []
+      }
+    }
+    data.schemaVersion = CURRENT_SCHEMA_VERSION
   }
 
   return data

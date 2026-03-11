@@ -113,7 +113,7 @@ const initialState = {
   nodes: {} as Record<string, StoryNode>,
   edges: {} as Record<string, StoryEdge>,
   viewport: { x: 0, y: 0, zoom: 1 },
-  scrollDirection: 'horizontal' as ScrollDirection,
+  scrollDirection: 'vertical' as ScrollDirection,
   selectedNodeIds: new Set<string>(),
   clipboard: null as { nodes: StoryNode[]; edges: StoryEdge[] } | null,
 }

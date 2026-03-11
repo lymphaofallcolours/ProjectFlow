@@ -5,22 +5,26 @@
 ## Current Session
 
 **Date:** 2026-03-11
-**Goal:** Peripheral view v2 — layout overhaul
+**Goal:** Conditions field + cross-field links
 
 ### Completed This Session
 
-- **Peripheral view v2 layout overhaul** — fixed field-to-edge mapping (Script/Dialogue→left, Combat/Events→right, Soundtrack/Dice/Vibe→top, Characters/Secrets/GM Notes/Custom→bottom)
-- **Proportional horizontal sizing** — top/bottom cards use flex-1 equal distribution with min/max bounds; single card fills full width, 2 cards split evenly
-- **Content-proportional height** — cards grow with content up to 25vh cap; per-card scroll containment (no more sibling scroll propagation)
-- **Soundtrack two-line layout** — track name + note on separate lines
-- **Full panel suppression** — peripheral view hides entirely when any toolbar panel is open
-- Removed `getActiveEdges()`, `suppressedEdges`, fallback logic — simplified domain module
-- Rewrote domain tests for fixed mapping
+- **Conditions field (12th field)** — new `ConditionEntry` type with description, status (met/unmet/unknown), optional targetEdgeId, optional notes
+- **ConditionsListEditor** — list editor with status cycling button, description input, outgoing edge picker dropdown, collapsible notes
+- **ConditionsReadView** — status indicators (●/○/?), description with status-based coloring, target node chips via edge resolution, muted notes line
+- **Peripheral layout** — conditions assigned to top edge (4th card alongside Vibe, Soundtrack, Dice Rolls)
+- **Search** — conditions description + notes included in full-text search
+- **Entity scanning** — conditions notes scanned for entity tags
+- **Cross-field links (`/?`)** — new TipTap extension (`FieldLinkExtension`) with ProseMirror suggestion plugin; detects `/?` trigger and shows autocomplete dropdown
+- **Field link chips** — inline atom nodes styled with field color + icon; hover shows content preview tooltip; click opens field panel
+- **Help panel** — new "Field References" section listing all 12 `/?` targets
+- **Schema version** bumped to 2 (backward compatible)
+- Added `@tiptap/core` as direct dependency
 
 ### Test Coverage
 
 - 775 tests across 50 test files
-- Domain: ~282 (rewrote 9 peripheral layout tests)
+- Domain: ~282 (updated peripheral layout tests for conditions)
 - Application: ~200
 - Infrastructure: 13
 - UI: 66

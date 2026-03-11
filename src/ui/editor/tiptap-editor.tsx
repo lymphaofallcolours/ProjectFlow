@@ -10,6 +10,7 @@ import type { EntitySuggestionListRef } from './entity-suggestion'
 import { buildSuggestionItems } from './suggestion-items'
 import { useEntityStore } from '@/application/entity-store'
 import { extractStatusTagsFromText } from '@/domain/entity-tag-parser'
+import { FieldLinkExtension, contentToHtml } from './field-link-extension'
 
 type TipTapEditorProps = {
   content: string
@@ -153,6 +154,7 @@ export function TipTapEditor({
       openOnClick: true,
       HTMLAttributes: { class: 'entity-link' },
     }),
+    FieldLinkExtension,
   ]
 
   if (enableEntityMentions) {
@@ -166,9 +168,11 @@ export function TipTapEditor({
     )
   }
 
+  const htmlContent = contentToHtml(content)
+
   const editor = useEditor({
     extensions,
-    content,
+    content: htmlContent,
     onUpdate: ({ editor: ed }) => {
       const newText = ed.getText()
       // Status auto-logging: diff old text vs new text for status markers
@@ -204,7 +208,7 @@ export function TipTapEditor({
       prevTextRef.current = content
       const currentText = editor.getText()
       if (currentText !== content) {
-        editor.commands.setContent(content)
+        editor.commands.setContent(contentToHtml(content))
       }
     }
   }, [content, editor])

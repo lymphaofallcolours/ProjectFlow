@@ -111,6 +111,15 @@ export function extractEntityTypesFromNodeFields(node: {
       types.add(tag.entityType)
     }
   }
+  if ('conditions' in node.fields) {
+    for (const cond of node.fields.conditions as { notes?: string }[]) {
+      if (cond.notes) {
+        for (const tag of parseEntityTags(cond.notes)) {
+          types.add(tag.entityType)
+        }
+      }
+    }
+  }
   for (const field of node.fields.custom) {
     if (field.content.markdown) {
       for (const tag of parseEntityTags(field.content.markdown)) {

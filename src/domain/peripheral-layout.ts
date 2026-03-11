@@ -19,6 +19,7 @@ const FIELD_EDGE_AFFINITY: Record<FieldKey, EdgePosition> = {
   soundtrack: 'top',
   diceRolls: 'top',
   vibe: 'top',
+  conditions: 'top',
   characters: 'bottom',
   secrets: 'bottom',
   gmNotes: 'bottom',

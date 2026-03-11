@@ -29,6 +29,12 @@ export function deserializeSubgraph(json: string): { nodes: StoryNode[]; edges: 
   if (!validateSubgraphFile(data)) {
     throw new Error('Invalid subgraph file format')
   }
+  // Ensure backward compat: add missing conditions field
+  for (const node of data.nodes) {
+    if (!node.fields.conditions) {
+      node.fields.conditions = []
+    }
+  }
   return { nodes: data.nodes, edges: data.edges }
 }
 

@@ -13,7 +13,7 @@ describe('serializeCampaign', () => {
     const campaign = createTestCampaign()
     const json = serializeCampaign(campaign)
     const parsed = JSON.parse(json)
-    expect(parsed.schemaVersion).toBe(1)
+    expect(parsed.schemaVersion).toBe(2)
   })
 })
 
@@ -28,7 +28,7 @@ describe('deserializeCampaign', () => {
     expect(restored.graph.nodes).toEqual(original.graph.nodes)
     expect(restored.graph.edges).toEqual(original.graph.edges)
     expect(restored.settings).toEqual(original.settings)
-    expect(restored.schemaVersion).toBe(1)
+    expect(restored.schemaVersion).toBe(2)
   })
 
   it('throws on invalid JSON', () => {

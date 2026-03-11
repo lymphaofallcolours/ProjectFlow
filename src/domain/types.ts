@@ -59,6 +59,7 @@ export const FIELD_DEFINITIONS: FieldDefinition[] = [
   { key: 'characters', label: 'Characters', icon: 'Users', color: '#06b6d4' },
   { key: 'diceRolls', label: 'Dice Rolls', icon: 'Dice5', color: '#84cc16' },
   { key: 'secrets', label: 'Secrets', icon: 'Lock', color: '#6b7280' },
+  { key: 'conditions', label: 'Conditions', icon: 'GitBranch', color: '#d97706' },
   { key: 'custom', label: 'Custom', icon: 'Sparkles', color: '#a855f7' },
 ]
 
@@ -102,6 +103,13 @@ export type CustomField = {
   templateId?: string
 }
 
+export type ConditionEntry = {
+  description: string
+  targetEdgeId?: string
+  status: 'met' | 'unmet' | 'unknown'
+  notes?: string
+}
+
 export type CustomFieldTemplate = {
   id: string
   label: string
@@ -122,6 +130,7 @@ export type NodeFields = {
   characters: RichContent
   diceRolls: DiceRollEntry[]
   secrets: RichContent
+  conditions: ConditionEntry[]
   custom: CustomField[]
 }
 

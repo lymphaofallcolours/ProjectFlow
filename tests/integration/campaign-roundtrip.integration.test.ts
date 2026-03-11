@@ -28,7 +28,7 @@ describe('Campaign roundtrip (integration)', () => {
 
     // Assert: campaign metadata
     expect(restored.name).toBe('Dark Heresy Campaign')
-    expect(restored.schemaVersion).toBe(1)
+    expect(restored.schemaVersion).toBe(2)
 
     // Assert: graph structure
     expect(Object.keys(restored.graph.nodes)).toHaveLength(2)

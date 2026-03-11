@@ -2,6 +2,21 @@
 
 <!-- Claude: Update this file with each commit via conventional commit format. -->
 
+## v1.7.0 (2026-03-11)
+
+### feat: conditions field + cross-field links
+- **Conditions field** — 12th node field tracking prerequisites, DCs, and triggers for conditional edges; entries have description, status (met/unmet/unknown), optional edge link, optional notes
+- **Conditions editor** — list editor with status cycling, outgoing edge picker dropdown, collapsible notes
+- **Conditions read view** — status indicators (●/○/?), target node chips, muted notes line
+- **Cross-field links (`/?`)** — type `/?FieldName` in any rich-text field to insert an inline chip referencing another field on the same node
+- **Field link autocomplete** — glass-panel dropdown filters all 12 fields as you type after `/?`
+- **Field link chips** — styled with field color and icon; hover shows content preview tooltip; click opens field panel
+- **Help panel** — new "Field References" section listing all `/?` field link targets
+- **Peripheral view** — Conditions assigned to top edge (4th card alongside Vibe, Soundtrack, Dice Rolls)
+- Schema version bumped to 2; backward compatible (old saves get empty `conditions: []`)
+- Added `@tiptap/core` as direct dependency for custom TipTap node extension
+- 775 total tests
+
 ## v1.6.0 (2026-03-11)
 
 ### feat: peripheral view v2 — layout overhaul, proportional sizing, panel suppression

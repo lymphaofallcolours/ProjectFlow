@@ -18,6 +18,8 @@ During live play, start a session and mark nodes as you go. The diff overlay sho
 - **Three-tier drill-down** — progressive disclosure from graph overview to field subnodes to full cockpit editor
 - **Peripheral view** — toggle mode that displays all populated fields as floating glass panels around the screen edges while keeping the graph visible (Ctrl+Shift+P)
 - **Entity tagging DSL** — inline `@Name` / `#Name` tags with type prefixes for NPCs, enemies, objects, locations, and secrets; rendered as colored chips with autocomplete
+- **Conditions field** — track prerequisites, DCs, and triggers for conditional edges with met/unmet/unknown status and optional edge linking
+- **Cross-field links** — type `/?FieldName` in any rich-text field to create inline chips that reference other fields on the same node, with hover previews and click-to-open
 - **Playthrough tracking** — session-based visit logging, diff overlays, and markdown export
 - **Nested groups** — collapsible groups that can contain other groups (unlimited depth), with double-border rectangle shape, depth badges, and ghost outlines when expanded
 - **Divider nodes** — ribbon-shaped separators for arcs, sessions, and scene breaks with 3 magnitude levels

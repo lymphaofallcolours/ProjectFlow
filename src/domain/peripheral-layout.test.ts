@@ -34,9 +34,9 @@ describe('computePeripheralLayout', () => {
     expect(result[1].order).toBe(1)
   })
 
-  it('assigns soundtrack, diceRolls, vibe to top edge', () => {
-    const result = computePeripheralLayout(fieldDefs('soundtrack', 'diceRolls', 'vibe'))
-    expect(result).toHaveLength(3)
+  it('assigns soundtrack, diceRolls, vibe, conditions to top edge', () => {
+    const result = computePeripheralLayout(fieldDefs('soundtrack', 'diceRolls', 'vibe', 'conditions'))
+    expect(result).toHaveLength(4)
     expect(result.every((a) => a.edge === 'top')).toBe(true)
   })
 
@@ -60,6 +60,7 @@ describe('computePeripheralLayout', () => {
     expect(byKey.soundtrack).toBe('top')
     expect(byKey.diceRolls).toBe('top')
     expect(byKey.vibe).toBe('top')
+    expect(byKey.conditions).toBe('top')
     expect(byKey.characters).toBe('bottom')
     expect(byKey.secrets).toBe('bottom')
     expect(byKey.gmNotes).toBe('bottom')

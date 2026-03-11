@@ -44,6 +44,11 @@ function extractFieldText(fields: NodeFields, fieldKey: FieldKey): string[] {
       (d) => `${d.description} ${d.formula ?? ''} ${d.result ?? ''}`,
     )
   }
+  if (fieldKey === 'conditions') {
+    return (value as NodeFields['conditions']).map(
+      (c) => `${c.description} ${c.notes ?? ''}`,
+    )
+  }
   if (fieldKey === 'custom') {
     return (value as NodeFields['custom']).map(
       (c) => `${c.label} ${c.content.markdown}`,
@@ -56,7 +61,7 @@ function extractFieldText(fields: NodeFields, fieldKey: FieldKey): string[] {
 
 const ALL_FIELD_KEYS: FieldKey[] = [
   ...RICH_CONTENT_FIELDS,
-  'dialogues', 'soundtrack', 'diceRolls', 'custom',
+  'dialogues', 'soundtrack', 'diceRolls', 'conditions', 'custom',
 ]
 
 export function searchNodes(

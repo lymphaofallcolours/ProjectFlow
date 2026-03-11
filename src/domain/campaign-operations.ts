@@ -2,7 +2,7 @@
 import type { Campaign, CampaignSettings, NarrativeGraph } from './types'
 import type { EntityRegistry } from './entity-types'
 
-export const CURRENT_SCHEMA_VERSION = 1
+export const CURRENT_SCHEMA_VERSION = 2
 
 export function createDefaultSettings(): CampaignSettings {
   return {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, ChevronDown, ChevronRight } from 'lucide-react'
 import { ENTITY_TYPE_CONFIGS } from '@/domain/entity-types'
+import { FIELD_DEFINITIONS } from '@/domain/types'
 import { useUIStore } from '@/application/ui-store'
 
 const SHORTCUTS = [
@@ -130,6 +131,30 @@ export function HelpPanel() {
             {' '}suffix marks state changes:{' '}
             <span style={{ fontFamily: 'var(--font-mono)' }}>@Alfa+wounded</span>
           </p>
+        </Section>
+
+        {/* Field References */}
+        <Section title="Field References">
+          <p className="text-[10px] text-text-muted mb-1.5">
+            Type{' '}
+            <span className="text-text-secondary font-medium" style={{ fontFamily: 'var(--font-mono)' }}>
+              /?
+            </span>
+            {' '}in any rich-text field to link to another field on the same node.
+          </p>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+            {FIELD_DEFINITIONS.map((f) => (
+              <div key={f.key} className="flex items-center gap-1.5 text-[10px]">
+                <span
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ backgroundColor: f.color }}
+                />
+                <span style={{ fontFamily: 'var(--font-mono)' }} className="text-text-secondary">
+                  /?{f.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </Section>
 
         {/* Keyboard Shortcuts */}

@@ -4,6 +4,24 @@
 
 ---
 
+## 2026-03-11 — Cross-field links via custom TipTap extension with ProseMirror plugin
+
+**Status:** Accepted
+**Context:** The `/?FieldName` cross-field link syntax needs a two-character trigger (`/?`) which TipTap's Mention extension doesn't support (single-char triggers only). Needed a way to detect the trigger, show a suggestion dropdown, and insert an inline atom node.
+**Decision:** Created a custom TipTap `Node` extension (`FieldLinkExtension`) using `@tiptap/core` directly, with a ProseMirror plugin that watches for `/?` in the document text and manages a DOM-based suggestion popup. This avoids hacking the Mention extension and gives full control over trigger detection, suggestion rendering, and node insertion.
+**Consequences:** Required adding `@tiptap/core` as a direct dependency (was previously only a transitive dep hoisted by pnpm). The ProseMirror plugin approach is lower-level than Mention's suggestion config but more flexible for multi-character triggers.
+
+---
+
+## 2026-03-11 — Schema version bump to 2 for Conditions field
+
+**Status:** Accepted
+**Context:** Adding `conditions: ConditionEntry[]` to `NodeFields` changes the data model. Old save files won't have this field.
+**Decision:** Bumped `CURRENT_SCHEMA_VERSION` to 2. Backward compatibility is handled by `createEmptyNodeFields()` which provides `conditions: []` as the default. Old save files missing the field will get an empty array when loaded.
+**Consequences:** Save files created with v1.7.0+ will have schema version 2. Loading old files (version 1) works without migration — missing `conditions` field defaults to empty array via JavaScript's undefined-to-default behavior.
+
+---
+
 ## 2026-03-09 — Dagre library in domain/ layer for auto-arrange
 
 **Status:** Accepted

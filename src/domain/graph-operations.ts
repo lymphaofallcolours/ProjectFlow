@@ -25,6 +25,7 @@ export function createEmptyNodeFields(): NodeFields {
     characters: createEmptyRichContent(),
     diceRolls: [],
     secrets: createEmptyRichContent(),
+    conditions: [],
     custom: [],
   }
 }

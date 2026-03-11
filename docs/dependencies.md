@@ -28,11 +28,11 @@
 **Removal risk:** Low — purely visual, replaceable by any icon set.
 **Added:** Phase 1, Commit 1.
 
-### @tiptap/react (3.20.0) + @tiptap/pm + @tiptap/starter-kit + @tiptap/extension-placeholder + @tiptap/extension-mention
-**Purpose:** Rich text editor for all node content fields. StarterKit provides base editing; Mention extension drives entity tag autocomplete (two instances: @ for present, # for mentioned); Placeholder provides empty-state hints.
+### @tiptap/react (3.20.0) + @tiptap/core + @tiptap/pm + @tiptap/starter-kit + @tiptap/extension-placeholder + @tiptap/extension-mention
+**Purpose:** Rich text editor for all node content fields. StarterKit provides base editing; Mention extension drives entity tag autocomplete (two instances: @ for present, # for mentioned); Placeholder provides empty-state hints. `@tiptap/core` is used directly for the custom `FieldLinkExtension` (cross-field `/?` links) which defines a custom inline atom Node with a ProseMirror suggestion plugin.
 **Chosen over:** Slate.js (steeper learning curve), Draft.js (deprecated), CodeMirror (code-focused, not prose).
-**Removal risk:** High — all content editing uses TipTap. Custom EntityChip NodeView renders inline entity chips.
-**Added:** Phase 2, Commit 3.
+**Removal risk:** High — all content editing uses TipTap. Custom EntityChip NodeView renders inline entity chips; FieldLink NodeView renders cross-field reference chips.
+**Added:** Phase 2, Commit 3. `@tiptap/core` added v1.7.0.
 
 ### @tiptap/extension-link (3.20.0)
 **Purpose:** TipTap extension for automatic URL detection and clickable hyperlinks. Detects URLs in text and renders them as `<a>` tags with configurable behavior.

@@ -5,6 +5,7 @@ import { RichContentEditor } from './rich-content-editor'
 import { DialogueListEditor } from './dialogue-list-editor'
 import { SoundtrackListEditor } from './soundtrack-list-editor'
 import { DiceRollListEditor } from './dice-roll-list-editor'
+import { ConditionsListEditor } from './conditions-list-editor'
 import { CustomFieldEditor } from './custom-field-editor'
 
 type FieldEditorProps = {
@@ -57,6 +58,14 @@ export function FieldEditor({ node, fieldKey }: FieldEditorProps) {
         <DiceRollListEditor
           value={node.fields.diceRolls}
           onChange={handleChange}
+        />
+      )
+    case 'conditions':
+      return (
+        <ConditionsListEditor
+          value={node.fields.conditions}
+          onChange={handleChange}
+          nodeId={node.id}
         />
       )
     case 'custom':
